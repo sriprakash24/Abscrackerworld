@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { useFieldArray } from 'react-hook-form';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, LayoutGrid } from 'lucide-react';
+import InvoiceProductPickerModal from './InvoiceProductPickerModal';
 
 /**
  * Renders the editable item rows for the invoice form. Each row has an
@@ -7,9 +9,14 @@ import { Plus, Trash2 } from 'lucide-react';
  * a live product) alongside always-editable description/qty/rate inputs, so
  * staff can either pick a real product or type a custom line for a phone-in
  * order that doesn't match anything in the catalog.
+ *
+ * For orders with a lot of line items, "Add products" opens a category-wise
+ * bulk picker (InvoiceProductPickerModal) instead of repeating "Add Line" +
+ * dropdown-search one product at a time.
  */
 export default function InvoiceItemsEditor({ control, register, watch, setValue, errors, products }) {
-  const { fields, append, remove } = useFieldArray({ control, name: 'items' });
+  const { fields, append, remove, replace } = useFieldArray({ control, name: 'items' });
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const handlePickProduct = (index, productId) => {
     setValue(`items.${index}.productId`, productId);
@@ -20,9 +27,52 @@ export default function InvoiceItemsEditor({ control, register, watch, setValue,
     setValue(`items.${index}.rate`, String(product.sale ?? ''), { shouldValidate: true });
   };
 
+  /** Merges a batch of {productId, qty} picks from the bulk picker into the item rows. */
+  const handleAddFromPicker = (picks) => {
+    const currentItems = watch('items') || [];
+    const newRows = [];
+
+    picks.forEach(({ productId, qty }) => {
+      const existingIndex = currentItems.findIndex((it) => it.productId === productId);
+      if (existingIndex !== -1) {
+        const newQty = (Number(currentItems[existingIndex].qty) || 0) + qty;
+        setValue(`items.${existingIndex}.qty`, String(newQty), { shouldValidate: true });
+        return;
+      }
+      const product = products.find((p) => p.id === productId);
+      newRows.push({
+        productId,
+        description: product?.name || '',
+        qty: String(qty),
+        rate: String(product?.sale ?? ''),
+      });
+    });
+
+    if (newRows.length === 0) return;
+
+    // If the only row so far is the pristine default blank line, replace it
+    // instead of leaving it dangling (it would fail validation unfilled).
+    const onlyBlankRow = currentItems.length === 1 && !currentItems[0].description && !currentItems[0].productId;
+    if (onlyBlankRow) {
+      replace(newRows);
+    } else {
+      append(newRows);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-2.5">
-      <span className="text-[11px] font-bold tracking-wide text-[#cfc7bd]">Items</span>
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] font-bold tracking-wide text-[#cfc7bd]">Items</span>
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          className="flex items-center gap-1.5 rounded-full border border-orange/40 bg-orange/10 px-3 py-1 text-[10.5px] font-bold text-orange"
+        >
+          <LayoutGrid size={12} />
+          Add products
+        </button>
+      </div>
 
       {fields.map((field, index) => {
         const qty = Number(watch(`items.${index}.qty`)) || 0;
@@ -111,6 +161,14 @@ export default function InvoiceItemsEditor({ control, register, watch, setValue,
         <Plus size={12} />
         Add Line
       </button>
+
+      <InvoiceProductPickerModal
+        open={pickerOpen}
+        products={products}
+        onAdd={handleAddFromPicker}
+        onClose={() => setPickerOpen(false)}
+      />
     </div>
   );
 }
+

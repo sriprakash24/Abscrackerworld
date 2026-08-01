@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Plus, Search, Pencil, Download, Receipt, Link2, PenSquare, Eye } from 'lucide-react';
+import { Plus, Search, Pencil, Download, Receipt, Link2, PenSquare, Eye, Trash2 } from 'lucide-react';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import AdminSectionHeader from '../../components/admin/AdminSectionHeader';
 import AdminTabsNav from '../../components/admin/AdminTabsNav';
 import InvoiceFormModal from '../../components/admin/InvoiceFormModal';
 import InvoicePreviewModal from '../../components/admin/InvoicePreviewModal';
+import ConfirmDeleteDialog from '../../components/admin/ConfirmDeleteDialog';
 import { db } from '../../firebase/config';
-import { subscribeAllInvoices } from '../../services/invoicesFirestore';
+import { subscribeAllInvoices, deleteInvoiceDoc } from '../../services/invoicesFirestore';
 import { generateInvoicePdf } from '../../utils/generateInvoicePdf';
 
 const SOURCE_FILTERS = ['ALL', 'ORDER', 'MANUAL'];
@@ -24,6 +25,8 @@ export default function AdminInvoices() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState(null);
   const [previewInvoice, setPreviewInvoice] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const unsubscribe = subscribeAllInvoices(
@@ -68,6 +71,21 @@ export default function AdminInvoices() {
   const openEditModal = (invoice) => {
     setEditingInvoice(invoice);
     setModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteInvoiceDoc(db, deleteTarget.id);
+      toast.success('Invoice deleted');
+      setDeleteTarget(null);
+    } catch (err) {
+      console.error('Failed to delete invoice', err);
+      toast.error("Couldn't delete the invoice. Please try again.");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -129,6 +147,7 @@ export default function AdminInvoices() {
                 invoice={invoice}
                 onView={() => setPreviewInvoice(invoice)}
                 onEdit={() => openEditModal(invoice)}
+                onDelete={() => setDeleteTarget(invoice)}
               />
             ))
           )}
@@ -137,11 +156,19 @@ export default function AdminInvoices() {
 
       <InvoiceFormModal open={modalOpen} invoice={editingInvoice} onClose={() => setModalOpen(false)} />
       <InvoicePreviewModal open={!!previewInvoice} invoice={previewInvoice} onClose={() => setPreviewInvoice(null)} />
+      <ConfirmDeleteDialog
+        open={!!deleteTarget}
+        title="Delete this invoice?"
+        description={`Invoice ${deleteTarget?.invoiceNo || ''} will be permanently removed. This can't be undone.`}
+        busy={deleting}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }
 
-function InvoiceRow({ invoice, onView, onEdit }) {
+function InvoiceRow({ invoice, onView, onEdit, onDelete }) {
   return (
     <div className="surface-3d flex items-center gap-3 rounded-2xl p-3">
       <div className="orb-3d flex h-12 w-12 shrink-0 items-center justify-center !rounded-xl text-orange">
@@ -178,6 +205,12 @@ function InvoiceRow({ invoice, onView, onEdit }) {
           className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-[#f2ece2] hover:text-orange"
         >
           <Download size={13} />
+        </button>
+        <button
+          onClick={onDelete}
+          className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-[#f2ece2] hover:text-[#e35226]"
+        >
+          <Trash2 size={13} />
         </button>
       </div>
     </div>

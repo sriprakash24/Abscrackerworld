@@ -9,16 +9,17 @@
 //   2. MANUAL — created from scratch on the admin Invoices page for phone-in
 //      orders that never went through the website (createManualInvoice).
 //
-// Invoice numbers are sequential (INV-0001, INV-0002, ...) via an atomic
-// counter doc at counters/invoices, so two admins confirming payment at the
-// same moment never collide.
+// Invoice numbers, e.g. "ABSI20260801108" — ABSI + today's date + a 3-digit
+// counter that resets daily, via an atomic Firestore transaction, so two
+// admins confirming payment at the same moment never collide. Orders use
+// the same generator with the ABSO prefix — see src/utils/sequentialId.js.
 
 import {
   doc,
   addDoc,
   updateDoc,
+  deleteDoc,
   getDoc,
-  runTransaction,
   serverTimestamp,
   collection,
   query,
@@ -26,20 +27,11 @@ import {
   onSnapshot,
 } from 'firebase/firestore';
 import { DEFAULT_PACKAGE_PERCENT, INVOICE_SOURCE } from '../constants/invoiceConstants';
+import { reserveSequentialId } from '../utils/sequentialId';
 
-const COUNTER_REF_PATH = ['counters', 'invoices'];
-
-/** Atomically reserves and returns the next sequential invoice number, e.g. "INV-0007". */
-async function reserveNextInvoiceNumber(db) {
-  const counterRef = doc(db, ...COUNTER_REF_PATH);
-  const next = await runTransaction(db, async (tx) => {
-    const snap = await tx.get(counterRef);
-    const current = snap.exists() ? snap.data().value || 0 : 0;
-    const value = current + 1;
-    tx.set(counterRef, { value }, { merge: true });
-    return value;
-  });
-  return `INV-${String(next).padStart(4, '0')}`;
+/** Atomically reserves and returns the next invoice number, e.g. "ABSI20260801108". */
+function reserveNextInvoiceNumber(db) {
+  return reserveSequentialId(db, { prefix: 'ABSI', counterKey: 'invoices' });
 }
 
 /** Computes subtotal/package/grand-total from line items — shared by order-derived and manual invoices. */
@@ -189,6 +181,18 @@ export async function getInvoice(db, invoiceDocId) {
   const snap = await getDoc(doc(db, 'invoices', invoiceDocId));
   if (!snap.exists()) return null;
   return { id: snap.id, ...snap.data() };
+}
+
+/**
+ * Permanently deletes an invoice document — admin-only, irreversible. Used
+ * from the "Delete Invoice" action on the Invoices page. Note: if this
+ * invoice was auto-generated from a website order, the order doc still
+ * keeps its `invoiceId`/`invoiceNo` fields pointing at the now-deleted
+ * invoice — use "Generate Invoice" on that order again to create a fresh
+ * one if needed.
+ */
+export async function deleteInvoiceDoc(db, invoiceDocId) {
+  await deleteDoc(doc(db, 'invoices', invoiceDocId));
 }
 
 /** Live-subscribes to every invoice, newest first — powers the admin Invoices list page. */

@@ -1,19 +1,27 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, LayoutGrid } from 'lucide-react';
-import { useAdminAuth } from '../../contexts/AdminAuthContext';
-import { useProducts } from '../../contexts/ProductsContext';
-import AdminSectionHeader from '../../components/admin/AdminSectionHeader';
-import AdminTabsNav from '../../components/admin/AdminTabsNav';
-import CategoryFormModal from '../../components/admin/CategoryFormModal';
-import ConfirmDeleteDialog from '../../components/admin/ConfirmDeleteDialog';
-import { CATEGORY_ICONS } from '../../constants/catalog';
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  ChevronUp,
+  ChevronDown,
+  LayoutGrid,
+} from "lucide-react";
+import { useAdminAuth } from "../../contexts/AdminAuthContext";
+import { useProducts } from "../../contexts/ProductsContext";
+import AdminSectionHeader from "../../components/admin/AdminSectionHeader";
+import AdminTabsNav from "../../components/admin/AdminTabsNav";
+import CategoryFormModal from "../../components/admin/CategoryFormModal";
+import ConfirmDeleteDialog from "../../components/admin/ConfirmDeleteDialog";
+import { CATEGORY_ICONS } from "../../constants/catalog";
 import {
   subscribeToCategoryDocs,
   deleteCategoryDoc,
+  deleteCategoryImageIfOwned,
   moveCategoryOrder,
-} from '../../services/products';
+} from "../../services/products";
 
 export default function AdminCategories() {
   const { user, logout } = useAdminAuth();
@@ -35,26 +43,27 @@ export default function AdminCategories() {
         setLoading(false);
       },
       (err) => {
-        console.error('[AdminCategories] subscription failed:', err);
+        console.error("[AdminCategories] subscription failed:", err);
         setLoading(false);
-      }
+      },
     );
     return () => unsubscribe?.();
   }, []);
 
   const productCountByCategory = useMemo(() => {
     const counts = {};
-    for (const p of products) counts[p.category] = (counts[p.category] || 0) + 1;
+    for (const p of products)
+      counts[p.category] = (counts[p.category] || 0) + 1;
     return counts;
   }, [products]);
 
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/admin/login', { replace: true });
+      navigate("/admin/login", { replace: true });
     } catch (err) {
-      console.error('Logout failed', err);
-      toast.error('Could not sign out. Please try again.');
+      console.error("Logout failed", err);
+      toast.error("Could not sign out. Please try again.");
     }
   };
 
@@ -63,7 +72,7 @@ export default function AdminCategories() {
     try {
       await moveCategoryOrder(categories, categoryId, direction);
     } catch (err) {
-      console.error('Failed to reorder category', err);
+      console.error("Failed to reorder category", err);
       toast.error("Couldn't reorder that category. Please try again.");
     } finally {
       setMovingId(null);
@@ -75,24 +84,27 @@ export default function AdminCategories() {
     setDeleting(true);
     try {
       await deleteCategoryDoc(deleteTarget.id);
-      toast.success('Category deleted');
+      await deleteCategoryImageIfOwned(deleteTarget.image);
+      toast.success("Category deleted");
       setDeleteTarget(null);
     } catch (err) {
-      console.error('Failed to delete category', err);
+      console.error("Failed to delete category", err);
       toast.error("Couldn't delete the category. Please try again.");
     } finally {
       setDeleting(false);
     }
   };
 
-  const productsInDeleteTarget = deleteTarget ? productCountByCategory[deleteTarget.categoryName] || 0 : 0;
+  const productsInDeleteTarget = deleteTarget
+    ? productCountByCategory[deleteTarget.categoryName] || 0
+    : 0;
 
   return (
     <div className="min-h-screen w-full bg-[#050505] pb-16 text-white">
       <AdminSectionHeader
         icon={LayoutGrid}
         title="Category Management"
-        subtitle={`${categories.length} ${categories.length === 1 ? 'category' : 'categories'} · drag order with arrows`}
+        subtitle={`${categories.length} ${categories.length === 1 ? "category" : "categories"} · drag order with arrows`}
         email={user?.email}
         onLogout={handleLogout}
       />
@@ -117,22 +129,27 @@ export default function AdminCategories() {
 
         <div className="flex flex-col gap-2.5">
           {loading ? (
-            Array.from({ length: 4 }).map((_, i) => <CategoryRowSkeleton key={i} />)
+            Array.from({ length: 4 }).map((_, i) => (
+              <CategoryRowSkeleton key={i} />
+            ))
           ) : categories.length === 0 ? (
             <div className="surface-3d rounded-2xl px-4 py-8 text-center text-[12px] text-muted">
-              No categories yet. Add your first category to start organizing products.
+              No categories yet. Add your first category to start organizing
+              products.
             </div>
           ) : (
             categories.map((category, i) => (
               <CategoryRow
                 key={category.id}
                 category={category}
-                productCount={productCountByCategory[category.categoryName] || 0}
+                productCount={
+                  productCountByCategory[category.categoryName] || 0
+                }
                 isFirst={i === 0}
                 isLast={i === categories.length - 1}
                 moving={movingId === category.id}
-                onMoveUp={() => handleMove(category.id, 'up')}
-                onMoveDown={() => handleMove(category.id, 'down')}
+                onMoveUp={() => handleMove(category.id, "up")}
+                onMoveDown={() => handleMove(category.id, "down")}
                 onEdit={() => {
                   setEditingCategory(category);
                   setModalOpen(true);
@@ -156,7 +173,7 @@ export default function AdminCategories() {
         title="Delete this category?"
         description={
           productsInDeleteTarget > 0
-            ? `"${deleteTarget?.categoryName}" still has ${productsInDeleteTarget} product${productsInDeleteTarget === 1 ? '' : 's'} assigned to it. They'll stay in the catalog but won't be grouped under any category until you move them. Continue?`
+            ? `"${deleteTarget?.categoryName}" still has ${productsInDeleteTarget} product${productsInDeleteTarget === 1 ? "" : "s"} assigned to it. They'll stay in the catalog but won't be grouped under any category until you move them. Continue?`
             : `"${deleteTarget?.categoryName}" will be permanently removed. This can't be undone.`
         }
         busy={deleting}
@@ -167,7 +184,17 @@ export default function AdminCategories() {
   );
 }
 
-function CategoryRow({ category, productCount, isFirst, isLast, moving, onMoveUp, onMoveDown, onEdit, onDelete }) {
+function CategoryRow({
+  category,
+  productCount,
+  isFirst,
+  isLast,
+  moving,
+  onMoveUp,
+  onMoveDown,
+  onEdit,
+  onDelete,
+}) {
   return (
     <div className="surface-3d flex items-center gap-3 rounded-2xl p-3">
       <div className="flex shrink-0 flex-col gap-1">
@@ -187,14 +214,25 @@ function CategoryRow({ category, productCount, isFirst, isLast, moving, onMoveUp
         </button>
       </div>
 
-      <span className="orb-3d flex h-11 w-11 shrink-0 items-center justify-center !rounded-full text-lg">
-        {CATEGORY_ICONS[category.categoryName] || '🎆'}
+      <span className="orb-3d flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden !rounded-full text-lg">
+        {category.image ? (
+          <img
+            src={category.image}
+            alt=""
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          CATEGORY_ICONS[category.categoryName] || "🎆"
+        )}
       </span>
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] font-bold text-[#f2ece2]">{category.categoryName}</p>
+        <p className="truncate text-[13px] font-bold text-[#f2ece2]">
+          {category.categoryName}
+        </p>
         <p className="text-[10.5px] font-semibold text-muted">
-          {productCount} {productCount === 1 ? 'product' : 'products'} · order {category.displayOrder}
+          {productCount} {productCount === 1 ? "product" : "products"} · order{" "}
+          {category.displayOrder}
         </p>
       </div>
 

@@ -7,6 +7,7 @@
 import {
   doc,
   setDoc,
+  deleteDoc,
   updateDoc,
   serverTimestamp,
   collection,
@@ -15,11 +16,15 @@ import {
   orderBy,
   onSnapshot,
 } from 'firebase/firestore';
+import { reserveSequentialId } from '../utils/sequentialId';
 
-/** Generates a short, human-friendly order id, e.g. ABS-6K92F1. */
-export function generateOrderId() {
-  const random = Math.random().toString(36).slice(2, 8).toUpperCase();
-  return `ABS-${random}`;
+/**
+ * Generates the order id, e.g. "ABSO20260801108" — ABSO + today's date +
+ * a 3-digit counter that resets daily. See src/utils/sequentialId.js for
+ * the shared format (invoices use the same helper with the ABSI prefix).
+ */
+export function generateOrderId(db) {
+  return reserveSequentialId(db, { prefix: 'ABSO', counterKey: 'orders' });
 }
 
 /**
@@ -90,7 +95,7 @@ export function buildOrderPayload({ orderId, formValues, pricing }) {
 
 /** Writes a new order document to orders/{orderId}. */
 export async function submitOrder(db, { formValues, pricing }) {
-  const orderId = generateOrderId();
+  const orderId = await generateOrderId(db);
   const payload = buildOrderPayload({ orderId, formValues, pricing });
   const ref = doc(db, 'orders', orderId);
   await setDoc(ref, payload);
@@ -172,4 +177,14 @@ export function subscribeAllOrders(db, onChange, onError) {
 export async function updateOrderStatus(db, orderDocId, patch) {
   const ref = doc(db, 'orders', orderDocId);
   await updateDoc(ref, { ...patch, updatedAt: serverTimestamp() });
+}
+
+/**
+ * Permanently deletes an order document — admin-only, irreversible. Used
+ * from the "Delete Order" action on the Order Management page. Note: this
+ * does not touch a linked invoice (orders/{id}.invoiceId), if one exists —
+ * the invoice stays on the Invoices page and can be deleted separately.
+ */
+export async function deleteOrderDoc(db, orderDocId) {
+  await deleteDoc(doc(db, 'orders', orderDocId));
 }

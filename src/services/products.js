@@ -28,13 +28,22 @@ import {
   serverTimestamp,
   query,
   orderBy,
-} from 'firebase/firestore';
-import { getDownloadURL, ref, uploadBytes, deleteObject } from 'firebase/storage';
-import { db, storage } from '../firebase/config';
-import { CATEGORY_ICONS, CATEGORY_TAGLINES, slugify } from '../constants/catalog';
+} from "firebase/firestore";
+import {
+  getDownloadURL,
+  ref,
+  uploadBytes,
+  deleteObject,
+} from "firebase/storage";
+import { db, storage } from "../firebase/config";
+import {
+  CATEGORY_ICONS,
+  CATEGORY_TAGLINES,
+  slugify,
+} from "../constants/catalog";
 
-const PRODUCTS_COLLECTION = 'products';
-const CATEGORIES_COLLECTION = 'categories';
+const PRODUCTS_COLLECTION = "products";
+const CATEGORIES_COLLECTION = "categories";
 
 // Resolved Storage download-URL cache, keyed by path, so the same image
 // is never re-resolved across snapshots or re-renders.
@@ -42,8 +51,8 @@ const imageUrlCache = new Map();
 
 /** Resolves a product's `image` field to a renderable URL. */
 export async function getProductImageUrl(image) {
-  if (!image) return '';
-  if (/^https?:\/\//i.test(image) || image.startsWith('data:')) return image;
+  if (!image) return "";
+  if (/^https?:\/\//i.test(image) || image.startsWith("data:")) return image;
 
   if (imageUrlCache.has(image)) return imageUrlCache.get(image);
 
@@ -52,21 +61,25 @@ export async function getProductImageUrl(image) {
     imageUrlCache.set(image, url);
     return url;
   } catch (err) {
-    console.warn(`[products] could not resolve Storage image "${image}":`, err?.message || err);
-    return '';
+    console.warn(
+      `[products] could not resolve Storage image "${image}":`,
+      err?.message || err,
+    );
+    return "";
   }
 }
 
 function deriveStock(raw) {
-  if (raw.stock === 'in' || raw.stock === 'low' || raw.stock === 'out') return raw.stock;
+  if (raw.stock === "in" || raw.stock === "low" || raw.stock === "out")
+    return raw.stock;
   const qty = Number(raw.stockQty ?? 0);
-  if (qty <= 0) return 'out';
-  if (qty <= 5) return 'low';
-  return 'in';
+  if (qty <= 0) return "out";
+  if (qty <= 5) return "low";
+  return "in";
 }
 
 function deriveDiscountPercentage(raw) {
-  if (typeof raw.discountPercentage === 'number') return raw.discountPercentage;
+  if (typeof raw.discountPercentage === "number") return raw.discountPercentage;
   const mrp = Number(raw.mrp) || 0;
   const sale = Number(raw.salePrice ?? raw.sale) || 0;
   return mrp > sale ? Math.round(((mrp - sale) / mrp) * 100) : 0;
@@ -77,30 +90,34 @@ async function normalizeProduct(id, raw) {
   const stock = deriveStock(raw);
   return {
     id,
-    name: raw.name || 'Unnamed product',
-    category: raw.category || 'UNCATEGORISED',
-    subcategory: raw.subcategory || '',
-    unit: raw.unit || '',
+    name: raw.name || "Unnamed product",
+    category: raw.category || "UNCATEGORISED",
+    subcategory: raw.subcategory || "",
+    unit: raw.unit || "",
     mrp: Number(raw.mrp) || 0,
     sale: Number(raw.salePrice ?? raw.sale) || 0,
     discountPercentage: deriveDiscountPercentage(raw),
-    img: await getProductImageUrl(raw.image || raw.img || ''),
-    rawImage: raw.image || raw.img || '',
+    img: await getProductImageUrl(raw.image || raw.img || ""),
+    rawImage: raw.image || raw.img || "",
     stock,
-    stockQty: Number(raw.stockQty ?? (stock === 'out' ? 0 : 99)),
+    stockQty: Number(raw.stockQty ?? (stock === "out" ? 0 : 99)),
     featured: !!raw.featured,
     bestSeller: !!raw.bestSeller,
     newArrival: !!raw.newArrival,
     flashDeal: !!raw.flashDeal,
-    description: raw.description || '',
+    description: raw.description || "",
     displayOrder: Number(raw.displayOrder ?? 0),
   };
 }
 
 async function normalizeSnapshot(snapshot) {
   const docs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-  const products = await Promise.all(docs.map((d) => normalizeProduct(d.id, d)));
-  products.sort((a, b) => a.displayOrder - b.displayOrder || a.name.localeCompare(b.name));
+  const products = await Promise.all(
+    docs.map((d) => normalizeProduct(d.id, d)),
+  );
+  products.sort(
+    (a, b) => a.displayOrder - b.displayOrder || a.name.localeCompare(b.name),
+  );
   return products;
 }
 
@@ -127,7 +144,7 @@ export function subscribeToProducts(onData, onError) {
         onError?.(err);
       }
     },
-    onError
+    onError,
   );
 }
 
@@ -146,11 +163,12 @@ export function subscribeToCategoryOrder(onData, onError) {
       const order = {};
       snapshot.docs.forEach((d) => {
         const data = d.data();
-        if (data?.categoryName) order[data.categoryName] = Number(data.displayOrder ?? 0);
+        if (data?.categoryName)
+          order[data.categoryName] = Number(data.displayOrder ?? 0);
       });
       onData(order);
     },
-    onError
+    onError,
   );
 }
 
@@ -179,8 +197,8 @@ export function groupByCategory(products, categoryOrder = {}) {
   return sorted.map((name) => ({
     name,
     slug: slugify(name),
-    icon: CATEGORY_ICONS[name] || '🎆',
-    tagline: CATEGORY_TAGLINES[name] || 'Premium festival crackers',
+    icon: CATEGORY_ICONS[name] || "🎆",
+    tagline: CATEGORY_TAGLINES[name] || "Premium festival crackers",
     items: map.get(name),
   }));
 }
@@ -205,26 +223,39 @@ export function getCategoryBySlug(categories, slug) {
  * { [name]: order } lookup map for sorting the storefront.
  */
 export function subscribeToCategoryDocs(onData, onError) {
-  const q = query(collection(db, CATEGORIES_COLLECTION), orderBy('displayOrder', 'asc'));
+  const q = query(
+    collection(db, CATEGORIES_COLLECTION),
+    orderBy("displayOrder", "asc"),
+  );
   return onSnapshot(
     q,
     (snapshot) => {
       onData(
         snapshot.docs.map((d) => ({
           id: d.id,
-          categoryName: d.data().categoryName || '',
+          categoryName: d.data().categoryName || "",
           displayOrder: Number(d.data().displayOrder ?? 0),
-        }))
+          image: d.data().image || "",
+        })),
       );
     },
-    onError
+    onError,
   );
 }
 
 /** Uploads a product image file to Storage and returns a ready-to-use download URL. */
 export async function uploadProductImageFile(file) {
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
   const path = `products/${Date.now()}-${safeName}`;
+  const storageRef = ref(storage, path);
+  await uploadBytes(storageRef, file);
+  return getDownloadURL(storageRef);
+}
+
+/** Uploads a category image file to Storage and returns a ready-to-use download URL. */
+export async function uploadCategoryImageFile(file) {
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const path = `categories/${Date.now()}-${safeName}`;
   const storageRef = ref(storage, path);
   await uploadBytes(storageRef, file);
   return getDownloadURL(storageRef);
@@ -242,7 +273,10 @@ export async function createProduct(data) {
 
 /** Updates an existing product document by id with a partial patch. */
 export async function updateProductDoc(id, patch) {
-  await updateDoc(doc(db, PRODUCTS_COLLECTION, id), { ...patch, updatedAt: serverTimestamp() });
+  await updateDoc(doc(db, PRODUCTS_COLLECTION, id), {
+    ...patch,
+    updatedAt: serverTimestamp(),
+  });
 }
 
 /** Deletes a product document by id. */
@@ -256,14 +290,21 @@ export async function deleteProductDoc(id) {
  * (max displayOrder + 100, matching the 100/200/300... spacing used by
  * CATEGORY_MASTER in starterData.js).
  */
-export async function createCategoryDoc({ categoryName, displayOrder, existingCategories = [] }) {
+export async function createCategoryDoc({
+  categoryName,
+  displayOrder,
+  image = "",
+  existingCategories = [],
+}) {
   const order =
-    displayOrder ?? (existingCategories.length
+    displayOrder ??
+    (existingCategories.length
       ? Math.max(...existingCategories.map((c) => c.displayOrder)) + 100
       : 100);
   const ref = await addDoc(collection(db, CATEGORIES_COLLECTION), {
     categoryName: categoryName.trim(),
     displayOrder: order,
+    image: image || "",
   });
   return ref.id;
 }
@@ -278,24 +319,45 @@ export async function deleteCategoryDoc(id) {
   await deleteDoc(doc(db, CATEGORIES_COLLECTION, id));
 }
 
+/** Best-effort delete of a Storage-hosted category image (ignores plain https:// URLs and failures). */
+export async function deleteCategoryImageIfOwned(image) {
+  if (!image || /^https?:\/\//i.test(image)) return;
+  try {
+    await deleteObject(ref(storage, image));
+  } catch (err) {
+    console.warn(
+      "[products] could not delete Storage category image:",
+      err?.message || err,
+    );
+  }
+}
+
 /**
  * Swaps displayOrder between a category and its immediate neighbor
  * (direction: 'up' | 'down') within an already displayOrder-sorted list —
  * this is how the Admin Categories screen implements the up/down reorder
  * arrows. No-ops silently at the top/bottom of the list.
  */
-export async function moveCategoryOrder(sortedCategories, categoryId, direction) {
+export async function moveCategoryOrder(
+  sortedCategories,
+  categoryId,
+  direction,
+) {
   const idx = sortedCategories.findIndex((c) => c.id === categoryId);
   if (idx === -1) return;
-  const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+  const swapIdx = direction === "up" ? idx - 1 : idx + 1;
   if (swapIdx < 0 || swapIdx >= sortedCategories.length) return;
 
   const current = sortedCategories[idx];
   const neighbor = sortedCategories[swapIdx];
 
   const batch = writeBatch(db);
-  batch.update(doc(db, CATEGORIES_COLLECTION, current.id), { displayOrder: neighbor.displayOrder });
-  batch.update(doc(db, CATEGORIES_COLLECTION, neighbor.id), { displayOrder: current.displayOrder });
+  batch.update(doc(db, CATEGORIES_COLLECTION, current.id), {
+    displayOrder: neighbor.displayOrder,
+  });
+  batch.update(doc(db, CATEGORIES_COLLECTION, neighbor.id), {
+    displayOrder: current.displayOrder,
+  });
   await batch.commit();
 }
 
@@ -305,6 +367,9 @@ export async function deleteProductImageIfOwned(image) {
   try {
     await deleteObject(ref(storage, image));
   } catch (err) {
-    console.warn('[products] could not delete Storage image:', err?.message || err);
+    console.warn(
+      "[products] could not delete Storage image:",
+      err?.message || err,
+    );
   }
 }

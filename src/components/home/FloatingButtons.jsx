@@ -1,76 +1,218 @@
-import { ShoppingCart, Compass } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { useCartStore } from '../../store/useCartStore';
+import { useEffect, useState } from "react";
+import { ShoppingCart, Compass } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { useCartStore } from "../../store/useCartStore";
 
-/** The standard WhatsApp glyph (phone-in-speech-bubble) — lucide has no
- * brand icons, so this is a small inline SVG rendered at the same size
- * MessageCircle was, filled with currentColor to match the button's style. */
+/** The real WhatsApp brand glyph (phone-in-speech-bubble), traced from the
+ * official mark so it actually reads as "WhatsApp" instead of a generic
+ * chat-bubble icon. Rendered in white on the brand's signature green. */
 function WhatsAppIcon({ size = 26 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2Zm5.8 14a1.65 1.65 0 0 1-1.15.83c-.31.06-.7.11-2.03-.42-1.71-.68-2.82-2.42-2.9-2.53-.09-.11-.7-.93-.7-1.78 0-.84.44-1.26.6-1.43a.63.63 0 0 1 .46-.22h.33c.11 0 .25 0 .38.29.16.35.53 1.19.58 1.28.05.09.08.19.02.31-.06.11-.09.19-.18.29-.09.11-.19.24-.27.32-.09.09-.18.19-.08.37.11.19.48.79 1.03 1.28.71.63 1.31.83 1.5.92.19.09.3.08.42-.05.11-.13.48-.56.61-.75.13-.19.26-.16.44-.1.19.07 1.17.55 1.37.65.19.1.32.14.37.23.05.09.05.5-.11.98Z" />
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 448 512"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z" />
     </svg>
   );
 }
 
 export default function FloatingButtons() {
   const navigate = useNavigate();
-  const count = useCartStore((s) => Object.values(s.cart).reduce((a, b) => a + b, 0));
+  const count = useCartStore((s) =>
+    Object.values(s.cart).reduce((a, b) => a + b, 0),
+  );
+
+  // Reacts to a rocket landing (see AddToCartButton) with a quick shake +
+  // bright flash, so the cart icon visibly "catches" what just flew into it.
+  const [hit, setHit] = useState(false);
+  useEffect(() => {
+    const onBurst = () => {
+      setHit(true);
+      setTimeout(() => setHit(false), 420);
+    };
+    window.addEventListener("abs-cart-burst", onBurst);
+    return () => window.removeEventListener("abs-cart-burst", onBurst);
+  }, []);
+
+  // One-time "what is this button" hint — pops up ~1s after landing on the
+  // page, stays for ~3s, then fades away for good. Explains the icon once
+  // instead of permanently eating space with a text label.
+  const [showHint, setShowHint] = useState(false);
+  useEffect(() => {
+    const openTimer = setTimeout(() => setShowHint(true), 1000);
+    const closeTimer = setTimeout(() => setShowHint(false), 4200);
+    return () => {
+      clearTimeout(openTimer);
+      clearTimeout(closeTimer);
+    };
+  }, []);
 
   return (
     <>
-      {/* Explore Category — left side */}
-      <button
-        onClick={() => navigate('/', { state: { scrollTo: 'categories' } })}
-        className="fixed bottom-24 left-4 z-40 flex h-14 w-14 items-center justify-center rounded-full text-white transition-transform active:scale-90"
+      {/* Explore Category — left side, jumps to the category grid below.
+          NOTE: this element must keep ONLY the `fixed` positioning class.
+          `fixed` already creates a positioning context for the absolutely
+          positioned children (glow ring, tooltip), so no extra `relative`
+          class is needed — adding one here previously fought `fixed` for
+          the same CSS property and knocked the button out of its corner
+          into normal page flow. Don't re-add it. */}
+      <motion.button
+        onClick={() => navigate("/", { state: { scrollTo: "categories" } })}
+        initial={{ opacity: 0, scale: 0.6 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ type: "spring", stiffness: 380, damping: 20 }}
+        whileTap={{ scale: 0.9 }}
+        className="fixed bottom-24 left-4 z-40 flex h-14 w-14 items-center justify-center rounded-full text-white"
         style={{
-          background: 'radial-gradient(circle at 40% 25%, #2a1c10, #100b07 65%, #060403 100%)',
+          background:
+            "linear-gradient(180deg, var(--color-accent) 0%, #cf3e14 60%, #a72f0c 100%)",
           boxShadow:
-            '0 0 0 1.5px rgba(255,122,0,.7), 0 0 14px 2px rgba(255,122,0,.6), 0 0 26px 6px rgba(255,122,0,.3), 0 8px 20px -6px rgba(0,0,0,.7)',
+            "0 1px 0 rgba(255,190,150,.5) inset, 0 -3px 6px rgba(0,0,0,.25) inset, 0 10px 22px -6px rgba(255,87,34,.6), 0 3px 6px rgba(0,0,0,.35)",
         }}
         aria-label="Explore categories"
       >
-        <Compass size={24} strokeWidth={2} className="text-orange" />
-      </button>
+        {/* breathing glow ring — quiet, on-brand attention cue */}
+        <motion.span
+          className="pointer-events-none absolute inset-0 rounded-full"
+          style={{ boxShadow: "0 0 0 2px rgba(255,87,34,.55)" }}
+          animate={{ opacity: [0.9, 0, 0.9], scale: [1, 1.4, 1] }}
+          transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.span
+          animate={{ rotate: [0, 360] }}
+          transition={{ duration: 9, repeat: Infinity, ease: "linear" }}
+        >
+          <Compass size={24} strokeWidth={2} />
+        </motion.span>
+
+        {/* auto-dismissing "what's this" tooltip */}
+        <AnimatePresence>
+          {showHint && (
+            <motion.span
+              initial={{ opacity: 0, x: -6, scale: 0.9 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: -6, scale: 0.9 }}
+              transition={{ duration: 0.25 }}
+              className="pointer-events-none absolute left-[4.1rem] whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-white"
+              style={{
+                background: "#1c1611",
+                border: "1px solid rgba(255,87,34,.5)",
+                boxShadow: "0 6px 14px -6px rgba(0,0,0,.6)",
+              }}
+            >
+              Tap to explore categories
+              <span
+                className="absolute -left-1 top-1/2 h-2 w-2 -translate-y-1/2 rotate-45"
+                style={{
+                  background: "#1c1611",
+                  borderLeft: "1px solid rgba(255,87,34,.5)",
+                  borderBottom: "1px solid rgba(255,87,34,.5)",
+                }}
+              />
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </motion.button>
 
       {/* WhatsApp — right side, stacked above the cart button */}
-      <a
+      <motion.a
         href="https://wa.me/910000000000"
         target="_blank"
         rel="noreferrer"
-        className="fixed bottom-[9.5rem] right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full text-white transition-transform active:scale-90"
+        initial={{ opacity: 0, scale: 0.6 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ type: "spring", stiffness: 380, damping: 20 }}
+        whileTap={{ scale: 0.9 }}
+        className="fixed bottom-[11.5rem] right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full text-white"
         style={{
-          background: 'linear-gradient(180deg,#3ee878,#20bd5a 55%,#189649)',
+          background: "linear-gradient(180deg,#3ee878,#20bd5a 55%,#189649)",
           boxShadow:
-            '0 1px 0 rgba(255,255,255,.5) inset, 0 -3px 6px rgba(0,0,0,.25) inset, 0 10px 22px -6px rgba(37,211,102,.55), 0 3px 6px rgba(0,0,0,.35)',
+            "0 1px 0 rgba(255,255,255,.5) inset, 0 -3px 6px rgba(0,0,0,.25) inset, 0 10px 22px -6px rgba(37,211,102,.55), 0 3px 6px rgba(0,0,0,.35)",
         }}
+        aria-label="Chat with us on WhatsApp"
       >
         <WhatsAppIcon size={26} />
-      </a>
+      </motion.a>
 
       <AnimatePresence>
         {count > 0 && (
           <motion.button
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 16 }}
-            onClick={() => navigate('/cart')}
+            key="cart-fab"
+            id="floating-cart-fab"
+            initial={{ opacity: 0, y: 16, scale: 0.6 }}
+            animate={
+              hit
+                ? {
+                    opacity: 1,
+                    y: 0,
+                    scale: [1, 1.18, 0.95, 1.05, 1],
+                    x: [0, -5, 5, -3, 0],
+                  }
+                : { opacity: 1, y: 0, scale: 1, x: 0 }
+            }
+            exit={{ opacity: 0, y: 16, scale: 0.6 }}
+            transition={
+              hit
+                ? { duration: 0.42, ease: "easeOut" }
+                : { type: "spring", stiffness: 420, damping: 22 }
+            }
+            whileTap={{ scale: 0.9 }}
+            onClick={() => navigate("/cart")}
             className="fixed bottom-24 right-4 z-40 flex flex-col items-center gap-0.5 rounded-2xl px-3.5 py-2.5 text-[10px] font-extrabold text-white"
             style={{
-              background: 'radial-gradient(circle at 40% 25%, #1c1611, #0a0705)',
-              boxShadow:
-                '0 0 0 1.5px rgba(255,122,0,.7), 0 0 14px 2px rgba(255,122,0,.6), 0 0 26px 6px rgba(255,122,0,.3), 0 8px 20px -6px rgba(0,0,0,.7)',
+              // Sampled from the actual shop logo (abs-logo.png) — a deep,
+              // saturated red-orange — instead of the near-black tone used
+              // everywhere else on the site, so this pill reads as its own
+              // branded thing rather than blending into the UI.
+              background:
+                "linear-gradient(160deg, #ff6a2e 0%, #f0400a 55%, #b82d06 100%)",
+              boxShadow: hit
+                ? "0 1px 0 rgba(255,200,160,.6) inset, 0 0 0 2px rgba(255,200,150,1), 0 0 26px 8px rgba(255,120,20,.9), 0 8px 20px -6px rgba(0,0,0,.7)"
+                : "0 1px 0 rgba(255,200,160,.5) inset, 0 -3px 6px rgba(0,0,0,.25) inset, 0 0 0 1.5px rgba(240,64,10,.5), 0 10px 22px -6px rgba(240,64,10,.55), 0 3px 6px rgba(0,0,0,.35)",
             }}
           >
+            {/* idle pulse — a slow sparkler-like breathing glow behind the orb */}
+            <motion.span
+              className="pointer-events-none absolute inset-0 rounded-2xl"
+              style={{ boxShadow: "0 0 0 1.5px rgba(255,122,0,.55)" }}
+              animate={{ opacity: [0.7, 0, 0.7], scale: [1, 1.3, 1] }}
+              transition={{
+                duration: 2.4,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            />
+
             <span className="relative">
-              <ShoppingCart size={20} />
-              <span
-                className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full px-[3px] text-[9px] font-extrabold text-white"
-                style={{ background: 'linear-gradient(180deg,#ff8a5c,#e35226)', boxShadow: '0 0 6px rgba(255,87,34,.7)' }}
+              <motion.span
+                animate={{ rotate: [0, -8, 8, -4, 0] }}
+                transition={{ duration: 0.5 }}
+                key={`bag-${count}`}
+                style={{ display: "inline-block" }}
               >
-                {count}
-              </span>
+                <ShoppingCart size={20} />
+              </motion.span>
+              <AnimatePresence mode="popLayout">
+                <motion.span
+                  key={count}
+                  initial={{ scale: 0.3, opacity: 0, y: -6 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  exit={{ scale: 0.3, opacity: 0, y: 6 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 20 }}
+                  className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full px-[3px] text-[9px] font-extrabold text-white"
+                  style={{
+                    background: "linear-gradient(180deg,#ff8a5c,#e35226)",
+                    boxShadow: "0 0 6px rgba(255,87,34,.7)",
+                  }}
+                >
+                  {count}
+                </motion.span>
+              </AnimatePresence>
             </span>
             <span className="tracking-wide">View Cart</span>
           </motion.button>

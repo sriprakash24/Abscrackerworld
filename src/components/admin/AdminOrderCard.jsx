@@ -18,15 +18,17 @@ import {
   Download,
   Eye,
   Receipt,
+  Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getOrderStatusMeta } from '../../constants/orderStatusMeta';
 import { NEXT_ACTION_BY_STATUS, canAdvance, canCancel } from '../../constants/orderActions';
 import { db } from '../../firebase/config';
-import { updateOrderStatus } from '../../services/ordersFirestore';
+import { updateOrderStatus, deleteOrderDoc } from '../../services/ordersFirestore';
 import { createInvoiceForOrder, getInvoice } from '../../services/invoicesFirestore';
 import { generateInvoicePdf } from '../../utils/generateInvoicePdf';
 import InvoicePreviewModal from './InvoicePreviewModal';
+import ConfirmDeleteDialog from './ConfirmDeleteDialog';
 
 const ACTION_ICONS = {
   CircleDollarSign,
@@ -60,6 +62,8 @@ export default function AdminOrderCard({ order, delay = 0 }) {
   const [previewInvoice, setPreviewInvoice] = useState(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [generatingInvoice, setGeneratingInvoice] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const items = order.cartItems || [];
   const statusMeta = getOrderStatusMeta(order.status);
@@ -174,6 +178,21 @@ export default function AdminOrderCard({ order, delay = 0 }) {
       return;
     }
     runUpdate({ status: 'CANCELLED' }, 'Order cancelled');
+  };
+
+  const handleDeleteOrder = async () => {
+    setDeleting(true);
+    try {
+      await deleteOrderDoc(db, order.id);
+      toast.success('Order deleted');
+      // No need to close the dialog or reset `deleting` — the order list is
+      // driven by a live Firestore subscription, so this card unmounts as
+      // soon as the delete lands.
+    } catch (err) {
+      console.error('Failed to delete order', err);
+      toast.error("Couldn't delete the order. Please try again.");
+      setDeleting(false);
+    }
   };
 
   const copyOrderId = async () => {
@@ -423,6 +442,17 @@ export default function AdminOrderCard({ order, delay = 0 }) {
                   )}
                 </div>
               )}
+
+              {/* Delete — always available, separate from the status actions above */}
+              <div className="flex items-center justify-end border-t border-dashed border-white/10 pt-3">
+                <button
+                  onClick={() => setConfirmingDelete(true)}
+                  className="flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-[#0c0906] px-3.5 py-2.5 text-[11px] font-bold text-muted transition-colors hover:border-[#e35226]/40 hover:text-[#e35226]"
+                >
+                  <Trash2 size={12} />
+                  Delete Order
+                </button>
+              </div>
             </div>
           </motion.div>
         )}
@@ -430,6 +460,14 @@ export default function AdminOrderCard({ order, delay = 0 }) {
     </motion.div>
 
     <InvoicePreviewModal open={!!previewInvoice} invoice={previewInvoice} onClose={() => setPreviewInvoice(null)} />
+    <ConfirmDeleteDialog
+      open={confirmingDelete}
+      title="Delete this order?"
+      description={`Order ${order.orderId || order.id} will be permanently removed. This can't be undone.`}
+      busy={deleting}
+      onConfirm={handleDeleteOrder}
+      onCancel={() => setConfirmingDelete(false)}
+    />
     </>
   );
 }

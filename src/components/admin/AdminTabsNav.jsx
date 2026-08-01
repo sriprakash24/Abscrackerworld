@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom';
-import { ClipboardList, PackageSearch, LayoutGrid, Receipt } from 'lucide-react';
+import { ClipboardList, PackageSearch, LayoutGrid, Receipt, Users } from 'lucide-react';
 
 const TABS = [
   { to: '/admin', label: 'Orders', icon: ClipboardList, end: true },
   { to: '/admin/products', label: 'Products', icon: PackageSearch, end: false },
   { to: '/admin/categories', label: 'Categories', icon: LayoutGrid, end: false },
   { to: '/admin/invoices', label: 'Invoices', icon: Receipt, end: false },
+  { to: '/admin/users', label: 'Users', icon: Users, end: false },
 ];
 
 /** Sticky tab strip switching between the Orders / Products / Categories admin screens. */

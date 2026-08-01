@@ -18,6 +18,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminCategories from "./pages/admin/AdminCategories";
 import AdminInvoices from "./pages/admin/AdminInvoices";
+import AdminUsers from "./pages/admin/AdminUsers";
 
 const SPLASH_DURATION_MS = 4200;
 
@@ -101,6 +102,14 @@ function AdminApp() {
               element={
                 <AdminRoute>
                   <AdminInvoices />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="users"
+              element={
+                <AdminRoute>
+                  <AdminUsers />
                 </AdminRoute>
               }
             />
