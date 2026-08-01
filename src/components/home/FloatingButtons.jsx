@@ -121,7 +121,7 @@ export default function FloatingButtons() {
 
       {/* WhatsApp — right side, stacked above the cart button */}
       <motion.a
-        href="https://wa.me/910000000000"
+        href="https://wa.me/919597189599"
         target="_blank"
         rel="noreferrer"
         initial={{ opacity: 0, scale: 0.6 }}
