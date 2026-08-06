@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { ShoppingBag, Loader2, Rocket, Check } from "lucide-react";
 import { Minus, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "sonner";
+import { showStockLimitToast } from "../../utils/cartToast";
 import { cn } from "../../utils/cn";
 
 const CRACKER_COLORS = [
@@ -255,7 +255,7 @@ export default function AddToCartButton({
   // not just the very first Add — so repeat taps keep pointing back at the cart.
   const handleIncrement = (e) => {
     if (atMax) {
-      toast(`Only ${maxQty} in stock for ${productName}`);
+      showStockLimitToast(productName, maxQty);
       return;
     }
     triggerLaunch(e);

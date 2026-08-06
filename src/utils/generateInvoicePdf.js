@@ -213,6 +213,18 @@ export function generateInvoicePdf(invoice) {
     doc.setFontSize(9);
     doc.setTextColor(...INK);
     doc.text(noteLines, margin, notesY);
+    notesY += noteLines.length * 4 + 2;
+  }
+
+  // Cart discount is reference-only info (already baked into the item
+  // rates above) — shown here, kept out of the totals box math entirely.
+  if (invoice.cartDiscountAmount > 0) {
+    const discountLine = `Cart Discount Applied: Rs. ${Number(invoice.cartDiscountAmount).toLocaleString('en-IN')} (already reflected in item rates)`;
+    const discountLines = doc.splitTextToSize(discountLine, paymentBoxW);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(...GOLD);
+    doc.text(discountLines, margin, notesY);
   }
 
   // --- Totals box (right column), grand total highlighted ---
@@ -220,10 +232,8 @@ export function generateInvoicePdf(invoice) {
   const totalsX = pageWidth - margin - totalsBoxW;
   const totalsInnerX = totalsX + 4;
   const totalsRows = [
-    ['Sub Total', invoice.subtotal],
-    ['Discount', -Math.abs(invoice.discount || 0)],
-    [`Package % (${invoice.packagePercent || 0}%)`, null],
-    ['Package Amount', invoice.packageAmount],
+    ['Total Amount', invoice.subtotal],
+    [`Packing Charge (${invoice.packagePercent || 0}%)`, invoice.packageAmount],
   ];
   const rowH = 6;
   const totalsBoxH = rowH * totalsRows.length + 11;

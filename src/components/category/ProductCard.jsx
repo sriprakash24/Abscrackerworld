@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/opacity.css';
-import { toast } from 'sonner';
+import { showAddedToast, showRemovedToast } from '../../utils/cartToast';
 import { useCartStore } from '../../store/useCartStore';
 import { useCustomerGateStore } from '../../store/useCustomerGateStore';
 import DiscountBadge from './DiscountBadge';
@@ -20,7 +20,7 @@ const STOCK_LABEL = {
   out: { text: 'Sold Out', className: 'text-[#e35226]' },
 };
 
-export default function ProductCard({ product }) {
+export default function ProductCard({ product, theme }) {
   const inCart = useCartStore((s) => s.cart[product.id] || 0);
   const wished = useCartStore((s) => !!s.wishlist[product.id]);
   const addToCart = useCartStore((s) => s.addToCart);
@@ -33,17 +33,33 @@ export default function ProductCard({ product }) {
   const stock = STOCK_LABEL[product.stock] || STOCK_LABEL.in;
   const soldOut = product.stock === 'out';
   const stockLabelText = product.stock === 'low' ? `Only ${product.stockQty} Left` : stock.text;
+  const accent = theme?.solid || 'var(--color-orange)';
 
   return (
     <motion.div
+      id={`product-card-${product.id}`}
       variants={cardVariants}
       initial="hidden"
       whileInView="show"
       viewport={{ once: true, amount: 0.25 }}
       whileHover={{ y: -4 }}
       whileTap={{ scale: 0.98 }}
-      className="surface-3d group relative flex flex-col overflow-hidden rounded-2xl p-2.5 transition-shadow duration-300 hover:shadow-[0_0_22px_rgba(255,122,0,.28)]"
+      className="surface-3d group relative flex flex-col overflow-hidden rounded-2xl p-2.5 transition-shadow duration-300"
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = `0 0 22px ${accent}48`;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = '';
+      }}
     >
+      {/* Thin category-color edge — the quickest visual cue for which
+          category this card belongs to when everything scrolls together
+          on the home feed. */}
+      <span
+        className="pointer-events-none absolute inset-x-0 top-0 z-10 h-[3px]"
+        style={{ background: theme ? `linear-gradient(90deg, ${theme.from}, ${theme.to})` : accent }}
+      />
+
       <DiscountBadge percent={product.discountPercentage} />
       <WishlistButton active={wished} onToggle={() => toggleWishlist(product.id)} />
 
@@ -85,14 +101,14 @@ export default function ProductCard({ product }) {
         onAdd={() => {
           requestDetails(() => {
             addToCart(product.id);
-            toast.success(`${product.name} added to cart`);
+            showAddedToast(product.name);
           });
         }}
         onIncrement={() => incrementQty(product.id)}
         onDecrement={() => {
           if (inCart <= 1) {
             removeFromCart(product.id);
-            toast(`${product.name} removed from cart`);
+            showRemovedToast(product.name);
           } else {
             decrementQty(product.id);
           }

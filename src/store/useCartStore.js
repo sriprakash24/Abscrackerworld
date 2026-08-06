@@ -155,12 +155,23 @@ export const useCartStore = create(
         const items = get().getCartItems();
 
         const subtotalMrp = items.reduce((sum, { product, qty }) => sum + product.mrp * qty, 0);
+        // "amount" — the displayed/sale price total. This is the number the
+        // cart total is built from directly (not derived by subtracting a
+        // discount column from MRP).
         const subtotalSale = items.reduce((sum, { product, qty }) => sum + product.sale * qty, 0);
         const discount = Math.max(0, subtotalMrp - subtotalSale);
-        const packingCharges = Math.round(subtotalMrp * PACKING_CHARGE_RATE);
+        // Shown to the customer as a % instead of a raw ₹ figure — avoids
+        // odd-looking numbers like "₹18,000 OFF" on a ₹2,000 item.
+        const discountPercentage = subtotalMrp > 0 ? Math.round((discount / subtotalMrp) * 100) : 0;
 
+        // Packing charge is 3% of the amount (sale total), not MRP.
+        const packingCharges = Math.round(subtotalSale * PACKING_CHARGE_RATE);
+
+        // Delivery is disabled for now — pricing/threshold logic is kept
+        // here (unused in the cart total) so it's ready to switch back on
+        // once delivery charges are finalised.
         const freeDeliveryUnlocked = subtotalSale >= FREE_DELIVERY_THRESHOLD;
-        const deliveryCharges = freeDeliveryUnlocked ? 0 : STANDARD_DELIVERY_FEE;
+        const deliveryCharges = 0;
         const amountToFreeDelivery = Math.max(0, FREE_DELIVERY_THRESHOLD - subtotalSale);
         const deliveryProgressPct = Math.min(100, Math.round((subtotalSale / FREE_DELIVERY_THRESHOLD) * 100));
 
@@ -168,8 +179,10 @@ export const useCartStore = create(
         const coupon = couponCode ? COUPONS[couponCode] : null;
         const couponDiscount = computeCouponDiscount(coupon, subtotalSale);
 
-        const grandTotal = Math.max(0, subtotalSale + packingCharges + deliveryCharges - couponDiscount);
-        const totalSavings = discount + couponDiscount + (freeDeliveryUnlocked ? STANDARD_DELIVERY_FEE : 0);
+        // Grand total = amount + packing charge - coupon. No delivery added.
+        const grandTotal = Math.max(0, subtotalSale + packingCharges - couponDiscount);
+        const totalSavings = discount + couponDiscount;
+        const totalSavingsPct = subtotalMrp > 0 ? Math.round((totalSavings / subtotalMrp) * 100) : 0;
 
         return {
           items,
@@ -177,6 +190,7 @@ export const useCartStore = create(
           subtotalMrp,
           subtotalSale,
           discount,
+          discountPercentage,
           packingCharges,
           deliveryCharges,
           freeDeliveryUnlocked,
@@ -186,6 +200,7 @@ export const useCartStore = create(
           couponDiscount,
           grandTotal,
           totalSavings,
+          totalSavingsPct,
         };
       },
     }),

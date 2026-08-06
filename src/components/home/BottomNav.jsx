@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, ClipboardList, User } from 'lucide-react';
-import { toast } from 'sonner';
+import { Home, ClipboardList, Truck } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { useCartStore } from '../../store/useCartStore';
 import absLogo from '../../assets/abs-logo.png';
 
 const LEFT_TABS = [{ key: 'home', label: 'HOME', icon: Home }, { key: 'orders', label: 'ORDERS', icon: ClipboardList }];
-const RIGHT_TABS = [{ key: 'cart', label: 'CART', icon: null }, { key: 'account', label: 'ACCOUNT', icon: User }];
+const RIGHT_TABS = [{ key: 'cart', label: 'CART', icon: null }, { key: 'track', label: 'TRACK', icon: Truck }];
 
 export default function BottomNav() {
   const [active, setActive] = useState('home');
@@ -29,7 +28,10 @@ export default function BottomNav() {
       navigate('/orders');
       return;
     }
-    toast(`${tab.charAt(0).toUpperCase() + tab.slice(1)} screen — coming soon in the full build`);
+    if (tab === 'track') {
+      navigate('/track-order');
+      return;
+    }
   };
 
   return (

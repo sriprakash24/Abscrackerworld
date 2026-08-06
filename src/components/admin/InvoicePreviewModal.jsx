@@ -109,12 +109,15 @@ export default function InvoicePreviewModal({ open, invoice, onClose }) {
                   <p>Payment Mode: {PAYMENT_MODE_LABELS[invoice.paymentMode] || invoice.paymentMode}</p>
                   {invoice.transactionRef && <p>Transaction / UTR No.: {invoice.transactionRef}</p>}
                   {invoice.notes && <p className="mt-1 max-w-[220px]">Notes: {invoice.notes}</p>}
+                  {invoice.cartDiscountAmount > 0 && (
+                    <p className="mt-1 max-w-[220px] text-[#b5751a]">
+                      Cart discount applied: ₹{Number(invoice.cartDiscountAmount).toLocaleString('en-IN')} (already reflected in item rates)
+                    </p>
+                  )}
                 </div>
                 <div className="w-full max-w-[220px] rounded-lg bg-[#f3ece1] p-3 text-[11px]">
-                  <Row label="Sub Total" value={invoice.subtotal} />
-                  <Row label="Discount" value={-Math.abs(invoice.discount || 0)} />
-                  <Row label={`Package % (${invoice.packagePercent || 0}%)`} value={null} />
-                  <Row label="Package Amount" value={invoice.packageAmount} />
+                  <Row label="Total Amount" value={invoice.subtotal} />
+                  <Row label={`Packing Charge (${invoice.packagePercent || 0}%)`} value={invoice.packageAmount} />
                   <div className="mt-1.5 flex justify-between border-t-2 border-[#e35226]/60 pt-1.5 text-[13px] font-extrabold text-[#e35226]">
                     <span>Grand Total</span>
                     <span>₹{Number(invoice.grandTotal || 0).toLocaleString('en-IN')}</span>

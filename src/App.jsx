@@ -7,6 +7,7 @@ import CategoryListing from "./pages/CategoryListing";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import OrderHistory from "./pages/OrderHistory";
+import TrackOrder from "./pages/TrackOrder";
 import AmbientBackground from "./components/ui/AmbientBackground";
 import CustomerDetailsSheet from "./components/customer/CustomerDetailsSheet";
 import { useCartFirestoreSync } from "./hooks/useCartFirestoreSync";
@@ -37,7 +38,7 @@ function CustomerApp() {
     <ProductsProvider>
       <div
         id="app-shell"
-        className="relative w-full max-w-[430px] overflow-hidden bg-[#050505] text-white"
+        className="relative w-full max-w-[430px] overflow-hidden bg-[#0a0f1e] text-white"
         style={{ transform: 'translateZ(0)', height: '100dvh' }}
       >
         <AmbientBackground />
@@ -55,6 +56,7 @@ function CustomerApp() {
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/orders" element={<OrderHistory />} />
+                <Route path="/track-order" element={<TrackOrder />} />
               </Routes>
             </div>
           )}

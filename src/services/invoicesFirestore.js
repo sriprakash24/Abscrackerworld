@@ -34,12 +34,23 @@ function reserveNextInvoiceNumber(db) {
   return reserveSequentialId(db, { prefix: 'ABSI', counterKey: 'invoices' });
 }
 
-/** Computes subtotal/package/grand-total from line items — shared by order-derived and manual invoices. */
-export function computeInvoiceTotals({ items, discount = 0, packagePercent = DEFAULT_PACKAGE_PERCENT }) {
+/**
+ * Computes total amount/packing/grand-total from line items — shared by
+ * order-derived and manual invoices.
+ *
+ * Discount is deliberately NOT part of this math. For website orders the
+ * items here already carry the cart's sale price (discount already baked
+ * in) — subtracting a discount % again on top of that double-counts it and
+ * was pushing (and sometimes clamping) the grand total toward zero. Any
+ * discount the customer got is informational only on the invoice now (see
+ * `cartDiscountAmount` in createInvoiceForOrder) and never touches this
+ * calculation. No delivery charge here either — that's an order-time
+ * concern, not an invoice line.
+ */
+export function computeInvoiceTotals({ items, packagePercent = DEFAULT_PACKAGE_PERCENT }) {
   const subtotal = items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
-  const afterDiscount = Math.max(subtotal - Number(discount || 0), 0);
-  const packageAmount = Math.round((afterDiscount * Number(packagePercent || 0)) / 100);
-  const grandTotal = afterDiscount + packageAmount;
+  const packageAmount = Math.round((subtotal * Number(packagePercent || 0)) / 100);
+  const grandTotal = Math.max(subtotal + packageAmount, 0);
   return { subtotal, packageAmount, grandTotal };
 }
 
@@ -68,11 +79,7 @@ export async function createInvoiceForOrder(db, order) {
 
   const items = orderToInvoiceItems(order);
   const packagePercent = DEFAULT_PACKAGE_PERCENT;
-  const { subtotal, packageAmount, grandTotal } = computeInvoiceTotals({
-    items,
-    discount: order.discount || 0,
-    packagePercent,
-  });
+  const { subtotal, packageAmount, grandTotal } = computeInvoiceTotals({ items, packagePercent });
 
   const invoiceNo = await reserveNextInvoiceNumber(db);
 
@@ -90,11 +97,14 @@ export async function createInvoiceForOrder(db, order) {
         .join(', '),
     },
     items,
-    discount: order.discount || 0,
     packagePercent,
     subtotal,
     packageAmount,
     grandTotal,
+    // Reference-only figure pulled straight from the cart's own discount
+    // (already reflected in the sale prices above) — shown on the invoice
+    // separately from the totals box, never subtracted again here.
+    cartDiscountAmount: order.discount || 0,
     paymentMode: 'OTHER',
     transactionRef: '',
     notes: '',
@@ -118,7 +128,6 @@ export async function createManualInvoice(db, values) {
   const packagePercent = values.packagePercent ?? DEFAULT_PACKAGE_PERCENT;
   const { subtotal, packageAmount, grandTotal } = computeInvoiceTotals({
     items: values.items,
-    discount: values.discount || 0,
     packagePercent,
   });
 
@@ -132,7 +141,6 @@ export async function createManualInvoice(db, values) {
     date: serverTimestamp(),
     customer: values.customer,
     items: values.items,
-    discount: values.discount || 0,
     packagePercent,
     subtotal,
     packageAmount,
@@ -153,14 +161,12 @@ export async function updateInvoice(db, invoiceDocId, values) {
   const packagePercent = values.packagePercent ?? DEFAULT_PACKAGE_PERCENT;
   const { subtotal, packageAmount, grandTotal } = computeInvoiceTotals({
     items: values.items,
-    discount: values.discount || 0,
     packagePercent,
   });
 
   const patch = {
     customer: values.customer,
     items: values.items,
-    discount: values.discount || 0,
     packagePercent,
     subtotal,
     packageAmount,

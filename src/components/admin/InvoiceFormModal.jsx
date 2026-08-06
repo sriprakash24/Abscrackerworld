@@ -49,12 +49,10 @@ export default function InvoiceFormModal({ open, invoice, onClose }) {
   }, [open, invoice]);
 
   const items = watch('items');
-  const discount = Number(watch('discount')) || 0;
   const packagePercent = Number(watch('packagePercent')) || 0;
   const subtotal = (items || []).reduce((sum, it) => sum + (Number(it.qty) || 0) * (Number(it.rate) || 0), 0);
-  const afterDiscount = Math.max(subtotal - discount, 0);
-  const packageAmount = Math.round((afterDiscount * packagePercent) / 100);
-  const grandTotal = afterDiscount + packageAmount;
+  const packageAmount = Math.round((subtotal * packagePercent) / 100);
+  const grandTotal = Math.max(subtotal + packageAmount, 0);
 
   const onSubmit = async (values) => {
     setSubmitting(true);
@@ -125,15 +123,18 @@ export default function InvoiceFormModal({ open, invoice, onClose }) {
                 products={products}
               />
 
-              <div className="grid grid-cols-2 gap-3">
-                <FormField label="Discount (₹)" type="number" step="0.01" registration={register('discount')} error={errors.discount} />
-                <FormField label="Package %" type="number" step="0.5" registration={register('packagePercent')} error={errors.packagePercent} />
-              </div>
+              <FormField label="Package %" type="number" step="0.5" registration={register('packagePercent')} error={errors.packagePercent} />
+
+              {isEdit && invoice.source === 'ORDER' && invoice.cartDiscountAmount > 0 && (
+                <div className="rounded-xl border border-gold/25 bg-gold/10 px-3.5 py-2.5 text-[10.5px] font-semibold text-gold">
+                  Cart discount applied at checkout: ₹{Number(invoice.cartDiscountAmount).toLocaleString('en-IN')}.
+                  Already reflected in the item rates below — shown here for reference only, not part of this invoice's total.
+                </div>
+              )}
 
               <div className="rounded-xl bg-black/20 px-3.5 py-3 text-[10.5px] text-[#cfc7bd]">
-                <div className="flex justify-between"><span>Sub Total</span><span>₹{subtotal.toLocaleString('en-IN')}</span></div>
-                <div className="flex justify-between"><span>Discount</span><span>-₹{discount.toLocaleString('en-IN')}</span></div>
-                <div className="flex justify-between"><span>Package Amount ({packagePercent}%)</span><span>₹{packageAmount.toLocaleString('en-IN')}</span></div>
+                <div className="flex justify-between"><span>Total Amount</span><span>₹{subtotal.toLocaleString('en-IN')}</span></div>
+                <div className="flex justify-between"><span>Packing Charge ({packagePercent}%)</span><span>₹{packageAmount.toLocaleString('en-IN')}</span></div>
                 <div className="mt-1 flex justify-between border-t border-dashed border-white/10 pt-1.5 text-[12.5px] font-extrabold text-[#f2ece2]">
                   <span>Grand Total</span><span>₹{grandTotal.toLocaleString('en-IN')}</span>
                 </div>

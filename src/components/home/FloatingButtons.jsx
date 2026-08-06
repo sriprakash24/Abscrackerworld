@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { ShoppingCart, Compass } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useCartStore } from "../../store/useCartStore";
+import { useCartPricing } from "../../hooks/useCartPricing";
 
 /** The real WhatsApp brand glyph (phone-in-speech-bubble), traced from the
  * official mark so it actually reads as "WhatsApp" instead of a generic
@@ -26,6 +27,7 @@ export default function FloatingButtons() {
   const count = useCartStore((s) =>
     Object.values(s.cart).reduce((a, b) => a + b, 0),
   );
+  const { subtotalSale } = useCartPricing();
 
   // Reacts to a rocket landing (see AddToCartButton) with a quick shake +
   // bright flash, so the cart icon visibly "catches" what just flew into it.
@@ -39,87 +41,12 @@ export default function FloatingButtons() {
     return () => window.removeEventListener("abs-cart-burst", onBurst);
   }, []);
 
-  // One-time "what is this button" hint — pops up ~1s after landing on the
-  // page, stays for ~3s, then fades away for good. Explains the icon once
-  // instead of permanently eating space with a text label.
-  const [showHint, setShowHint] = useState(false);
-  useEffect(() => {
-    const openTimer = setTimeout(() => setShowHint(true), 1000);
-    const closeTimer = setTimeout(() => setShowHint(false), 4200);
-    return () => {
-      clearTimeout(openTimer);
-      clearTimeout(closeTimer);
-    };
-  }, []);
-
   return (
     <>
-      {/* Explore Category — left side, jumps to the category grid below.
+      {/* WhatsApp — left side, opposite the cart button.
           NOTE: this element must keep ONLY the `fixed` positioning class.
-          `fixed` already creates a positioning context for the absolutely
-          positioned children (glow ring, tooltip), so no extra `relative`
-          class is needed — adding one here previously fought `fixed` for
-          the same CSS property and knocked the button out of its corner
-          into normal page flow. Don't re-add it. */}
-      <motion.button
-        onClick={() => navigate("/", { state: { scrollTo: "categories" } })}
-        initial={{ opacity: 0, scale: 0.6 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ type: "spring", stiffness: 380, damping: 20 }}
-        whileTap={{ scale: 0.9 }}
-        className="fixed bottom-24 left-4 z-40 flex h-14 w-14 items-center justify-center rounded-full text-white"
-        style={{
-          background:
-            "linear-gradient(180deg, var(--color-accent) 0%, #cf3e14 60%, #a72f0c 100%)",
-          boxShadow:
-            "0 1px 0 rgba(255,190,150,.5) inset, 0 -3px 6px rgba(0,0,0,.25) inset, 0 10px 22px -6px rgba(255,87,34,.6), 0 3px 6px rgba(0,0,0,.35)",
-        }}
-        aria-label="Explore categories"
-      >
-        {/* breathing glow ring — quiet, on-brand attention cue */}
-        <motion.span
-          className="pointer-events-none absolute inset-0 rounded-full"
-          style={{ boxShadow: "0 0 0 2px rgba(255,87,34,.55)" }}
-          animate={{ opacity: [0.9, 0, 0.9], scale: [1, 1.4, 1] }}
-          transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.span
-          animate={{ rotate: [0, 360] }}
-          transition={{ duration: 9, repeat: Infinity, ease: "linear" }}
-        >
-          <Compass size={24} strokeWidth={2} />
-        </motion.span>
-
-        {/* auto-dismissing "what's this" tooltip */}
-        <AnimatePresence>
-          {showHint && (
-            <motion.span
-              initial={{ opacity: 0, x: -6, scale: 0.9 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: -6, scale: 0.9 }}
-              transition={{ duration: 0.25 }}
-              className="pointer-events-none absolute left-[4.1rem] whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-white"
-              style={{
-                background: "#1c1611",
-                border: "1px solid rgba(255,87,34,.5)",
-                boxShadow: "0 6px 14px -6px rgba(0,0,0,.6)",
-              }}
-            >
-              Tap to explore categories
-              <span
-                className="absolute -left-1 top-1/2 h-2 w-2 -translate-y-1/2 rotate-45"
-                style={{
-                  background: "#1c1611",
-                  borderLeft: "1px solid rgba(255,87,34,.5)",
-                  borderBottom: "1px solid rgba(255,87,34,.5)",
-                }}
-              />
-            </motion.span>
-          )}
-        </AnimatePresence>
-      </motion.button>
-
-      {/* WhatsApp — right side, stacked above the cart button */}
+          `fixed` already creates a positioning context, so no extra
+          `relative` class is needed here. */}
       <motion.a
         href="https://wa.me/919597189599"
         target="_blank"
@@ -128,7 +55,7 @@ export default function FloatingButtons() {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ type: "spring", stiffness: 380, damping: 20 }}
         whileTap={{ scale: 0.9 }}
-        className="fixed bottom-[11.5rem] right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full text-white"
+        className="fixed bottom-24 left-4 z-40 flex h-14 w-14 items-center justify-center rounded-full text-white"
         style={{
           background: "linear-gradient(180deg,#3ee878,#20bd5a 55%,#189649)",
           boxShadow:
@@ -136,6 +63,13 @@ export default function FloatingButtons() {
         }}
         aria-label="Chat with us on WhatsApp"
       >
+        {/* breathing glow ring — quiet, on-brand attention cue */}
+        <motion.span
+          className="pointer-events-none absolute inset-0 rounded-full"
+          style={{ boxShadow: "0 0 0 2px rgba(37,211,102,.55)" }}
+          animate={{ opacity: [0.9, 0, 0.9], scale: [1, 1.4, 1] }}
+          transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+        />
         <WhatsAppIcon size={26} />
       </motion.a>
 
@@ -161,26 +95,20 @@ export default function FloatingButtons() {
                 ? { duration: 0.42, ease: "easeOut" }
                 : { type: "spring", stiffness: 420, damping: 22 }
             }
-            whileTap={{ scale: 0.9 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => navigate("/cart")}
-            className="fixed bottom-24 right-4 z-40 flex flex-col items-center gap-0.5 rounded-2xl px-3.5 py-2.5 text-[10px] font-extrabold text-white"
+            className="fixed bottom-24 right-4 z-40 flex items-stretch overflow-hidden rounded-2xl text-white"
             style={{
-              // Sampled from the actual shop logo (abs-logo.png) — a deep,
-              // saturated red-orange — instead of the near-black tone used
-              // everywhere else on the site, so this pill reads as its own
-              // branded thing rather than blending into the UI.
-              background:
-                "linear-gradient(160deg, #ff6a2e 0%, #f0400a 55%, #b82d06 100%)",
               boxShadow: hit
-                ? "0 1px 0 rgba(255,200,160,.6) inset, 0 0 0 2px rgba(255,200,150,1), 0 0 26px 8px rgba(255,120,20,.9), 0 8px 20px -6px rgba(0,0,0,.7)"
-                : "0 1px 0 rgba(255,200,160,.5) inset, 0 -3px 6px rgba(0,0,0,.25) inset, 0 0 0 1.5px rgba(240,64,10,.5), 0 10px 22px -6px rgba(240,64,10,.55), 0 3px 6px rgba(0,0,0,.35)",
+                ? "0 0 0 2px rgba(255,200,150,1), 0 0 26px 8px rgba(255,120,20,.9), 0 8px 20px -6px rgba(0,0,0,.7)"
+                : "0 0 0 1.5px rgba(240,64,10,.5), 0 10px 22px -6px rgba(240,64,10,.55), 0 3px 6px rgba(0,0,0,.35)",
             }}
           >
-            {/* idle pulse — a slow sparkler-like breathing glow behind the orb */}
+            {/* idle pulse — a slow sparkler-like breathing glow behind the whole pill */}
             <motion.span
               className="pointer-events-none absolute inset-0 rounded-2xl"
               style={{ boxShadow: "0 0 0 1.5px rgba(255,122,0,.55)" }}
-              animate={{ opacity: [0.7, 0, 0.7], scale: [1, 1.3, 1] }}
+              animate={{ opacity: [0.7, 0, 0.7], scale: [1, 1.06, 1] }}
               transition={{
                 duration: 2.4,
                 repeat: Infinity,
@@ -188,33 +116,74 @@ export default function FloatingButtons() {
               }}
             />
 
-            <span className="relative">
-              <motion.span
-                animate={{ rotate: [0, -8, 8, -4, 0] }}
-                transition={{ duration: 0.5 }}
-                key={`bag-${count}`}
-                style={{ display: "inline-block" }}
-              >
-                <ShoppingCart size={20} />
-              </motion.span>
+            {/* Amount readout — a small "LCD screen" showing the running
+                discounted total, parallel to the item-count badge, so it's
+                obvious what the cart adds up to while still adding items. */}
+            <span
+              className="relative flex flex-col items-center justify-center gap-0.5 px-3 py-2"
+              style={{
+                background: "linear-gradient(165deg, #1a0f08, #0d0705)",
+                borderRight: "1px solid rgba(255,154,0,.28)",
+              }}
+            >
+              <span className="text-[6.5px] font-bold uppercase tracking-widest text-[#ffb87a]/70">
+                Total
+              </span>
               <AnimatePresence mode="popLayout">
                 <motion.span
-                  key={count}
-                  initial={{ scale: 0.3, opacity: 0, y: -6 }}
-                  animate={{ scale: 1, opacity: 1, y: 0 }}
-                  exit={{ scale: 0.3, opacity: 0, y: 6 }}
-                  transition={{ type: "spring", stiffness: 500, damping: 20 }}
-                  className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full px-[3px] text-[9px] font-extrabold text-white"
-                  style={{
-                    background: "linear-gradient(180deg,#ff8a5c,#e35226)",
-                    boxShadow: "0 0 6px rgba(255,87,34,.7)",
-                  }}
+                  key={subtotalSale}
+                  initial={{ y: -8, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: 8, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 24 }}
+                  className="text-[12.5px] font-extrabold tabular-nums text-gold"
+                  style={{ textShadow: "0 0 8px rgba(255,180,60,.65)" }}
                 >
-                  {count}
+                  ₹{subtotalSale}
                 </motion.span>
               </AnimatePresence>
             </span>
-            <span className="tracking-wide">View Cart</span>
+
+            {/* Cart icon + item count + label */}
+            <span
+              className="relative flex flex-col items-center gap-0.5 px-3.5 py-2.5 text-[10px] font-extrabold"
+              style={{
+                // Sampled from the actual shop logo (abs-logo.png) — a deep,
+                // saturated red-orange — instead of the near-black tone used
+                // everywhere else on the site, so this pill reads as its own
+                // branded thing rather than blending into the UI.
+                background:
+                  "linear-gradient(160deg, #ff6a2e 0%, #f0400a 55%, #b82d06 100%)",
+              }}
+            >
+              <span className="relative">
+                <motion.span
+                  animate={{ rotate: [0, -8, 8, -4, 0] }}
+                  transition={{ duration: 0.5 }}
+                  key={`bag-${count}`}
+                  style={{ display: "inline-block" }}
+                >
+                  <ShoppingCart size={20} />
+                </motion.span>
+                <AnimatePresence mode="popLayout">
+                  <motion.span
+                    key={count}
+                    initial={{ scale: 0.3, opacity: 0, y: -6 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.3, opacity: 0, y: 6 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 20 }}
+                    className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full px-[3px] text-[9px] font-extrabold text-white"
+                    style={{
+                      background: "linear-gradient(180deg,#ff8a5c,#e35226)",
+                      boxShadow: "0 0 6px rgba(255,87,34,.7)",
+                    }}
+                  >
+                    {count}
+                  </motion.span>
+                </AnimatePresence>
+              </span>
+              <span className="tracking-wide">View Cart</span>
+            </span>
           </motion.button>
         )}
       </AnimatePresence>

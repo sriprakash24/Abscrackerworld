@@ -1,10 +1,10 @@
 export default function AmbientBackground() {
   return (
     <div className="pointer-events-none fixed inset-0 z-0 mx-auto max-w-[430px] overflow-hidden">
-      {/* Deep black base */}
-      <div className="absolute inset-0 bg-[#050505]" />
-      {/* Dark brown ambient layer */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#0c0704] via-transparent to-[#0c0704]" />
+      {/* Deep navy base */}
+      <div className="absolute inset-0 bg-[#0a0f1e]" />
+      {/* Dark navy ambient layer */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#080c17] via-transparent to-[#080c17]" />
       {/* Orange radial glow, bottom */}
       <div
         className="absolute inset-x-0 bottom-0 h-1/2"

@@ -4,15 +4,13 @@ import PackingChargesCard from './PackingChargesCard';
 
 export default function OrderSummary({ pricing }) {
   const {
-    subtotalMrp,
-    discount,
+    subtotalSale,
+    discountPercentage,
     packingCharges,
-    deliveryCharges,
-    freeDeliveryUnlocked,
     coupon,
     couponDiscount,
     grandTotal,
-    totalSavings,
+    totalSavingsPct,
   } = pricing;
 
   return (
@@ -21,16 +19,13 @@ export default function OrderSummary({ pricing }) {
         <h3 className="text-[12.5px] font-extrabold tracking-wide text-[#f2ece2]">Order Summary</h3>
 
         <div className="mt-2 divide-y divide-white/[0.06]">
-          <Row label="Subtotal" value={`₹${subtotalMrp}`} />
-          {discount > 0 && <Row label="Discount" value={`− ₹${discount}`} valueClassName="text-[#8fe3a0]" />}
+          <Row label="Item Total" value={`₹${subtotalSale}`} />
+          {discountPercentage > 0 && (
+            <Row label="You Save" value={`${discountPercentage}% OFF`} valueClassName="text-[#8fe3a0]" />
+          )}
           <div className="py-0.5">
             <PackingChargesCard amount={packingCharges} />
           </div>
-          <Row
-            label="Delivery"
-            value={freeDeliveryUnlocked ? 'FREE' : `₹${deliveryCharges}`}
-            valueClassName={freeDeliveryUnlocked ? 'text-[#8fe3a0] font-extrabold' : undefined}
-          />
           {coupon && couponDiscount > 0 && (
             <Row label={`Coupon (${coupon.code})`} value={`− ₹${couponDiscount}`} valueClassName="text-[#8fe3a0]" />
           )}
@@ -49,10 +44,10 @@ export default function OrderSummary({ pricing }) {
           </motion.span>
         </div>
 
-        {totalSavings > 0 && (
+        {totalSavingsPct > 0 && (
           <div className="mt-2.5 flex items-center justify-center gap-1.5 rounded-lg border border-gold/25 bg-gold/10 py-1.5 text-[11px] font-bold text-gold">
             <Sparkles size={13} />
-            You're saving ₹{totalSavings} on this order!
+            You're saving {totalSavingsPct}% on this order!
           </div>
         )}
       </div>

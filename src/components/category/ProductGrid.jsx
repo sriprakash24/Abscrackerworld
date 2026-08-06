@@ -2,8 +2,9 @@ import { memo } from 'react';
 import ProductCard from './ProductCard';
 import SkeletonCard from './SkeletonCard';
 import EmptyState from './EmptyState';
+import { getCategoryTheme } from '../../utils/categoryTheme';
 
-function ProductGrid({ products, loading, onResetFilters }) {
+function ProductGrid({ products, loading, onResetFilters, categoryName }) {
   if (loading) {
     return (
       <div className="grid grid-cols-2 gap-3 px-4 pb-6">
@@ -22,10 +23,12 @@ function ProductGrid({ products, loading, onResetFilters }) {
     );
   }
 
+  const theme = categoryName ? getCategoryTheme(categoryName) : undefined;
+
   return (
     <div className="grid grid-cols-2 items-stretch gap-3 px-4 pb-6">
       {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
+        <ProductCard key={product.id} product={product} theme={theme} />
       ))}
     </div>
   );

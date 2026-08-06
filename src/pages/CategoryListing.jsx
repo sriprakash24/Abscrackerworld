@@ -170,7 +170,7 @@ export default function CategoryListing() {
       />
 
       <div className="pt-3">
-        <ProductGrid products={filteredProducts} loading={loading} onResetFilters={resetFilters} />
+        <ProductGrid products={filteredProducts} loading={loading} onResetFilters={resetFilters} categoryName={category.name} />
       </div>
 
       <FloatingButtons />

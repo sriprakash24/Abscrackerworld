@@ -1,7 +1,7 @@
 import { Heart } from 'lucide-react';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/opacity.css';
-import { toast } from 'sonner';
+import { showAddedToast, showRemovedToast } from '../../utils/cartToast';
 import { useCartStore } from '../../store/useCartStore';
 import { useCustomerGateStore } from '../../store/useCustomerGateStore';
 import { cn } from '../../utils/cn';
@@ -70,14 +70,14 @@ export default function ProductCard({ product }) {
         onAdd={() => {
           requestDetails(() => {
             addToCart(product.id);
-            toast.success(`${product.name} added to cart`);
+            showAddedToast(product.name);
           });
         }}
         onIncrement={() => incrementQty(product.id)}
         onDecrement={() => {
           if (inCart <= 1) {
             removeFromCart(product.id);
-            toast(`${product.name} removed from cart`);
+            showRemovedToast(product.name);
           } else {
             decrementQty(product.id);
           }
