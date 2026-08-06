@@ -5,8 +5,6 @@ import ProductCard from '../category/ProductCard';
 import { useProducts } from '../../contexts/ProductsContext';
 import { getCategoryTheme } from '../../utils/categoryTheme';
 
-const INITIAL_VISIBLE = 6;
-
 // One category's product grid, always expanded, with its own sticky
 // header. The header pins to the top of the scroll area while its
 // products are in view — as the user scrolls past, the next category's
@@ -14,9 +12,7 @@ const INITIAL_VISIBLE = 6;
 // browsing (and what's coming up next). Each category gets its own
 // accent color (see utils/categoryTheme) so sections read as visually
 // distinct instead of blending into one uniform dark/orange block.
-function CategorySection({ category, headerRef, expanded, onToggleExpand }) {
-  const items = expanded ? category.items : category.items.slice(0, INITIAL_VISIBLE);
-  const hasMore = category.items.length > INITIAL_VISIBLE;
+function CategorySection({ category, headerRef }) {
   const theme = getCategoryTheme(category.name);
 
   return (
@@ -73,21 +69,10 @@ function CategorySection({ category, headerRef, expanded, onToggleExpand }) {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        {items.map((product) => (
+        {category.items.map((product) => (
           <ProductCard key={product.id} product={product} theme={theme} />
         ))}
       </div>
-
-      {hasMore && (
-        <div className="mt-3 flex justify-center">
-          <button
-            onClick={onToggleExpand}
-            className="btn-3d-outline rounded-lg px-4 py-2 text-[11px] font-bold text-[#f2ece2]"
-          >
-            {expanded ? 'Show Less' : `Show All ${category.items.length}`}
-          </button>
-        </div>
-      )}
     </div>
   );
 }
@@ -95,7 +80,6 @@ function CategorySection({ category, headerRef, expanded, onToggleExpand }) {
 const CategoryGrid = forwardRef(function CategoryGrid(_, ref) {
   const { categories, loading } = useProducts();
   const [activeSlug, setActiveSlug] = useState(null);
-  const [expandedSlugs, setExpandedSlugs] = useState(() => new Set());
   const headerRefs = useRef({});
 
   useEffect(() => {
@@ -122,30 +106,15 @@ const CategoryGrid = forwardRef(function CategoryGrid(_, ref) {
     document.getElementById(`category-section-${slug}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const toggleExpand = (slug) => {
-    setExpandedSlugs((prev) => {
-      const next = new Set(prev);
-      if (next.has(slug)) next.delete(slug);
-      else next.add(slug);
-      return next;
-    });
-  };
-
   // Lets the home search bar (and anything else) land on a specific
-  // product without leaving this page: it expands that product's
-  // category if needed, scrolls to the card, and gives it a brief glow
-  // so the jump doesn't feel jarring.
+  // product without leaving this page: it scrolls to the card and gives
+  // it a brief glow so the jump doesn't feel jarring. Every category
+  // already renders all its products, so there's no "expand" step needed
+  // first — it just has to scroll.
   useEffect(() => {
     function onSearchJump(e) {
-      const { productId, categorySlug } = e.detail || {};
-      if (!productId || !categorySlug) return;
-
-      setExpandedSlugs((prev) => {
-        if (prev.has(categorySlug)) return prev;
-        const next = new Set(prev);
-        next.add(categorySlug);
-        return next;
-      });
+      const { productId } = e.detail || {};
+      if (!productId) return;
 
       requestAnimationFrame(() => {
         setTimeout(() => {
@@ -177,8 +146,6 @@ const CategoryGrid = forwardRef(function CategoryGrid(_, ref) {
           <CategorySection
             key={cat.slug}
             category={cat}
-            expanded={expandedSlugs.has(cat.slug)}
-            onToggleExpand={() => toggleExpand(cat.slug)}
             headerRef={(el) => {
               headerRefs.current[cat.slug] = el;
             }}

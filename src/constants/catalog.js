@@ -39,39 +39,6 @@ export const CATEGORY_TAGLINES = {
   GUN: 'Fun cap guns & novelty poppers',
 };
 
-export const HERO_SLIDES = [
-  {
-    eyebrow: 'DIWALI MEGA SALE',
-    headline: 'Light Up The Night',
-    offerLabel: 'Flat',
-    offerValue: 'UP TO 90% OFF',
-    note: 'On all sparklers, bombs & gift boxes.',
-    noteStrong: 'Limited stock!',
-    cta: 'Shop Now',
-    art: '🎆',
-  },
-  {
-    eyebrow: 'BEST SELLER',
-    headline: 'Gift Box Combos',
-    offerLabel: 'Starting',
-    offerValue: '₹350 ONLY',
-    note: 'Handpicked assortments for the whole family.',
-    noteStrong: 'Free delivery.',
-    cta: 'Explore Combos',
-    art: '🎁',
-  },
-  {
-    eyebrow: 'NEW ARRIVALS',
-    headline: 'Fancy Fountains',
-    offerLabel: 'Save',
-    offerValue: 'UP TO 85%',
-    note: 'Premium showpieces & sky shots.',
-    noteStrong: 'Trending now.',
-    cta: 'View Collection',
-    art: '⛲',
-  },
-];
-
 export const TRUST_ITEMS = [
   { label: 'Own Warehouse' },
   { label: 'Fast Shipping' },

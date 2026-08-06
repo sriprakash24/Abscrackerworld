@@ -2,8 +2,18 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
-import { HERO_SLIDES } from '../../constants/catalog';
 import { toast } from 'sonner';
+import heroSlide1 from '../../assets/hero/hero-slide-1.jpg';
+import heroSlide2 from '../../assets/hero/hero-slide-2.jpg';
+import heroSlide3 from '../../assets/hero/hero-slide-3.jpg';
+
+// Full-bleed promo banners (replaces the old text/emoji overlay slides —
+// these images already carry their own headline, offer and CTA artwork).
+const HERO_SLIDES = [
+  { image: heroSlide1, alt: 'ABS Crackers World — up to 90% off on all products' },
+  { image: heroSlide2, alt: 'ABS Crackers — factory direct prices, bulk orders welcome' },
+  { image: heroSlide3, alt: 'Light up the night — Diwali mega sale, up to 90% off' },
+];
 
 export default function HeroSlider() {
   return (
@@ -23,33 +33,18 @@ export default function HeroSlider() {
         >
           {HERO_SLIDES.map((slide, i) => (
             <SwiperSlide key={i}>
-              <div className="relative flex min-h-[230px] items-center overflow-hidden px-[18px] py-[26px]">
-                <div
-                  className="absolute inset-0"
-                  style={{ background: 'radial-gradient(circle at 78% 45%, rgba(255,122,0,.35), transparent 60%)' }}
+              <button
+                type="button"
+                onClick={() => toast('Full catalog coming soon')}
+                className="block w-full"
+              >
+                <img
+                  src={slide.image}
+                  alt={slide.alt}
+                  className="aspect-[3/2] w-full object-cover"
+                  loading={i === 0 ? 'eager' : 'lazy'}
                 />
-                <div className="relative z-10 max-w-[56%]">
-                  <div className="text-[17px] font-black tracking-wide text-white">{slide.eyebrow}</div>
-                  <div className="text-embossed my-0.5 mb-2 text-[30px] font-black leading-[1.02] text-gradient-gold">
-                    {slide.headline}
-                  </div>
-                  <div className="mb-1 text-base font-extrabold text-white">
-                    {slide.offerLabel} <b className="text-[20px] text-gold">{slide.offerValue}</b>
-                  </div>
-                  <div className="mb-3.5 text-[11px] text-[#e8ddce]">
-                    {slide.note} <b className="text-orange">{slide.noteStrong}</b>
-                  </div>
-                  <button
-                    onClick={() => toast(`${slide.cta} — full catalog coming soon`)}
-                    className="btn-3d overflow-hidden rounded-[10px] px-[22px] py-2.5 text-xs font-extrabold tracking-wide text-white"
-                  >
-                    {slide.cta}
-                  </button>
-                </div>
-                <div className="art-float absolute bottom-[-10px] right-[-10px] z-[1] text-[90px]">
-                  {slide.art}
-                </div>
-              </div>
+              </button>
             </SwiperSlide>
           ))}
         </Swiper>
