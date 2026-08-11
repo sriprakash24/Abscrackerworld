@@ -3,6 +3,7 @@ import * as LottieModule from "lottie-react";
 import { Copy, MessageCircleMore } from "lucide-react";
 import { toast } from "sonner";
 import EmberParticles from "../ui/EmberParticles";
+import FestiveBackdrop from "../ui/FestiveBackdrop";
 import FireworkBurst from "../ui/FireworkBurst";
 import OrderStatusStepper from "./OrderStatusStepper";
 import successBurst from "../../assets/lottie/orderSuccessBurst.json";
@@ -36,6 +37,7 @@ export default function OrderSuccessScreen({
 
   return (
     <div className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden px-6 py-10 text-center">
+      <FestiveBackdrop />
       <EmberParticles count={14} className="opacity-40" />
       <FireworkBurst
         size={130}

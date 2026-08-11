@@ -127,7 +127,7 @@ export default function CheckoutModal({ open, onClose, pricing }) {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 32, stiffness: 320 }}
-            className="absolute inset-x-0 bottom-0 top-[5%] mx-auto flex w-full max-w-[430px] flex-col overflow-hidden rounded-t-[28px] bg-[#0a0f1e]"
+            className="absolute inset-x-0 bottom-0 top-[5%] mx-auto flex w-full max-w-[430px] flex-col overflow-hidden rounded-t-[28px] bg-[#150007]"
             style={{ boxShadow: '0 -12px 40px rgba(0,0,0,.6)' }}
           >
             {/* Ambient layers — matches the app-wide dark navy background */}

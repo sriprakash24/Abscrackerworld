@@ -9,6 +9,7 @@ import OrderCard from '../components/orders/OrderCard';
 import OrderCardSkeleton from '../components/orders/OrderCardSkeleton';
 import EmptyOrders from '../components/orders/EmptyOrders';
 import EmberParticles from '../components/ui/EmberParticles';
+import FestiveBackdrop from '../components/ui/FestiveBackdrop';
 import BottomNav from '../components/home/BottomNav';
 
 export default function OrderHistory() {
@@ -47,6 +48,7 @@ export default function OrderHistory() {
 
   return (
     <div className="relative min-h-screen w-full pb-28">
+      <FestiveBackdrop />
       <EmberParticles count={8} className="opacity-30" />
 
       <OrdersHeader orderCount={orders.length} onBack={() => navigate(-1)} />

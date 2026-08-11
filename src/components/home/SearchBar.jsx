@@ -109,17 +109,34 @@ export default function SearchBar({ products = [] }) {
     <div ref={containerRef} className="relative px-4 pb-3.5 pt-1">
       <div
         className={cn(
-          'flex items-center gap-2.5 rounded-[14px] border border-[#262220] bg-gradient-to-b from-[#0d0a08] to-[#151109] px-3.5 py-3 transition-all duration-300',
-          !focused && 'shadow-[0_2px_8px_rgba(0,0,0,.55)_inset,0_1px_0_rgba(255,255,255,.04)]',
-          focused && 'border-orange shadow-[0_0_0_3px_rgba(255,122,0,.15),0_0_18px_rgba(255,122,0,.3),0_2px_8px_rgba(0,0,0,.5)_inset]'
+          'relative flex items-center gap-2.5 rounded-[14px] px-3.5 py-3 transition-all duration-300',
+          !focused &&
+            'border border-gold/35 shadow-[0_2px_10px_rgba(0,0,0,.5)_inset,0_0_0_1px_rgba(255,213,79,.08),0_4px_18px_-6px_rgba(255,154,0,.28)]',
+          focused &&
+            'border border-gold shadow-[0_0_0_3px_rgba(255,180,0,.22),0_0_22px_rgba(255,154,0,.4),0_2px_10px_rgba(0,0,0,.5)_inset]'
         )}
+        style={{
+          background: 'linear-gradient(180deg, rgba(58,10,14,.62), rgba(30,4,7,.7))',
+          backdropFilter: 'blur(12px) saturate(150%)',
+          WebkitBackdropFilter: 'blur(12px) saturate(150%)',
+        }}
       >
-        <Search size={18} strokeWidth={2.2} className="shrink-0 text-muted" />
+        {/* Quiet breathing glow around the search icon — enough to say
+            "this is tappable" without shouting over the rest of the page. */}
+        <span className="relative shrink-0">
+          <motion.span
+            className="pointer-events-none absolute -inset-1.5 rounded-full"
+            style={{ boxShadow: '0 0 0 1px rgba(255,180,0,.4)' }}
+            animate={{ opacity: [0.6, 0, 0.6], scale: [1, 1.5, 1] }}
+            transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          <Search size={18} strokeWidth={2.2} className="relative text-gold" />
+        </span>
         <input
           type="text"
           value={value}
           placeholder="Search crackers, packs..."
-          className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-muted"
+          className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-[#e8ddce]/60"
           onFocus={() => {
             setFocused(true);
             if (value.trim()) setShowResults(true);

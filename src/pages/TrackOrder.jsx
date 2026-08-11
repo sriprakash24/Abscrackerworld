@@ -14,6 +14,7 @@ import OrderStatusStepper from '../components/checkout/OrderStatusStepper';
 import OrderCardSkeleton from '../components/orders/OrderCardSkeleton';
 import EmptyOrders from '../components/orders/EmptyOrders';
 import EmberParticles from '../components/ui/EmberParticles';
+import FestiveBackdrop from '../components/ui/FestiveBackdrop';
 import BottomNav from '../components/home/BottomNav';
 
 const ACTIVE_STATUSES = new Set(['AWAITING_ADMIN_CONFIRMATION', 'CONFIRMED', 'PACKED', 'OUT_FOR_DELIVERY']);
@@ -142,6 +143,7 @@ export default function TrackOrder() {
 
   return (
     <div className="relative min-h-screen w-full pb-28">
+      <FestiveBackdrop />
       <EmberParticles count={8} className="opacity-30" />
 
       <TrackHeader onBack={() => navigate(-1)} />
@@ -221,7 +223,7 @@ export default function TrackOrder() {
                 {(selectedOrder.cartItems || []).slice(0, 5).map((item, i) => (
                   <div
                     key={item.productId || i}
-                    className="orb-3d flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden !rounded-lg"
+                    className="orb-3d orb-cream flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden !rounded-lg"
                     style={{ zIndex: 5 - i }}
                   >
                     {item.image ? (

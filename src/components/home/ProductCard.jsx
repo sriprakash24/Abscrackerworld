@@ -39,7 +39,7 @@ export default function ProductCard({ product }) {
         <Heart size={14} fill={wished ? 'currentColor' : 'none'} />
       </button>
 
-      <div className="orb-3d flex h-[86px] items-center justify-center overflow-hidden !rounded-xl">
+      <div className="orb-3d orb-cream flex h-[86px] items-center justify-center overflow-hidden !rounded-xl">
         {product.img ? (
           <LazyLoadImage src={product.img} alt={product.name} effect="opacity" className="h-full w-full object-contain" />
         ) : (

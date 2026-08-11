@@ -8,6 +8,7 @@ import OrderSummary from '../components/cart/OrderSummary';
 import CheckoutModal from '../components/cart/CheckoutModal';
 import EmptyCart from '../components/cart/EmptyCart';
 import EmberParticles from '../components/ui/EmberParticles';
+import FestiveBackdrop from '../components/ui/FestiveBackdrop';
 import BottomNav from '../components/home/BottomNav';
 
 export default function Cart() {
@@ -28,6 +29,7 @@ export default function Cart() {
   if (isEmpty && !checkoutOpen) {
     return (
       <div className="relative min-h-screen w-full pb-6">
+        <FestiveBackdrop />
         <CartHeader itemCount={0} onBack={() => navigate(-1)} />
         <EmptyCart />
         <CheckoutModal open={checkoutOpen} onClose={() => setCheckoutOpen(false)} pricing={pricing} />
@@ -37,6 +39,7 @@ export default function Cart() {
 
   return (
     <div className="relative min-h-screen w-full pb-44">
+      <FestiveBackdrop />
       <EmberParticles count={8} className="opacity-30" />
 
       <CartHeader itemCount={pricing.itemCount} onBack={() => navigate(-1)} />

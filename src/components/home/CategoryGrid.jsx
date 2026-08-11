@@ -1,7 +1,10 @@
 import { forwardRef, useEffect, useRef, useState } from 'react';
+import { Sparkles } from 'lucide-react';
+import { LazyLoadImage } from 'react-lazy-load-image-component';
 import SectionHead from './SectionHead';
 import CategoryQuickNav from './CategoryQuickNav';
 import ProductCard from '../category/ProductCard';
+import FestiveBackdrop from '../ui/FestiveBackdrop';
 import { useProducts } from '../../contexts/ProductsContext';
 import { getCategoryTheme } from '../../utils/categoryTheme';
 
@@ -24,48 +27,89 @@ function CategorySection({ category, headerRef }) {
       <div
         ref={headerRef}
         data-slug={category.slug}
-        className="sticky top-2 z-20 mb-3 flex items-center justify-between gap-2 rounded-2xl px-3.5 py-2.5"
+        className="sticky top-2 z-20 mb-3 overflow-hidden rounded-2xl"
         style={{
-          background: 'linear-gradient(160deg, rgba(16,22,42,0.94), rgba(8,11,22,0.94))',
-          backdropFilter: 'blur(14px) saturate(150%)',
-          WebkitBackdropFilter: 'blur(14px) saturate(150%)',
           border: `1px solid ${theme.solid}55`,
           boxShadow: `0 10px 22px -10px rgba(0,0,0,0.65), 0 0 18px ${theme.solid}30`,
         }}
       >
-        <div className="flex min-w-0 items-center gap-2.5">
+        {/* Full-bleed photo backdrop — the first product's photo, so the
+            row feels alive instead of a flat text bar. Falls back to a
+            plain theme-tinted background if no image is available yet. */}
+        {category.items[0]?.img ? (
+          <LazyLoadImage
+            src={category.items[0].img}
+            alt=""
+            wrapperClassName="!absolute !inset-0 !block"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{ background: `radial-gradient(circle at 70% 40%, ${theme.from}33, #1c0201)` }}
+          />
+        )}
+
+        {/* Dark-to-photo gradient so the icon + name stay legible on the
+            left while the photo shows through toward the right. */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background: `linear-gradient(100deg, rgba(10,2,2,0.96) 0%, rgba(16,3,3,0.88) 38%, rgba(16,3,3,0.45) 68%, transparent 100%)`,
+          }}
+        />
+
+        {/* Continuous, slow-moving glow sweep in the category's own
+            color — the "advanced" animated touch, kept gentle so it reads
+            as ambient light rather than a flashy loading shimmer. */}
+        <div
+          className="pointer-events-none absolute inset-0 animate-shimmer"
+          style={{
+            background: `linear-gradient(110deg, transparent 25%, ${theme.solid}40 50%, transparent 75%)`,
+            backgroundSize: '250% 100%',
+            animationDuration: '4.5s',
+            mixBlendMode: 'screen',
+          }}
+        />
+
+        <div className="relative z-10 flex items-center justify-between gap-2 px-3.5 py-2.5">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span
+              className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[17px]"
+              style={{
+                background: `radial-gradient(circle at 32% 26%, ${theme.from}33 0%, #171009 62%, #0a0705 100%)`,
+                border: `1px solid ${theme.solid}80`,
+                boxShadow: `0 1px 0 rgba(255,255,255,.12) inset, 0 0 12px ${theme.solid}45`,
+              }}
+            >
+              {/* quiet breathing ring in the category's own color */}
+              <span
+                className="pointer-events-none absolute inset-0 animate-glow-pulse rounded-xl"
+                style={{ boxShadow: `0 0 0 1px ${theme.solid}66` }}
+              />
+              {category.icon}
+            </span>
+            <span
+              className="text-embossed truncate text-[13px] font-extrabold uppercase tracking-wide"
+              style={{ color: theme.from, textShadow: '0 2px 6px rgba(0,0,0,0.8)' }}
+            >
+              {category.name}
+            </span>
+          </div>
+
           <span
-            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[17px]"
+            className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold shadow-[0_1px_0_rgba(255,220,170,.15)_inset]"
             style={{
-              background: `radial-gradient(circle at 32% 26%, ${theme.from}33 0%, #171009 62%, #0a0705 100%)`,
-              border: `1px solid ${theme.solid}80`,
-              boxShadow: `0 1px 0 rgba(255,255,255,.12) inset, 0 0 12px ${theme.solid}45`,
+              border: `1px solid ${theme.solid}70`,
+              background: `${theme.solid}3a`,
+              color: theme.from,
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)',
             }}
           >
-            {/* quiet breathing ring in the category's own color */}
-            <span
-              className="pointer-events-none absolute inset-0 animate-glow-pulse rounded-xl"
-              style={{ boxShadow: `0 0 0 1px ${theme.solid}66` }}
-            />
-            {category.icon}
-          </span>
-          <span
-            className="text-embossed truncate text-[13px] font-extrabold uppercase tracking-wide"
-            style={{ color: theme.from }}
-          >
-            {category.name}
+            {category.items.length} items
           </span>
         </div>
-        <span
-          className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold shadow-[0_1px_0_rgba(255,220,170,.15)_inset]"
-          style={{
-            border: `1px solid ${theme.solid}55`,
-            background: `${theme.solid}1f`,
-            color: theme.from,
-          }}
-        >
-          {category.items.length} items
-        </span>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -135,10 +179,23 @@ const CategoryGrid = forwardRef(function CategoryGrid(_, ref) {
   }, []);
 
   return (
-    <div ref={ref} className="mb-5 px-4">
+    <div ref={ref} className="relative mb-5 px-4">
+      {/* Festive backdrop photo — this is where it starts (right at "Shop
+          by Category") and it runs all the way through every category
+          section and product card below. See FestiveBackdrop for why
+          it's tiled rather than stretched. Bled past this section's own
+          px-4 padding so it's edge-to-edge, not inset. */}
+      <FestiveBackdrop inset={{ top: -12, left: -16, right: -16 }} />
+
       <SectionHead
-        title="Shop by Category"
-        action={loading ? 'Loading…' : `${categories.length} Categories`}
+        title={
+          <span className="inline-flex items-center gap-1.5">
+            <Sparkles size={12} className="text-gold" style={{ filter: 'drop-shadow(0 0 4px rgba(255,213,79,.6))' }} />
+            Shop by Category
+            <Sparkles size={12} className="text-gold" style={{ filter: 'drop-shadow(0 0 4px rgba(255,213,79,.6))' }} />
+          </span>
+        }
+        action={loading ? 'Loading…' : `${categories.length} Categories ›`}
       />
 
       <div className="flex flex-col gap-6">

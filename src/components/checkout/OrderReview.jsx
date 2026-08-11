@@ -25,7 +25,7 @@ export default function OrderReview({ items }) {
           const lineTotal = product.sale * qty;
           return (
             <div key={product.id} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
-              <div className="orb-3d flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden !rounded-lg">
+              <div className="orb-3d orb-cream flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden !rounded-lg">
                 {product.img ? (
                   <LazyLoadImage
                     src={product.img}

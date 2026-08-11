@@ -38,7 +38,7 @@ function CustomerApp() {
     <ProductsProvider>
       <div
         id="app-shell"
-        className="relative w-full max-w-[430px] overflow-hidden bg-[#0a0f1e] text-white"
+        className="relative w-full max-w-[430px] overflow-hidden bg-[#150007] text-white"
         style={{ transform: 'translateZ(0)', height: '100dvh' }}
       >
         <AmbientBackground />

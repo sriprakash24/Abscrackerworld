@@ -22,6 +22,7 @@ import OrderSuccessScreen from '../components/checkout/OrderSuccessScreen';
 import FreeDeliveryProgress from '../components/cart/FreeDeliveryProgress';
 import OrderSummary from '../components/cart/OrderSummary';
 import EmberParticles from '../components/ui/EmberParticles';
+import FestiveBackdrop from '../components/ui/FestiveBackdrop';
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -111,6 +112,7 @@ export default function Checkout() {
 
   return (
     <div className="relative min-h-screen w-full pb-4">
+      <FestiveBackdrop />
       <EmberParticles count={8} className="opacity-30" />
 
       <CheckoutHeader onBack={() => navigate(-1)} />

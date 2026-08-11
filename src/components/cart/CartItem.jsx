@@ -50,7 +50,7 @@ export default function CartItem({ product, qty }) {
       <div className="pointer-events-none absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b from-gold via-orange to-accent opacity-70" />
 
       <div className="flex gap-3">
-        <div className="orb-3d relative flex h-[80px] w-[80px] shrink-0 items-center justify-center overflow-hidden !rounded-2xl">
+        <div className="orb-3d orb-cream relative flex h-[80px] w-[80px] shrink-0 items-center justify-center overflow-hidden !rounded-2xl">
           {product.img ? (
             <LazyLoadImage
               src={product.img}

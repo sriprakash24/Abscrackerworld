@@ -63,7 +63,7 @@ export default function ProductCard({ product, theme }) {
       <DiscountBadge percent={product.discountPercentage} />
       <WishlistButton active={wished} onToggle={() => toggleWishlist(product.id)} />
 
-      <div className="orb-3d relative flex h-[86px] items-center justify-center overflow-hidden !rounded-xl">
+      <div className="orb-3d orb-cream relative flex h-[86px] items-center justify-center overflow-hidden !rounded-xl">
         {product.img ? (
           <LazyLoadImage
             src={product.img}

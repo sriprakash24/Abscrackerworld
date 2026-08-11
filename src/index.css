@@ -1,14 +1,17 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #0a0f1e;
+  --color-bg: #150007;
   --color-orange: #ff7a00;
   --color-gold: #ffd54f;
   --color-glow: #ff8c00;
   --color-accent: #ff5722;
-  --color-card: #10182c;
-  --color-card-2: #141d33;
-  --color-muted: #9a938c;
+  --color-card: #22060a;
+  --color-card-2: #2b070c;
+  --color-muted: #cdb39f;
+  --color-maroon: #3a0a0e;
+  --color-maroon-deep: #1a0305;
+  --color-crimson: #d81c2b;
 
   --font-display: "Poppins", "Segoe UI", system-ui, sans-serif;
   --font-sans:
@@ -26,6 +29,24 @@
   --animate-twinkle: twinkle 2.6s ease-in-out infinite;
   --animate-glow-pulse: glowPulse 2.4s ease-in-out infinite;
   --animate-shimmer: shimmer 2.5s linear infinite;
+  --animate-bulb-blink: bulbBlink 1.6s ease-in-out infinite;
+  --animate-flame-flicker: flameFlicker 2.2s ease-in-out infinite;
+  --animate-marquee: marqueeScroll 22s linear infinite;
+}
+
+@keyframes bulbBlink {
+  0%, 100% { opacity: 1; filter: brightness(1.25); }
+  50% { opacity: 0.35; filter: brightness(0.75); }
+}
+@keyframes flameFlicker {
+  0%, 100% { transform: scaleY(1) scaleX(1) rotate(-1deg); opacity: 0.95; }
+  25% { transform: scaleY(1.08) scaleX(0.94) rotate(1deg); opacity: 1; }
+  50% { transform: scaleY(0.92) scaleX(1.05) rotate(-2deg); opacity: 0.85; }
+  75% { transform: scaleY(1.05) scaleX(0.97) rotate(2deg); opacity: 1; }
+}
+@keyframes marqueeScroll {
+  0% { background-position: 0 0; }
+  100% { background-position: -240px 0; }
 }
 
 @keyframes floatUp {
@@ -102,9 +123,53 @@ body {
   margin: 0;
   padding: 0;
   height: 100%;
-  background: #0a0f1e;
+  background: #220000;
   overflow: hidden;
   overscroll-behavior-y: none;
+}
+
+/* ===================== FESTIVE STRING LIGHTS ===================== */
+/* A row of small alternating gold/red bulbs that blink out of phase —
+   the marquee-light strip seen along the top/bottom of a Diwali storefront. */
+.festive-lights {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  height: 14px;
+  padding: 0 6px;
+  overflow: hidden;
+}
+.festive-lights::before {
+  content: "";
+  position: absolute;
+  inset: 6px 4px auto 4px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 200, 120, 0.35), transparent);
+}
+.festive-bulb {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  animation: bulbBlink 1.6s ease-in-out infinite;
+}
+.festive-bulb--gold {
+  background: radial-gradient(circle at 35% 30%, #fff3c4, #ffb300 65%, #a35a00);
+  box-shadow: 0 0 6px 1px rgba(255, 179, 0, 0.85);
+}
+.festive-bulb--red {
+  background: radial-gradient(circle at 35% 30%, #ff9e8a, #e5304a 65%, #7a0d1a);
+  box-shadow: 0 0 6px 1px rgba(229, 48, 74, 0.85);
+}
+
+/* Small flickering diya (oil-lamp) glyph — pure CSS, used as a quiet
+   festival accent near headers/hero corners. */
+.diya-flame {
+  display: inline-block;
+  transform-origin: 50% 100%;
+  animation: flameFlicker 2.2s ease-in-out infinite;
+  filter: drop-shadow(0 0 6px rgba(255, 170, 40, 0.85));
 }
 
 body {
@@ -153,8 +218,8 @@ button {
    soft bevel border, warm rim glow. Used for product/category/promo cards. */
 .surface-3d {
   position: relative;
-  background: linear-gradient(160deg, #1c1611 0%, #120e0a 55%, #0a0706 100%);
-  border: 1px solid rgba(255, 178, 90, 0.16);
+  background: linear-gradient(160deg, #300604 0%, #1c0201 55%, #100000 100%);
+  border: 1px solid rgba(255, 178, 90, 0.28);
   box-shadow:
     0 1px 0 0 rgba(255, 200, 130, 0.14) inset,
     0 -18px 30px -22px rgba(255, 122, 0, 0.35) inset,
@@ -233,7 +298,7 @@ button {
 }
 .btn-3d-outline {
   position: relative;
-  background: linear-gradient(180deg, #1c1611, #100c09);
+  background: linear-gradient(180deg, #2a0a0c, #1a0508);
   border: 1px solid rgba(255, 154, 0, 0.55);
   box-shadow:
     0 1px 0 rgba(255, 200, 130, 0.15) inset,
@@ -252,9 +317,9 @@ button {
 .orb-3d {
   background: radial-gradient(
     circle at 32% 26%,
-    #2a2018 0%,
-    #171009 55%,
-    #0a0705 100%
+    #3a0d10 0%,
+    #22060a 55%,
+    #120304 100%
   );
   border: 1px solid rgba(255, 154, 0, 0.35);
   box-shadow:
@@ -274,6 +339,26 @@ button {
     0 0 18px rgba(255, 122, 0, 0.55),
     0 4px 10px -4px rgba(0, 0, 0, 0.6);
   border-color: var(--color-gold);
+}
+
+/* Cream/peach product-photo panel — the warm ivory backdrop the
+   reference design uses behind product photography, sitting inside an
+   otherwise dark maroon card. Layered on top of .orb-3d (keep both
+   classes) so it inherits the shape/transition, only the surface swaps. */
+.orb-3d.orb-cream {
+  background: linear-gradient(135deg, #fbe6c8 0%, #edbd7f 55%, #d99a5c 100%);
+  border: 1px solid rgba(120, 40, 10, 0.3);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.55) inset,
+    0 -10px 16px -10px rgba(120, 40, 10, 0.35) inset,
+    0 8px 18px -8px rgba(0, 0, 0, 0.55);
+}
+.orb-3d.orb-cream:active {
+  border-color: rgba(120, 40, 10, 0.5);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 0 14px rgba(255, 154, 0, 0.4),
+    0 4px 10px -4px rgba(0, 0, 0, 0.5);
 }
 
 /* Raised glass panel for nav bars / floating headers */
@@ -337,7 +422,13 @@ button {
   }
 }
 
-/* ===================== FLOATING CATEGORY LAUNCHER (highlighted) ===================== */
+/* ===================== HERO SLIDER — PREMIUM GLASS TREATMENT ===================== */
+/* Custom glass progress rail (one segment per slide, filled by JS-driven
+   inline animation — see HeroSlider.jsx) instead of plain dot pagination. */
+@keyframes heroBarFill {
+  from { width: 0%; }
+  to { width: 100%; }
+}
 /* Keeps the same dark-glass base as every other orb on the site (so it
    belongs to the UI instead of fighting it), but stands out through a
    vivid gold rim + breathing outer glow — highlighted by light, not by a
@@ -346,9 +437,9 @@ button {
   position: relative;
   background: radial-gradient(
     circle at 32% 26%,
-    #2f2317 0%,
-    #1a1109 55%,
-    #0a0705 100%
+    #3f0e12 0%,
+    #26070a 55%,
+    #120304 100%
   );
   border: 1.5px solid rgba(255, 186, 90, 0.8);
   box-shadow:
@@ -401,7 +492,7 @@ button {
   min-width: 224px;
   padding: 11px 14px;
   border-radius: 16px;
-  background: linear-gradient(160deg, #1e1712 0%, #130e0a 55%, #0a0706 100%);
+  background: linear-gradient(160deg, #2c0a0d 0%, #1e0608 55%, #120304 100%);
   border: 1px solid rgba(255, 178, 90, 0.32);
   box-shadow:
     0 1px 0 0 rgba(255, 210, 150, 0.16) inset,

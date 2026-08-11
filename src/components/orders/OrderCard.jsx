@@ -81,7 +81,7 @@ export default function OrderCard({ order, delay = 0 }) {
             {items.slice(0, 3).map((item, i) => (
               <div
                 key={item.productId || i}
-                className="orb-3d flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden !rounded-lg"
+                className="orb-3d orb-cream flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden !rounded-lg"
                 style={{ zIndex: 3 - i }}
               >
                 {item.image ? (
@@ -131,7 +131,7 @@ export default function OrderCard({ order, delay = 0 }) {
               <div className="flex flex-col divide-y divide-white/[0.06]">
                 {items.map((item, i) => (
                   <div key={item.productId || i} className="flex items-center gap-3 py-2 first:pt-0 last:pb-0">
-                    <div className="orb-3d flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden !rounded-lg">
+                    <div className="orb-3d orb-cream flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden !rounded-lg">
                       {item.image ? (
                         <LazyLoadImage src={item.image} alt={item.name} effect="opacity" className="h-full w-full object-contain" />
                       ) : (

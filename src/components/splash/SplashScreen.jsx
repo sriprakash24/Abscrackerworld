@@ -7,7 +7,7 @@ export default function SplashScreen({ visible }) {
     <AnimatePresence>
       {visible && (
         <motion.div
-          className="fixed inset-0 z-[999] mx-auto max-w-[430px] overflow-hidden bg-[#0a0f1e]"
+          className="fixed inset-0 z-[999] mx-auto max-w-[430px] overflow-hidden bg-[#150007]"
           exit={{ opacity: 0, transition: { duration: 1, ease: 'easeInOut' } }}
         >
           <motion.img
