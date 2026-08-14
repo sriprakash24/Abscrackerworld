@@ -1,12 +1,12 @@
-import { forwardRef, useEffect, useRef, useState } from 'react';
-import { Sparkles } from 'lucide-react';
-import { LazyLoadImage } from 'react-lazy-load-image-component';
-import SectionHead from './SectionHead';
-import CategoryQuickNav from './CategoryQuickNav';
-import ProductCard from '../category/ProductCard';
-import FestiveBackdrop from '../ui/FestiveBackdrop';
-import { useProducts } from '../../contexts/ProductsContext';
-import { getCategoryTheme } from '../../utils/categoryTheme';
+import { forwardRef, useEffect, useRef, useState } from "react";
+import { Sparkles } from "lucide-react";
+import { LazyLoadImage } from "react-lazy-load-image-component";
+import SectionHead from "./SectionHead";
+import CategoryQuickNav from "./CategoryQuickNav";
+import ProductCard from "../category/ProductCard";
+import FestiveBackdrop from "../ui/FestiveBackdrop";
+import { useProducts } from "../../contexts/ProductsContext";
+import { getCategoryTheme } from "../../utils/categoryTheme";
 
 // One category's product grid, always expanded, with its own sticky
 // header. The header pins to the top of the scroll area while its
@@ -15,14 +15,30 @@ import { getCategoryTheme } from '../../utils/categoryTheme';
 // browsing (and what's coming up next). Each category gets its own
 // accent color (see utils/categoryTheme) so sections read as visually
 // distinct instead of blending into one uniform dark/orange block.
-function CategorySection({ category, headerRef }) {
+function CategorySection({ category, headerRef, isActive }) {
   const theme = getCategoryTheme(category.name);
+
+  // Rough placeholder height for `content-visibility: auto` below — only
+  // used before this section has ever been rendered/measured, so the page
+  // doesn't jump around as sections further down the list get skipped.
+  // Doesn't need to be exact, just in the right ballpark (2-col grid).
+  const estimatedRows = Math.ceil(category.items.length / 2);
+  const estimatedHeight =
+    70 + estimatedRows * 195 + Math.max(estimatedRows - 1, 0) * 12;
 
   return (
     <div
       id={`category-section-${category.slug}`}
       data-slug={category.slug}
-      style={{ scrollMarginTop: 76 }}
+      style={{
+        scrollMarginTop: 76,
+        // Off-screen sections skip layout/paint/style work entirely until
+        // they're near the viewport — this is the fix for "N categories'
+        // worth of cards all costing scroll performance at once" (see
+        // ProductCard.jsx for why each card isn't cheap on its own).
+        contentVisibility: "auto",
+        containIntrinsicHeight: `${estimatedHeight}px`,
+      }}
     >
       <div
         ref={headerRef}
@@ -46,7 +62,9 @@ function CategorySection({ category, headerRef }) {
         ) : (
           <div
             className="absolute inset-0"
-            style={{ background: `radial-gradient(circle at 70% 40%, ${theme.from}33, #1c0201)` }}
+            style={{
+              background: `radial-gradient(circle at 70% 40%, ${theme.from}33, #1c0201)`,
+            }}
           />
         )}
 
@@ -61,16 +79,22 @@ function CategorySection({ category, headerRef }) {
 
         {/* Continuous, slow-moving glow sweep in the category's own
             color — the "advanced" animated touch, kept gentle so it reads
-            as ambient light rather than a flashy loading shimmer. */}
-        <div
-          className="pointer-events-none absolute inset-0 animate-shimmer"
-          style={{
-            background: `linear-gradient(110deg, transparent 25%, ${theme.solid}40 50%, transparent 75%)`,
-            backgroundSize: '250% 100%',
-            animationDuration: '4.5s',
-            mixBlendMode: 'screen',
-          }}
-        />
+            as ambient light rather than a flashy loading shimmer.
+            Only mounted for the currently-active (pinned) section — with
+            15+ categories on the page, running this infinite animation
+            for every header at once (most of them off-screen) was the
+            main source of the scroll lag. */}
+        {isActive && (
+          <div
+            className="pointer-events-none absolute inset-0 animate-shimmer"
+            style={{
+              background: `linear-gradient(110deg, transparent 25%, ${theme.solid}40 50%, transparent 75%)`,
+              backgroundSize: "250% 100%",
+              animationDuration: "4.5s",
+              mixBlendMode: "screen",
+            }}
+          />
+        )}
 
         <div className="relative z-10 flex items-center justify-between gap-2 px-3.5 py-2.5">
           <div className="flex min-w-0 items-center gap-2.5">
@@ -82,16 +106,23 @@ function CategorySection({ category, headerRef }) {
                 boxShadow: `0 1px 0 rgba(255,255,255,.12) inset, 0 0 12px ${theme.solid}45`,
               }}
             >
-              {/* quiet breathing ring in the category's own color */}
-              <span
-                className="pointer-events-none absolute inset-0 animate-glow-pulse rounded-xl"
-                style={{ boxShadow: `0 0 0 1px ${theme.solid}66` }}
-              />
+              {/* quiet breathing ring in the category's own color —
+                  same reasoning as the shimmer sweep above: only the
+                  active section's icon breathes, the rest stay static */}
+              {isActive && (
+                <span
+                  className="pointer-events-none absolute inset-0 animate-glow-pulse rounded-xl"
+                  style={{ boxShadow: `0 0 0 1px ${theme.solid}66` }}
+                />
+              )}
               {category.icon}
             </span>
             <span
               className="text-embossed truncate text-[13px] font-extrabold uppercase tracking-wide"
-              style={{ color: theme.from, textShadow: '0 2px 6px rgba(0,0,0,0.8)' }}
+              style={{
+                color: theme.from,
+                textShadow: "0 2px 6px rgba(0,0,0,0.8)",
+              }}
             >
               {category.name}
             </span>
@@ -103,8 +134,6 @@ function CategorySection({ category, headerRef }) {
               border: `1px solid ${theme.solid}70`,
               background: `${theme.solid}3a`,
               color: theme.from,
-              backdropFilter: 'blur(4px)',
-              WebkitBackdropFilter: 'blur(4px)',
             }}
           >
             {category.items.length} items
@@ -139,15 +168,19 @@ const CategoryGrid = forwardRef(function CategoryGrid(_, ref) {
       },
       // Fires the moment a header crosses just below the top of the
       // scroll area — i.e. the moment it "takes over" as the sticky one.
-      { rootMargin: '-8px 0px -85% 0px', threshold: 0 }
+      { rootMargin: "-8px 0px -85% 0px", threshold: 0 },
     );
 
-    Object.values(headerRefs.current).forEach((el) => el && observer.observe(el));
+    Object.values(headerRefs.current).forEach(
+      (el) => el && observer.observe(el),
+    );
     return () => observer.disconnect();
   }, [categories]);
 
   const handleJump = (slug) => {
-    document.getElementById(`category-section-${slug}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document
+      .getElementById(`category-section-${slug}`)
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   // Lets the home search bar (and anything else) land on a specific
@@ -164,18 +197,18 @@ const CategoryGrid = forwardRef(function CategoryGrid(_, ref) {
         setTimeout(() => {
           const el = document.getElementById(`product-card-${productId}`);
           if (!el) return;
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          el.classList.remove('search-highlight');
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.classList.remove("search-highlight");
           // restart the animation even if it was already applied recently
           void el.offsetWidth;
-          el.classList.add('search-highlight');
-          setTimeout(() => el.classList.remove('search-highlight'), 1800);
+          el.classList.add("search-highlight");
+          setTimeout(() => el.classList.remove("search-highlight"), 1800);
         }, 80);
       });
     }
 
-    window.addEventListener('abs-search-jump', onSearchJump);
-    return () => window.removeEventListener('abs-search-jump', onSearchJump);
+    window.addEventListener("abs-search-jump", onSearchJump);
+    return () => window.removeEventListener("abs-search-jump", onSearchJump);
   }, []);
 
   return (
@@ -190,12 +223,20 @@ const CategoryGrid = forwardRef(function CategoryGrid(_, ref) {
       <SectionHead
         title={
           <span className="inline-flex items-center gap-1.5">
-            <Sparkles size={12} className="text-gold" style={{ filter: 'drop-shadow(0 0 4px rgba(255,213,79,.6))' }} />
+            <Sparkles
+              size={12}
+              className="text-gold"
+              style={{ filter: "drop-shadow(0 0 4px rgba(255,213,79,.6))" }}
+            />
             Shop by Category
-            <Sparkles size={12} className="text-gold" style={{ filter: 'drop-shadow(0 0 4px rgba(255,213,79,.6))' }} />
+            <Sparkles
+              size={12}
+              className="text-gold"
+              style={{ filter: "drop-shadow(0 0 4px rgba(255,213,79,.6))" }}
+            />
           </span>
         }
-        action={loading ? 'Loading…' : `${categories.length} Categories ›`}
+        action={loading ? "Loading…" : `${categories.length} Categories ›`}
       />
 
       <div className="flex flex-col gap-6">
@@ -203,6 +244,7 @@ const CategoryGrid = forwardRef(function CategoryGrid(_, ref) {
           <CategorySection
             key={cat.slug}
             category={cat}
+            isActive={cat.slug === activeSlug}
             headerRef={(el) => {
               headerRefs.current[cat.slug] = el;
             }}
@@ -210,7 +252,11 @@ const CategoryGrid = forwardRef(function CategoryGrid(_, ref) {
         ))}
       </div>
 
-      <CategoryQuickNav categories={categories} activeSlug={activeSlug} onJump={handleJump} />
+      <CategoryQuickNav
+        categories={categories}
+        activeSlug={activeSlug}
+        onJump={handleJump}
+      />
     </div>
   );
 });
