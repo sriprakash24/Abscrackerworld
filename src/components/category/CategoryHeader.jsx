@@ -1,9 +1,11 @@
 import { ArrowLeft, Search, Heart } from 'lucide-react';
 import { cn } from '../../utils/cn';
+import CategoryIcon from '../home/CategoryIcon';
 
 export default function CategoryHeader({
   categoryName,
   categoryIcon,
+  categoryImage,
   productCount,
   searchOpen,
   onToggleSearch,
@@ -29,7 +31,12 @@ export default function CategoryHeader({
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5 truncate text-[13.5px] font-extrabold leading-tight text-[#f2ece2]">
-          <span>{categoryIcon}</span>
+          <CategoryIcon
+            image={categoryImage}
+            icon={categoryIcon}
+            name={categoryName}
+            className="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full leading-none"
+          />
           <span className="truncate">{categoryName}</span>
         </div>
         <div className="text-[10px] font-semibold text-muted">

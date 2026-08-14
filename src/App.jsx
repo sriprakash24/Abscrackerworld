@@ -9,14 +9,17 @@ import Checkout from "./pages/Checkout";
 import OrderHistory from "./pages/OrderHistory";
 import TrackOrder from "./pages/TrackOrder";
 import AmbientBackground from "./components/ui/AmbientBackground";
+import GlobalFestiveFX from "./components/ui/GlobalFestiveFX";
 import CustomerDetailsSheet from "./components/customer/CustomerDetailsSheet";
 import { useCartFirestoreSync } from "./hooks/useCartFirestoreSync";
 import { ProductsProvider } from "./contexts/ProductsContext";
 import { AdminAuthProvider } from "./contexts/AdminAuthContext";
 import AdminRoute from "./components/admin/AdminRoute";
 import AdminLogin from "./pages/admin/AdminLogin";
+import AdminOverview from "./pages/admin/AdminOverview";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
+import AdminInventory from "./pages/admin/AdminInventory";
 import AdminCategories from "./pages/admin/AdminCategories";
 import AdminInvoices from "./pages/admin/AdminInvoices";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -42,7 +45,11 @@ function CustomerApp() {
         style={{ transform: 'translateZ(0)', height: '100dvh' }}
       >
         <AmbientBackground />
-        <SplashScreen visible={showSplash} />
+        {/* Site-wide scroll-triggered firework/fountain flourish — lives
+            here (not inside Home) so it plays on every customer screen
+            that shares this #app-scroll container. */}
+        <GlobalFestiveFX />
+        <SplashScreen visible={showSplash} onSkip={() => setShowSplash(false)} />
         <div
           id="app-scroll"
           className="relative h-full w-full overflow-y-auto overflow-x-hidden"
@@ -84,10 +91,26 @@ function AdminApp() {
           <Routes>
             <Route path="login" element={<AdminLogin />} />
             <Route
+              path="orders"
+              element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
+              }
+            />
+            <Route
               path="products"
               element={
                 <AdminRoute>
                   <AdminProducts />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="inventory"
+              element={
+                <AdminRoute>
+                  <AdminInventory />
                 </AdminRoute>
               }
             />
@@ -119,7 +142,7 @@ function AdminApp() {
               path="*"
               element={
                 <AdminRoute>
-                  <AdminDashboard />
+                  <AdminOverview />
                 </AdminRoute>
               }
             />

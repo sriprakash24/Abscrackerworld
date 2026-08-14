@@ -85,6 +85,11 @@ export default function CartItem({ product, qty }) {
               <div className="line-clamp-2 text-[12.5px] font-bold leading-snug text-[#f2ece2]">
                 {product.name}
               </div>
+              {product.nameTa && (
+                <div className="line-clamp-1 text-[10px] font-semibold leading-snug text-gold">
+                  {product.nameTa}
+                </div>
+              )}
               <div className="mt-1 flex items-center gap-1.5 text-[10px] text-muted">
                 <span className="truncate rounded-full bg-white/[0.05] px-1.5 py-[1px]">{product.category}</span>
                 <span className={`font-bold ${stock.className}`}>{stockLabelText}</span>

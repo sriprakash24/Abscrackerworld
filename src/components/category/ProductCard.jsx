@@ -86,6 +86,11 @@ export default function ProductCard({ product, theme }) {
       <div className="mt-2 line-clamp-2 min-h-[30px] text-[12px] font-bold leading-snug text-[#f2ece2]">
         {product.name}
       </div>
+      {product.nameTa && (
+        <div className="-mt-0.5 line-clamp-1 text-[10.5px] font-semibold leading-snug text-gold">
+          {product.nameTa}
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <span className="text-[10px] text-muted">{product.unit}</span>
         <span className={`text-[9.5px] font-bold ${stock.className}`}>{stockLabelText}</span>

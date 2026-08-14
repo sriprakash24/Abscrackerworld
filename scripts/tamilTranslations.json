@@ -1,0 +1,416 @@
+{
+  "categories": [
+    {
+      "name": "SPARKLERS",
+      "name_ta": "ஸ்பார்க்லர்ஸ்",
+      "products": [
+        {
+          "name": "10 CM ELECTRIC SPARKLERS",
+          "name_ta": "10 CM எலக்ட்ரிக் ஸ்பார்க்லர்ஸ்"
+        },
+        {
+          "name": "10 CM COLOR SPARKLERS",
+          "name_ta": "10 CM கலர் ஸ்பார்க்லர்ஸ்"
+        },
+        {
+          "name": "10 CM GREEN SPARKLERS",
+          "name_ta": "10 CM கிரீன் ஸ்பார்க்லர்ஸ்"
+        },
+        {
+          "name": "10 CM RED SPARKLERS",
+          "name_ta": "10 CM ரெட் ஸ்பார்க்லர்ஸ்"
+        },
+        {
+          "name": "15 CM ELECTRIC SPARKLERS",
+          "name_ta": "15 CM எலக்ட்ரிக் ஸ்பார்க்லர்ஸ்"
+        },
+        {
+          "name": "15 CM CRACKLING SPARKLERS",
+          "name_ta": "15 CM கிராக்லிங் ஸ்பார்க்லர்ஸ்"
+        },
+        {
+          "name": "15 CM GREEN SPARKLERS",
+          "name_ta": "15 CM கிரீன் ஸ்பார்க்லர்ஸ்"
+        },
+        {
+          "name": "15 CM RED SPARKLERS",
+          "name_ta": "15 CM ரெட் ஸ்பார்க்லர்ஸ்"
+        },
+        {
+          "name": "30 CM ELECTRIC SPARKLERS",
+          "name_ta": "30 CM எலக்ட்ரிக் ஸ்பார்க்லர்ஸ்"
+        },
+        {
+          "name": "30 CM CRACKLING SPARKLERS",
+          "name_ta": "30 CM கிராக்லிங் ஸ்பார்க்லர்ஸ்"
+        },
+        {
+          "name": "30 CM GREEN SPARKLERS",
+          "name_ta": "30 CM கிரீன் ஸ்பார்க்லர்ஸ்"
+        },
+        {
+          "name": "30 CM RED SPARKLERS",
+          "name_ta": "30 CM ரெட் ஸ்பார்க்லர்ஸ்"
+        },
+        {
+          "name": "50 CM ELECTRIC SPARKLERS",
+          "name_ta": "50 CM எலக்ட்ரிக் ஸ்பார்க்லர்ஸ்"
+        },
+        {
+          "name": "50 CM COLOR SPARKLERS",
+          "name_ta": "50 CM கலர் ஸ்பார்க்லர்ஸ்"
+        },
+        {
+          "name": "ROTATING SPARKLERS",
+          "name_ta": "ரோட்டேட்டிங் ஸ்பார்க்லர்ஸ்"
+        }
+      ]
+    },
+    {
+      "name": "GROUND CHAKKARAS",
+      "name_ta": "கிரவுண்ட் சக்கராஸ்",
+      "products": [
+        {
+          "name": "CHAKKARAM BIG (10 PCS)",
+          "name_ta": "சக்கரம் பிக் (10 பீஸ்)"
+        },
+        {
+          "name": "CHAKKARAM BIG (25 PCS)",
+          "name_ta": "சக்கரம் பிக் (25 பீஸ்)"
+        },
+        { "name": "CHAKKARAM SPECIAL", "name_ta": "சக்கரம் ஸ்பெஷல்" },
+        { "name": "CHAKKARAM DELUXE", "name_ta": "சக்கரம் டீலக்ஸ்" }
+      ]
+    },
+    {
+      "name": "FLOWER POT",
+      "name_ta": "ஃப்ளவர் பாட்",
+      "products": [
+        { "name": "FLOWER POT BIG", "name_ta": "ஃப்ளவர் பாட் பிக்" },
+        { "name": "FLOWER POT SPECIAL", "name_ta": "ஃப்ளவர் பாட் ஸ்பெஷல்" },
+        { "name": "FLOWER POT ASHOKA", "name_ta": "ஃப்ளவர் பாட் அசோகா" },
+        { "name": "FLOWER POT DELUXE", "name_ta": "ஃப்ளவர் பாட் டீலக்ஸ்" },
+        { "name": "COLOR KOTI", "name_ta": "கலர் கோட்டி" },
+        { "name": "MEGA POT DLX", "name_ta": "மெகா பாட் டிஎல்எக்ஸ்" }
+      ]
+    },
+    {
+      "name": "TWINKLING STAR",
+      "name_ta": "ட்விங்க்ளிங் ஸ்டார்",
+      "products": [
+        {
+          "name": "1 1/2 TWINKLING STAR",
+          "name_ta": "1 1/2 ட்விங்க்ளிங் ஸ்டார்"
+        },
+        {
+          "name": "4' TWINKLING STAR DELUXE",
+          "name_ta": "4' ட்விங்க்ளிங் ஸ்டார் டீலக்ஸ்"
+        }
+      ]
+    },
+    {
+      "name": "ONE SOUND CRACKERS",
+      "name_ta": "ஒன் சவுண்ட் கிராக்கர்ஸ்",
+      "products": [
+        { "name": "2 3/4 KURUVI", "name_ta": "2 3/4 குருவி" },
+        { "name": "3 1/2 LAKSHMI", "name_ta": "3 1/2 லக்ஷ்மி" },
+        { "name": "4' LION", "name_ta": "4' லயன்" },
+        { "name": "4' DELUXE HULK", "name_ta": "4' டீலக்ஸ் ஹல்க்" },
+        {
+          "name": "4' GOLD LAKSHMI DLX",
+          "name_ta": "4' கோல்டு லக்ஷ்மி டிஎல்எக்ஸ்"
+        },
+        { "name": "6' LION DLX", "name_ta": "6' லயன் டிஎல்எக்ஸ்" }
+      ]
+    },
+    {
+      "name": "BOMB",
+      "name_ta": "பாம்",
+      "products": [
+        {
+          "name": "BULLET (FOILS BOMB)",
+          "name_ta": "புல்லட் (ஃபாயில்ஸ் பாம்)"
+        },
+        { "name": "HYDRO BOMB CLASSIC", "name_ta": "ஹைட்ரோ பாம் கிளாசிக்" },
+        { "name": "HYDROGEN BOMB", "name_ta": "ஹைட்ரஜன் பாம்" },
+        { "name": "RED DRAGON DELUXE", "name_ta": "ரெட் டிராகன் டீலக்ஸ்" },
+        {
+          "name": "CLASSIC ELEPHANT BOMB",
+          "name_ta": "கிளாசிக் எலிஃபன்ட் பாம்"
+        },
+        {
+          "name": "BADA BOMB ULTRA DLX",
+          "name_ta": "படா பாம் அல்ட்ரா டிஎல்எக்ஸ்"
+        },
+        { "name": "PAPER BOMB 1/4 KG", "name_ta": "பேப்பர் பாம் 1/4 KG" },
+        { "name": "PAPER BOMB 1/2 KG", "name_ta": "பேப்பர் பாம் 1/2 KG" },
+        { "name": "PAPER BOMB 1 KG", "name_ta": "பேப்பர் பாம் 1 KG" }
+      ]
+    },
+    {
+      "name": "GIANT & DELUXE",
+      "name_ta": "ஜெயண்ட் & டீலக்ஸ்",
+      "products": [
+        { "name": "28 GIANT", "name_ta": "28 ஜெயண்ட்" },
+        { "name": "56 GIANT", "name_ta": "56 ஜெயண்ட்" },
+        { "name": "50 DELUXE", "name_ta": "50 டீலக்ஸ்" },
+        { "name": "4' 100 MEGA DELUXE", "name_ta": "4' 100 மெகா டீலக்ஸ்" }
+      ]
+    },
+    {
+      "name": "RED MAGIC CRACKERS",
+      "name_ta": "ரெட் மேஜிக் கிராக்கர்ஸ்",
+      "products": [
+        { "name": "1K", "name_ta": "1K" },
+        { "name": "2K", "name_ta": "2K" },
+        { "name": "5K", "name_ta": "5K" },
+        { "name": "10K", "name_ta": "10K" },
+        { "name": "1K (BRAND)", "name_ta": "1K (பிராண்ட்)" },
+        { "name": "2K (BRAND)", "name_ta": "2K (பிராண்ட்)" },
+        { "name": "5K (BRAND)", "name_ta": "5K (பிராண்ட்)" },
+        { "name": "10K (BRAND)", "name_ta": "10K (பிராண்ட்)" }
+      ]
+    },
+    {
+      "name": "MEGA FANCY OUT",
+      "name_ta": "மெகா ஃபேன்சி அவுட்",
+      "products": [
+        { "name": "SKY SHOT", "name_ta": "ஸ்கை ஷாட்" },
+        { "name": "2' ARIAL FANCY", "name_ta": "2' ஏரியல் ஃபேன்சி" },
+        {
+          "name": "2' ARIAL FANCY (2 PCS)",
+          "name_ta": "2' ஏரியல் ஃபேன்சி (2 பீஸ்)"
+        },
+        {
+          "name": "2' ARIAL FANCY (3 PCS)",
+          "name_ta": "2' ஏரியல் ஃபேன்சி (3 பீஸ்)"
+        },
+        {
+          "name": "2 1/2' GAME OF THRONES (3 PCS)",
+          "name_ta": "2 1/2' கேம் ஆஃப் த்ரோன்ஸ் (3 பீஸ்)"
+        },
+        {
+          "name": "3 1/2' HARRY POTTER (2 PCS)",
+          "name_ta": "3 1/2' ஹாரி பாட்டர் (2 பீஸ்)"
+        },
+        { "name": "3 1/2 ARIAL FANCY", "name_ta": "3 1/2 ஏரியல் ஃபேன்சி" },
+        {
+          "name": "3 1/2 GUN OUT (ULTRA SOUND)",
+          "name_ta": "3 1/2 கன் அவுட் (அல்ட்ரா சவுண்ட்)"
+        },
+        { "name": "4' ARIAL FANCY", "name_ta": "4' ஏரியல் ஃபேன்சி" },
+        { "name": "4' PIPE (ULTRA SHOW)", "name_ta": "4' பைப் (அல்ட்ரா ஷோ)" },
+        { "name": "5' PIPE FANCY", "name_ta": "5' பைப் ஃபேன்சி" },
+        {
+          "name": "5' FANCY (ULTRA SHOW)",
+          "name_ta": "5' ஃபேன்சி (அல்ட்ரா ஷோ)"
+        }
+      ]
+    },
+    {
+      "name": "MULTI COLOUR SKY SHOT",
+      "name_ta": "மல்டி கலர் ஸ்கை ஷாட்",
+      "products": [
+        { "name": "12 SHOT", "name_ta": "12 ஷாட்" },
+        { "name": "25 SHOT", "name_ta": "25 ஷாட்" },
+        {
+          "name": "30 SHOT MULTI COLOUR (GOLD)",
+          "name_ta": "30 ஷாட் மல்டி கலர் (கோல்டு)"
+        },
+        {
+          "name": "60 SHOT MULTI COLOUR (GOLD)",
+          "name_ta": "60 ஷாட் மல்டி கலர் (கோல்டு)"
+        },
+        {
+          "name": "120 SHOT MULTI COLOUR (GOLD)",
+          "name_ta": "120 ஷாட் மல்டி கலர் (கோல்டு)"
+        },
+        {
+          "name": "240 SHOT MULTI COLOUR (GOLD)",
+          "name_ta": "240 ஷாட் மல்டி கலர் (கோல்டு)"
+        },
+        {
+          "name": "30 SHOT MULTI COLOUR (PREMIUM)",
+          "name_ta": "30 ஷாட் மல்டி கலர் (பிரீமியம்)"
+        },
+        {
+          "name": "60 SHOT MULTI COLOUR (PREMIUM)",
+          "name_ta": "60 ஷாட் மல்டி கலர் (பிரீமியம்)"
+        },
+        {
+          "name": "120 SHOT MULTI COLOUR (PREMIUM)",
+          "name_ta": "120 ஷாட் மல்டி கலர் (பிரீமியம்)"
+        },
+        {
+          "name": "240 SHOT MULTI COLOUR (PREMIUM)",
+          "name_ta": "240 ஷாட் மல்டி கலர் (பிரீமியம்)"
+        },
+        { "name": "HAND SHOT (50 SHOT)", "name_ta": "ஹேண்ட் ஷாட் (50 ஷாட்)" }
+      ]
+    },
+    {
+      "name": "FANCY FOUNTAINS",
+      "name_ta": "ஃபேன்சி ஃபவுண்டெயின்ஸ்",
+      "products": [
+        { "name": "KITKAT", "name_ta": "கிட்கேட்" },
+        { "name": "SNAKE TABLET", "name_ta": "ஸ்நேக் டேப்லெட்" },
+        { "name": "BUTTERFLY (10 PCS)", "name_ta": "பட்டர்ஃப்ளை (10 பீஸ்)" },
+        { "name": "GANGA JAMUNA", "name_ta": "கங்கா ஜமுனா" },
+        { "name": "WHITE HOUSE", "name_ta": "வைட் ஹவுஸ்" },
+        { "name": "TOM & JERRY 5 PCS", "name_ta": "டாம் & ஜெர்ரி 5 பீஸ்" },
+        {
+          "name": "MASTER TREAT CRACKLING",
+          "name_ta": "மாஸ்டர் ட்ரீட் கிராக்லிங்"
+        },
+        { "name": "HELICOPTER", "name_ta": "ஹெலிகாப்டர்" },
+        {
+          "name": "DANCING BAMBARAM (5 PCS)",
+          "name_ta": "டான்சிங் பம்பரம் (5 பீஸ்)"
+        },
+        { "name": "BINGO SHOWER (5 PCS)", "name_ta": "பிங்கோ ஷவர் (5 பீஸ்)" },
+        {
+          "name": "TIN BEER (RED, GREEN, CRACKLING)",
+          "name_ta": "டின் பீர் (ரெட், கிரீன், கிராக்லிங்)"
+        },
+        { "name": "MAYAJAAL (5 PCS)", "name_ta": "மாயாஜால் (5 பீஸ்)" },
+        {
+          "name": "PEACOCK (RED, GREEN, GOLD)",
+          "name_ta": "பீகாக் (ரெட், கிரீன், கோல்டு)"
+        },
+        { "name": "PENTA FANCY (5 PCS)", "name_ta": "பென்டா ஃபேன்சி (5 பீஸ்)" },
+        {
+          "name": "RAINBOW COLOUR SMOKE (3 PCS)",
+          "name_ta": "ரெயின்போ கலர் ஸ்மோக் (3 பீஸ்)"
+        },
+        { "name": "MEGA SIREN (3 PCS)", "name_ta": "மெகா சைரன் (3 பீஸ்)" },
+        { "name": "SILVER MOON", "name_ta": "சில்வர் மூன்" },
+        {
+          "name": "PHOTO FLASH (5 PCS)",
+          "name_ta": "ஃபோட்டோ ஃப்ளாஷ் (5 பீஸ்)"
+        },
+        { "name": "X Max (3 PCS)", "name_ta": "எக்ஸ் மேக்ஸ் (3 பீஸ்)" },
+        { "name": "Ice Age Snow Flake", "name_ta": "ஐஸ் ஏஜ் ஸ்னோ ஃப்ளேக்" },
+        { "name": "SKY WINGS MIX", "name_ta": "ஸ்கை விங்ஸ் மிக்ஸ்" },
+        { "name": "CHIKOO BUNTY MIX", "name_ta": "சிக்கூ பன்டி மிக்ஸ்" },
+        { "name": "SEA LASER MIX", "name_ta": "ஸீ லேசர் மிக்ஸ்" },
+        {
+          "name": "CHHOTU TRICOLOUR FOUNTAIN (5 PCS)",
+          "name_ta": "சோட்டு ட்ரைகலர் ஃபவுண்டெயின் (5 பீஸ்)"
+        },
+        {
+          "name": "TRICOLOUR FOUNTAIN (5 PCS)",
+          "name_ta": "ட்ரைகலர் ஃபவுண்டெயின் (5 பீஸ்)"
+        },
+        { "name": "FIRE EGG (2 PCS)", "name_ta": "ஃபயர் எக் (2 பீஸ்)" },
+        { "name": "VEL 2 PCS", "name_ta": "வேல் 2 பீஸ்" },
+        {
+          "name": "WATER QUEEN (COLD PYRO)",
+          "name_ta": "வாட்டர் குயின் (கோல்ட் பைரோ)"
+        },
+        { "name": "BADA PEACOCK", "name_ta": "படா பீகாக்" },
+        {
+          "name": "MAGIC SHOW MONEY PAPER (2 PCS)",
+          "name_ta": "மேஜிக் ஷோ மணி பேப்பர் (2 பீஸ்)"
+        },
+        { "name": "APPLE - MIX", "name_ta": "ஆப்பிள் - மிக்ஸ்" },
+        {
+          "name": "Shin chan (TRICOLOUR FOUNTAINS)",
+          "name_ta": "ஷின் சான் (ட்ரைகலர் ஃபவுண்டெயின்ஸ்)"
+        },
+        {
+          "name": "RAJAKALA MEGA FOUNTAIN",
+          "name_ta": "ராஜகலா மெகா ஃபவுண்டெயின்"
+        },
+        { "name": "DHANDIYA PEACOCK", "name_ta": "தண்டியா பீகாக்" },
+        {
+          "name": "KURKURE MIX (10 SMOKE SHOT)",
+          "name_ta": "குர்குரே மிக்ஸ் (10 ஸ்மோக் ஷாட்)"
+        },
+        { "name": "ORANGE FOUNTAIN", "name_ta": "ஆரஞ்ச் ஃபவுண்டெயின்" },
+        {
+          "name": "STRAWBERRY FOUNTAIN",
+          "name_ta": "ஸ்ட்ராபெர்ரி ஃபவுண்டெயின்"
+        },
+        { "name": "PINEAPPLE FOUNTAIN", "name_ta": "பைனாப்பிள் ஃபவுண்டெயின்" },
+        { "name": "PUMPKIN FOUNTAIN", "name_ta": "பம்ப்கின் ஃபவுண்டெயின்" },
+        { "name": "CYLINDER BOMB", "name_ta": "சிலிண்டர் பாம்" }
+      ]
+    },
+    {
+      "name": "BIJILI",
+      "name_ta": "பிஜிலி",
+      "products": [
+        {
+          "name": "RED BIJILI 50 PCS (GOLD PKT)",
+          "name_ta": "ரெட் பிஜிலி 50 பீஸ் (கோல்டு பாக்கெட்)"
+        },
+        {
+          "name": "RED BIJILI 100 PCS (GOLD PKT)",
+          "name_ta": "ரெட் பிஜிலி 100 பீஸ் (கோல்டு பாக்கெட்)"
+        }
+      ]
+    },
+    {
+      "name": "ROCKET",
+      "name_ta": "ராக்கெட்",
+      "products": [
+        { "name": "BABY ROCKET", "name_ta": "பேபி ராக்கெட்" },
+        { "name": "BOMB ROCKET", "name_ta": "பாம் ராக்கெட்" },
+        { "name": "LUNIC ROCKET", "name_ta": "லுனிக் ராக்கெட்" },
+        { "name": "WHISTLING ROCKET", "name_ta": "விஸ்லிங் ராக்கெட்" }
+      ]
+    },
+    {
+      "name": "GIFT BOX",
+      "name_ta": "கிஃப்ட் பாக்ஸ்",
+      "products": [
+        {
+          "name": "GIFT BOX (18 ITEMS)",
+          "name_ta": "கிஃப்ட் பாக்ஸ் (18 ஐட்டம்ஸ்)"
+        },
+        {
+          "name": "GIFT BOX (21 ITEMS)",
+          "name_ta": "கிஃப்ட் பாக்ஸ் (21 ஐட்டம்ஸ்)"
+        },
+        {
+          "name": "GIFT BOX (30 ITEMS)",
+          "name_ta": "கிஃப்ட் பாக்ஸ் (30 ஐட்டம்ஸ்)"
+        },
+        {
+          "name": "GIFT BOX (40 ITEMS)",
+          "name_ta": "கிஃப்ட் பாக்ஸ் (40 ஐட்டம்ஸ்)"
+        },
+        {
+          "name": "GIFT BOX (50 ITEMS)",
+          "name_ta": "கிஃப்ட் பாக்ஸ் (50 ஐட்டம்ஸ்)"
+        },
+        {
+          "name": "GIFT BOX (60 ITEMS)",
+          "name_ta": "கிஃப்ட் பாக்ஸ் (60 ஐட்டம்ஸ்)"
+        }
+      ]
+    },
+    {
+      "name": "MATCH BOX",
+      "name_ta": "மேட்ச் பாக்ஸ்",
+      "products": [
+        { "name": "ANNAM", "name_ta": "அன்னம்" },
+        { "name": "HERO (LAPTOP BOX)", "name_ta": "ஹீரோ (லேப்டாப் பாக்ஸ்)" },
+        { "name": "ROYAL SUPER MEGA", "name_ta": "ராயல் சூப்பர் மெகா" }
+      ]
+    },
+    {
+      "name": "GUN",
+      "name_ta": "கன்",
+      "products": [
+        { "name": "GUN SMALL", "name_ta": "கன் ஸ்மால்" },
+        { "name": "GUN MEDIUM", "name_ta": "கன் மீடியம்" },
+        { "name": "GUN BIG", "name_ta": "கன் பிக்" },
+        { "name": "GUN BADA BIG", "name_ta": "கன் படா பிக்" },
+        { "name": "ROLL CAP", "name_ta": "ரோல் கேப்" },
+        { "name": "RING CAP", "name_ta": "ரிங் கேப்" },
+        { "name": "POP-POP", "name_ta": "பாப்-பாப்" }
+      ]
+    }
+  ]
+}

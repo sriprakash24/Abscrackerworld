@@ -1,12 +1,13 @@
-import { forwardRef, useEffect, useRef, useState } from "react";
-import { Sparkles } from "lucide-react";
-import { LazyLoadImage } from "react-lazy-load-image-component";
-import SectionHead from "./SectionHead";
-import CategoryQuickNav from "./CategoryQuickNav";
-import ProductCard from "../category/ProductCard";
-import FestiveBackdrop from "../ui/FestiveBackdrop";
-import { useProducts } from "../../contexts/ProductsContext";
-import { getCategoryTheme } from "../../utils/categoryTheme";
+import { forwardRef, useEffect, useRef, useState } from 'react';
+import { Sparkles, Search } from 'lucide-react';
+import { LazyLoadImage } from 'react-lazy-load-image-component';
+import SectionHead from './SectionHead';
+import CategoryQuickNav from './CategoryQuickNav';
+import CategoryIcon from './CategoryIcon';
+import ProductCard from '../category/ProductCard';
+import FestiveBackdrop from '../ui/FestiveBackdrop';
+import { useProducts } from '../../contexts/ProductsContext';
+import { getCategoryTheme } from '../../utils/categoryTheme';
 
 // One category's product grid, always expanded, with its own sticky
 // header. The header pins to the top of the scroll area while its
@@ -15,7 +16,7 @@ import { getCategoryTheme } from "../../utils/categoryTheme";
 // browsing (and what's coming up next). Each category gets its own
 // accent color (see utils/categoryTheme) so sections read as visually
 // distinct instead of blending into one uniform dark/orange block.
-function CategorySection({ category, headerRef, isActive }) {
+function CategorySection({ category, headerRef, isActive, onOpenSearch }) {
   const theme = getCategoryTheme(category.name);
 
   // Rough placeholder height for `content-visibility: auto` below — only
@@ -23,8 +24,7 @@ function CategorySection({ category, headerRef, isActive }) {
   // doesn't jump around as sections further down the list get skipped.
   // Doesn't need to be exact, just in the right ballpark (2-col grid).
   const estimatedRows = Math.ceil(category.items.length / 2);
-  const estimatedHeight =
-    70 + estimatedRows * 195 + Math.max(estimatedRows - 1, 0) * 12;
+  const estimatedHeight = 70 + estimatedRows * 195 + Math.max(estimatedRows - 1, 0) * 12;
 
   return (
     <div
@@ -36,25 +36,30 @@ function CategorySection({ category, headerRef, isActive }) {
         // they're near the viewport — this is the fix for "N categories'
         // worth of cards all costing scroll performance at once" (see
         // ProductCard.jsx for why each card isn't cheap on its own).
-        contentVisibility: "auto",
+        contentVisibility: 'auto',
         containIntrinsicHeight: `${estimatedHeight}px`,
       }}
     >
+      {/* Sticky category header — one single card, not two mismatched
+          boxes. Search lives inside it now, as a highlighted icon at the
+          end of the same row (same background/border as the rest of the
+          card — just its own accent color so it still reads as tappable). */}
       <div
         ref={headerRef}
         data-slug={category.slug}
-        className="sticky top-2 z-20 mb-3 overflow-hidden rounded-2xl"
+        className="sticky top-2 z-20 mb-3 relative overflow-hidden rounded-2xl"
         style={{
           border: `1px solid ${theme.solid}55`,
           boxShadow: `0 10px 22px -10px rgba(0,0,0,0.65), 0 0 18px ${theme.solid}30`,
         }}
       >
-        {/* Full-bleed photo backdrop — the first product's photo, so the
-            row feels alive instead of a flat text bar. Falls back to a
+        {/* Full-bleed photo backdrop — the category's own thumbnail when
+            the admin has set one, otherwise the first product's photo, so
+            the row feels alive instead of a flat text bar. Falls back to a
             plain theme-tinted background if no image is available yet. */}
-        {category.items[0]?.img ? (
+        {category.image || category.items[0]?.img ? (
           <LazyLoadImage
-            src={category.items[0].img}
+            src={category.image || category.items[0].img}
             alt=""
             wrapperClassName="!absolute !inset-0 !block"
             className="absolute inset-0 h-full w-full object-cover"
@@ -62,9 +67,7 @@ function CategorySection({ category, headerRef, isActive }) {
         ) : (
           <div
             className="absolute inset-0"
-            style={{
-              background: `radial-gradient(circle at 70% 40%, ${theme.from}33, #1c0201)`,
-            }}
+            style={{ background: `radial-gradient(circle at 70% 40%, ${theme.from}33, #1c0201)` }}
           />
         )}
 
@@ -89,9 +92,9 @@ function CategorySection({ category, headerRef, isActive }) {
             className="pointer-events-none absolute inset-0 animate-shimmer"
             style={{
               background: `linear-gradient(110deg, transparent 25%, ${theme.solid}40 50%, transparent 75%)`,
-              backgroundSize: "250% 100%",
-              animationDuration: "4.5s",
-              mixBlendMode: "screen",
+              backgroundSize: '250% 100%',
+              animationDuration: '4.5s',
+              mixBlendMode: 'screen',
             }}
           />
         )}
@@ -99,7 +102,7 @@ function CategorySection({ category, headerRef, isActive }) {
         <div className="relative z-10 flex items-center justify-between gap-2 px-3.5 py-2.5">
           <div className="flex min-w-0 items-center gap-2.5">
             <span
-              className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[17px]"
+              className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl text-[17px]"
               style={{
                 background: `radial-gradient(circle at 32% 26%, ${theme.from}33 0%, #171009 62%, #0a0705 100%)`,
                 border: `1px solid ${theme.solid}80`,
@@ -111,20 +114,29 @@ function CategorySection({ category, headerRef, isActive }) {
                   active section's icon breathes, the rest stay static */}
               {isActive && (
                 <span
-                  className="pointer-events-none absolute inset-0 animate-glow-pulse rounded-xl"
+                  className="pointer-events-none absolute inset-0 z-10 animate-glow-pulse rounded-xl"
                   style={{ boxShadow: `0 0 0 1px ${theme.solid}66` }}
                 />
               )}
-              {category.icon}
+              <CategoryIcon
+                image={category.image}
+                icon={category.icon}
+                name={category.name}
+                className="flex h-full w-full items-center justify-center leading-none"
+              />
             </span>
-            <span
-              className="text-embossed truncate text-[13px] font-extrabold uppercase tracking-wide"
-              style={{
-                color: theme.from,
-                textShadow: "0 2px 6px rgba(0,0,0,0.8)",
-              }}
-            >
-              {category.name}
+            <span className="min-w-0">
+              <span
+                className="text-embossed block truncate text-[13px] font-extrabold uppercase tracking-wide"
+                style={{ color: theme.from, textShadow: '0 2px 6px rgba(0,0,0,0.8)' }}
+              >
+                {category.name}
+              </span>
+              {category.nameTa && (
+                <span className="block truncate text-[10.5px] font-semibold text-[#f2ece2]/80">
+                  {category.nameTa}
+                </span>
+              )}
             </span>
           </div>
 
@@ -138,6 +150,22 @@ function CategorySection({ category, headerRef, isActive }) {
           >
             {category.items.length} items
           </span>
+
+          {/* Search — at the very end of the same card, in the gold
+              accent color so it stands out as its own tappable thing
+              without needing a separate panel next to the card. */}
+          <button
+            type="button"
+            onClick={onOpenSearch}
+            aria-label="Search products"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+            style={{
+              background: 'linear-gradient(180deg,#ffd54f,#ff9a00)',
+              boxShadow: '0 1px 0 rgba(255,255,255,.35) inset, 0 0 12px rgba(255,180,0,.55)',
+            }}
+          >
+            <Search size={14} strokeWidth={2.6} className="text-[#2a1400]" />
+          </button>
         </div>
       </div>
 
@@ -150,7 +178,7 @@ function CategorySection({ category, headerRef, isActive }) {
   );
 }
 
-const CategoryGrid = forwardRef(function CategoryGrid(_, ref) {
+const CategoryGrid = forwardRef(function CategoryGrid({ onOpenSearch }, ref) {
   const { categories, loading } = useProducts();
   const [activeSlug, setActiveSlug] = useState(null);
   const headerRefs = useRef({});
@@ -168,19 +196,15 @@ const CategoryGrid = forwardRef(function CategoryGrid(_, ref) {
       },
       // Fires the moment a header crosses just below the top of the
       // scroll area — i.e. the moment it "takes over" as the sticky one.
-      { rootMargin: "-8px 0px -85% 0px", threshold: 0 },
+      { rootMargin: '-8px 0px -85% 0px', threshold: 0 }
     );
 
-    Object.values(headerRefs.current).forEach(
-      (el) => el && observer.observe(el),
-    );
+    Object.values(headerRefs.current).forEach((el) => el && observer.observe(el));
     return () => observer.disconnect();
   }, [categories]);
 
   const handleJump = (slug) => {
-    document
-      .getElementById(`category-section-${slug}`)
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    document.getElementById(`category-section-${slug}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   // Lets the home search bar (and anything else) land on a specific
@@ -197,18 +221,18 @@ const CategoryGrid = forwardRef(function CategoryGrid(_, ref) {
         setTimeout(() => {
           const el = document.getElementById(`product-card-${productId}`);
           if (!el) return;
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-          el.classList.remove("search-highlight");
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.classList.remove('search-highlight');
           // restart the animation even if it was already applied recently
           void el.offsetWidth;
-          el.classList.add("search-highlight");
-          setTimeout(() => el.classList.remove("search-highlight"), 1800);
+          el.classList.add('search-highlight');
+          setTimeout(() => el.classList.remove('search-highlight'), 1800);
         }, 80);
       });
     }
 
-    window.addEventListener("abs-search-jump", onSearchJump);
-    return () => window.removeEventListener("abs-search-jump", onSearchJump);
+    window.addEventListener('abs-search-jump', onSearchJump);
+    return () => window.removeEventListener('abs-search-jump', onSearchJump);
   }, []);
 
   return (
@@ -223,20 +247,12 @@ const CategoryGrid = forwardRef(function CategoryGrid(_, ref) {
       <SectionHead
         title={
           <span className="inline-flex items-center gap-1.5">
-            <Sparkles
-              size={12}
-              className="text-gold"
-              style={{ filter: "drop-shadow(0 0 4px rgba(255,213,79,.6))" }}
-            />
+            <Sparkles size={12} className="text-gold" style={{ filter: 'drop-shadow(0 0 4px rgba(255,213,79,.6))' }} />
             Shop by Category
-            <Sparkles
-              size={12}
-              className="text-gold"
-              style={{ filter: "drop-shadow(0 0 4px rgba(255,213,79,.6))" }}
-            />
+            <Sparkles size={12} className="text-gold" style={{ filter: 'drop-shadow(0 0 4px rgba(255,213,79,.6))' }} />
           </span>
         }
-        action={loading ? "Loading…" : `${categories.length} Categories ›`}
+        action={loading ? 'Loading…' : `${categories.length} Categories ›`}
       />
 
       <div className="flex flex-col gap-6">
@@ -245,6 +261,7 @@ const CategoryGrid = forwardRef(function CategoryGrid(_, ref) {
             key={cat.slug}
             category={cat}
             isActive={cat.slug === activeSlug}
+            onOpenSearch={onOpenSearch}
             headerRef={(el) => {
               headerRefs.current[cat.slug] = el;
             }}
@@ -252,11 +269,7 @@ const CategoryGrid = forwardRef(function CategoryGrid(_, ref) {
         ))}
       </div>
 
-      <CategoryQuickNav
-        categories={categories}
-        activeSlug={activeSlug}
-        onJump={handleJump}
-      />
+      <CategoryQuickNav categories={categories} activeSlug={activeSlug} onJump={handleJump} />
     </div>
   );
 });

@@ -111,12 +111,16 @@ export default function SearchBar({ products = [] }) {
         className={cn(
           'relative flex items-center gap-2.5 rounded-[14px] px-3.5 py-3 transition-all duration-300',
           !focused &&
-            'border border-gold/35 shadow-[0_2px_10px_rgba(0,0,0,.5)_inset,0_0_0_1px_rgba(255,213,79,.08),0_4px_18px_-6px_rgba(255,154,0,.28)]',
+            'border border-gold/70 shadow-[0_2px_10px_rgba(0,0,0,.45)_inset,0_0_0_1px_rgba(255,213,79,.18),0_4px_20px_-4px_rgba(255,154,0,.45)]',
           focused &&
-            'border border-gold shadow-[0_0_0_3px_rgba(255,180,0,.22),0_0_22px_rgba(255,154,0,.4),0_2px_10px_rgba(0,0,0,.5)_inset]'
+            'border border-gold shadow-[0_0_0_3px_rgba(255,180,0,.3),0_0_26px_rgba(255,154,0,.55),0_2px_10px_rgba(0,0,0,.45)_inset]'
         )}
         style={{
-          background: 'linear-gradient(180deg, rgba(58,10,14,.62), rgba(30,4,7,.7))',
+          // Was near-identical in tone to the page's own #220000 background
+          // (same dark-maroon family, low contrast) — this pulls the fill
+          // noticeably lighter/warmer so the bar reads as its own surface
+          // rather than blending into whatever's behind it.
+          background: 'linear-gradient(180deg, rgba(120,42,24,.88), rgba(72,20,14,.92))',
           backdropFilter: 'blur(12px) saturate(150%)',
           WebkitBackdropFilter: 'blur(12px) saturate(150%)',
         }}
@@ -136,7 +140,7 @@ export default function SearchBar({ products = [] }) {
           type="text"
           value={value}
           placeholder="Search crackers, packs..."
-          className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-[#e8ddce]/60"
+          className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-[#f2e9da]/80"
           onFocus={() => {
             setFocused(true);
             if (value.trim()) setShowResults(true);
@@ -222,6 +226,9 @@ export default function SearchBar({ products = [] }) {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[12px] font-bold text-[#f2ece2]">{p.name}</span>
+                    {p.nameTa && (
+                      <span className="block truncate text-[10px] font-semibold text-gold">{p.nameTa}</span>
+                    )}
                     <span className="block text-[10px] text-muted">{p.category}</span>
                   </span>
                   <span className="shrink-0 text-[12px] font-extrabold text-gold">₹{p.sale}</span>

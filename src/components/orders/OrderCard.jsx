@@ -1,14 +1,16 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/opacity.css';
-import { ChevronDown, Copy, MapPin, MessageCircleMore, Download, Loader2 } from 'lucide-react';
+import { ChevronDown, Copy, MapPin, MessageCircleMore, Download, Loader2, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { getOrderStatusMeta, normalizeOrderStage } from '../../constants/orderStatusMeta';
 import OrderStatusStepper from '../checkout/OrderStatusStepper';
+import EditOrderModal from './EditOrderModal';
 import { db } from '../../firebase/config';
 import { getInvoice } from '../../services/invoicesFirestore';
 import { generateInvoicePdf } from '../../utils/generateInvoicePdf';
+import { useProducts } from '../../contexts/ProductsContext';
 
 function formatOrderDate(createdAt) {
   const date = createdAt?.toDate ? createdAt.toDate() : createdAt ? new Date(createdAt) : null;
@@ -19,10 +21,25 @@ function formatOrderDate(createdAt) {
 export default function OrderCard({ order, delay = 0 }) {
   const [open, setOpen] = useState(false);
   const [downloadingInvoice, setDownloadingInvoice] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const { products } = useProducts();
   const items = order.cartItems || [];
+  // Older orders were placed before item.nameTa started being snapshotted
+  // at checkout (see ordersFirestore.js) — fall back to the live catalog
+  // by productId so those orders still show the Tamil name.
+  const nameTaById = useMemo(
+    () => Object.fromEntries(products.map((p) => [p.id, p.nameTa])),
+    [products]
+  );
   const statusMeta = getOrderStatusMeta(order.status);
   const stage = normalizeOrderStage(order.orderStage, order.status);
   const isCancelled = order.status === 'CANCELLED';
+  // Manual-payment flow: the order sits at AWAITING_ADMIN_CONFIRMATION
+  // until the team confirms payment came through. Editing is only safe
+  // in that window — once it's CONFIRMED (or moved further) the order's
+  // already been acted on, so the button disappears entirely rather than
+  // just disabling, to avoid implying it might still work.
+  const canEdit = order.status === 'AWAITING_ADMIN_CONFIRMATION';
 
   const handleDownloadInvoice = async () => {
     if (!order.invoiceId || downloadingInvoice) return;
@@ -140,6 +157,11 @@ export default function OrderCard({ order, delay = 0 }) {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="line-clamp-1 text-[11.5px] font-bold text-[#f2ece2]">{item.name}</div>
+                      {(item.nameTa || nameTaById[item.productId]) && (
+                        <div className="line-clamp-1 text-[10px] font-semibold text-gold">
+                          {item.nameTa || nameTaById[item.productId]}
+                        </div>
+                      )}
                       <div className="mt-0.5 text-[10px] text-muted">
                         Qty {item.quantity} × ₹{item.unitPrice}
                       </div>
@@ -164,6 +186,17 @@ export default function OrderCard({ order, delay = 0 }) {
                 <div className="flex justify-center">
                   <OrderStatusStepper currentStageId={stage} delay={0.05} />
                 </div>
+              )}
+
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={() => setEditOpen(true)}
+                  className="btn-3d flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[11.5px] font-extrabold text-white"
+                >
+                  <Pencil size={13} />
+                  Edit Order
+                </button>
               )}
 
               {order.invoiceId && (
@@ -197,6 +230,14 @@ export default function OrderCard({ order, delay = 0 }) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <EditOrderModal
+        open={editOpen}
+        order={order}
+        products={products}
+        onClose={() => setEditOpen(false)}
+        onSaved={() => {}}
+      />
     </motion.div>
   );
 }

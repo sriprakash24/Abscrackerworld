@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import TopBar from '../components/home/TopBar';
@@ -8,6 +8,7 @@ import TrustStrip from '../components/home/TrustStrip';
 import CategoryGrid from '../components/home/CategoryGrid';
 import FloatingButtons from '../components/home/FloatingButtons';
 import BottomNav from '../components/home/BottomNav';
+import QuickSearchOverlay from '../components/home/QuickSearchOverlay';
 import EmberParticles from '../components/ui/EmberParticles';
 import { useProducts } from '../contexts/ProductsContext';
 
@@ -21,6 +22,7 @@ export default function Home() {
   const navigate = useNavigate();
   const location = useLocation();
   const { products } = useProducts();
+  const [quickSearchOpen, setQuickSearchOpen] = useState(false);
 
   useEffect(() => {
     if (location.state?.scrollTo === 'categories') {
@@ -33,7 +35,7 @@ export default function Home() {
     <div className="relative min-h-screen w-full pb-28">
       <EmberParticles count={10} className="opacity-40" />
 
-      <TopBar />
+      <TopBar onOpenSearch={() => setQuickSearchOpen(true)} />
       <SearchBar products={products} />
       <HeroSlider />
       <motion.div initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.2 }} variants={fadeUp}>
@@ -44,10 +46,11 @@ export default function Home() {
           it's the main content of the page and must always be visible
           immediately, and a `transform`-animated ancestor here would also
           break `position: sticky` on the category headers inside it. */}
-      <CategoryGrid ref={categoryGridRef} />
+      <CategoryGrid ref={categoryGridRef} onOpenSearch={() => setQuickSearchOpen(true)} />
 
       <FloatingButtons />
       <BottomNav />
+      <QuickSearchOverlay open={quickSearchOpen} onClose={() => setQuickSearchOpen(false)} products={products} />
     </div>
   );
 }

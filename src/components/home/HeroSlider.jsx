@@ -25,7 +25,7 @@ export default function HeroSlider() {
   const [tick, setTick] = useState(0);
 
   return (
-    <div className="relative aspect-[16/9] w-full overflow-hidden">
+    <div className="relative aspect-[16/7] w-full overflow-hidden">
       <Swiper
         modules={[Autoplay, EffectFade]}
         effect="fade"
@@ -45,18 +45,14 @@ export default function HeroSlider() {
               type="button"
               onClick={() => toast('Full catalog coming soon')}
               className="block h-full w-full"
-              style={i === 0 ? { background: '#00030a' } : undefined}
             >
               <img
                 src={slide.image}
                 alt={slide.alt}
-                // Slide 1's artwork is a taller 3:2 poster with headline/offer
-                // text running edge-to-edge top and bottom — object-cover on
-                // this 16:9 rail was slicing that text off. object-contain
-                // shows the whole poster; the near-black backdrop above
-                // matches the artwork's own background so there's no visible
-                // letterbox bar. Slides 2–3 fit the rail fine as-is.
-                className={i === 0 ? 'h-full w-full object-contain' : 'h-full w-full object-cover'}
+                // Images are pre-cropped to the exact 16:7 frame aspect, so a
+                // plain edge-to-edge cover fills the rail with no letterbox
+                // bars and no further cropping needed.
+                className="h-full w-full object-cover"
                 loading={i === 0 ? 'eager' : 'lazy'}
               />
             </button>

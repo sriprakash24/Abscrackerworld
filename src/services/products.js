@@ -27,7 +27,9 @@ import {
   writeBatch,
   serverTimestamp,
   query,
+  where,
   orderBy,
+  limit,
 } from "firebase/firestore";
 import {
   getDownloadURL,
@@ -44,6 +46,7 @@ import {
 
 const PRODUCTS_COLLECTION = "products";
 const CATEGORIES_COLLECTION = "categories";
+const STOCK_MOVEMENTS_COLLECTION = "stockMovements";
 
 // Resolved Storage download-URL cache, keyed by path, so the same image
 // is never re-resolved across snapshots or re-renders.
@@ -91,6 +94,7 @@ async function normalizeProduct(id, raw) {
   return {
     id,
     name: raw.name || "Unnamed product",
+    nameTa: raw.name_ta || raw.nameTa || "",
     category: raw.category || "UNCATEGORISED",
     subcategory: raw.subcategory || "",
     unit: raw.unit || "",
@@ -150,30 +154,35 @@ export function subscribeToProducts(onData, onError) {
 
 /**
  * Live subscription to the `categories` collection — gives a
- * { [categoryName]: displayOrder } map (see scripts/seedProducts.mjs,
- * which writes categoryName + displayOrder per category from
- * src/starterData.js's CATEGORY_MASTER). Used to sort the category
- * grouping by the order set in that table, instead of by incidental
- * first-appearance in the product list.
+ * { [categoryName]: { displayOrder, nameTa } } map (see
+ * scripts/seedProducts.mjs, which writes categoryName + displayOrder +
+ * categoryName_ta per category from src/starterData.js's CATEGORY_MASTER).
+ * Used to sort the category grouping by the order set in that table
+ * (instead of by incidental first-appearance in the product list) and to
+ * attach each category's Tamil name.
  */
 export function subscribeToCategoryOrder(onData, onError) {
   return onSnapshot(
     collection(db, CATEGORIES_COLLECTION),
     (snapshot) => {
-      const order = {};
+      const meta = {};
       snapshot.docs.forEach((d) => {
         const data = d.data();
         if (data?.categoryName)
-          order[data.categoryName] = Number(data.displayOrder ?? 0);
+          meta[data.categoryName] = {
+            displayOrder: Number(data.displayOrder ?? 0),
+            nameTa: data.categoryName_ta || "",
+            image: data.image || "",
+          };
       });
-      onData(order);
+      onData(meta);
     },
     onError,
   );
 }
 
 /** Groups a flat product list into the CATEGORIES shape the UI renders. */
-export function groupByCategory(products, categoryOrder = {}) {
+export function groupByCategory(products, categoryMeta = {}) {
   const order = [];
   const map = new Map();
   for (const p of products) {
@@ -183,21 +192,29 @@ export function groupByCategory(products, categoryOrder = {}) {
     }
     map.get(p.category).push(p);
   }
-  // Sort by categoryOrder[name] when known (from the `categories` collection);
-  // categories not present there keep falling back to first-appearance order,
-  // placed after every category that does have an explicit order.
+  // Sort by categoryMeta[name].displayOrder when known (from the
+  // `categories` collection); categories not present there keep falling
+  // back to first-appearance order, placed after every category that does
+  // have an explicit order.
   const sorted = [...order].sort((a, b) => {
-    const hasA = Object.prototype.hasOwnProperty.call(categoryOrder, a);
-    const hasB = Object.prototype.hasOwnProperty.call(categoryOrder, b);
-    if (hasA && hasB) return categoryOrder[a] - categoryOrder[b];
+    const hasA = Object.prototype.hasOwnProperty.call(categoryMeta, a);
+    const hasB = Object.prototype.hasOwnProperty.call(categoryMeta, b);
+    if (hasA && hasB)
+      return categoryMeta[a].displayOrder - categoryMeta[b].displayOrder;
     if (hasA) return -1;
     if (hasB) return 1;
     return order.indexOf(a) - order.indexOf(b);
   });
   return sorted.map((name) => ({
     name,
+    nameTa: categoryMeta[name]?.nameTa || "",
     slug: slugify(name),
     icon: CATEGORY_ICONS[name] || "🎆",
+    // Admin-uploaded category thumbnail (see CategoryFormModal + the
+    // `categories` collection's `image` field). Falls back to "" so every
+    // storefront spot that renders it can fall back to the emoji icon
+    // above, exactly like ProductCard already does for product photos.
+    image: categoryMeta[name]?.image || "",
     tagline: CATEGORY_TAGLINES[name] || "Premium festival crackers",
     items: map.get(name),
   }));
@@ -282,6 +299,81 @@ export async function updateProductDoc(id, patch) {
 /** Deletes a product document by id. */
 export async function deleteProductDoc(id) {
   await deleteDoc(doc(db, PRODUCTS_COLLECTION, id));
+}
+
+/**
+ * Derives the 'in' | 'low' | 'out' badge from a raw quantity — the same
+ * 0 / ≤5 / else thresholds ProductFormModal uses on create/edit, kept here
+ * too so the Inventory screen's quick stock updates stay consistent with it.
+ */
+export function stockStatusForQty(qty) {
+  const n = Number(qty) || 0;
+  if (n <= 0) return 'out';
+  if (n <= 5) return 'low';
+  return 'in';
+}
+
+/**
+ * Sets a product's stock quantity directly (typed edit or +/- stepper on
+ * the admin Inventory screen) and re-derives the 'in'/'low'/'out' badge
+ * from it in the same write, so the two fields never drift apart.
+ * Also logs a stockMovements entry so every change is auditable — who
+ * changed it, when, and by how much.
+ */
+export async function setProductStockQty(id, qty, meta = {}) {
+  const stockQty = Math.max(0, Math.round(Number(qty) || 0));
+  const { previousQty, adminEmail, reason, productName } = meta;
+
+  const batch = writeBatch(db);
+  batch.update(doc(db, PRODUCTS_COLLECTION, id), {
+    stockQty,
+    stock: stockStatusForQty(stockQty),
+    updatedAt: serverTimestamp(),
+  });
+
+  if (typeof previousQty === "number" && previousQty !== stockQty) {
+    const movementRef = doc(collection(db, STOCK_MOVEMENTS_COLLECTION));
+    batch.set(movementRef, {
+      productId: id,
+      productName: productName || "",
+      previousQty,
+      newQty: stockQty,
+      delta: stockQty - previousQty,
+      type: stockQty > previousQty ? "increase" : "decrease",
+      reason: reason || "",
+      adminEmail: adminEmail || "",
+      createdAt: serverTimestamp(),
+    });
+  }
+
+  await batch.commit();
+}
+
+/**
+ * Adjusts a product's stock quantity by a positive or negative delta
+ * (e.g. +10 on restock, -1 from the quick stepper) relative to its last
+ * known quantity, clamped at 0. Logs the same audit trail as setProductStockQty.
+ */
+export async function adjustProductStockQty(id, currentQty, delta, meta = {}) {
+  const next = Math.max(0, Math.round((Number(currentQty) || 0) + delta));
+  await setProductStockQty(id, next, { ...meta, previousQty: Number(currentQty) || 0 });
+}
+
+/**
+ * Live-subscribes to the most recent stock-movement log entries, newest
+ * first — powers the Inventory screen's "Recent Stock Activity" feed.
+ * Pass a productId to scope it to one product's history instead.
+ */
+export function subscribeStockMovements(onData, onError, { productId, max = 30 } = {}) {
+  const constraints = [orderBy("createdAt", "desc"), limit(max)];
+  if (productId) constraints.unshift(where("productId", "==", productId));
+
+  const q = query(collection(db, STOCK_MOVEMENTS_COLLECTION), ...constraints);
+  return onSnapshot(
+    q,
+    (snapshot) => onData(snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))),
+    onError,
+  );
 }
 
 /**

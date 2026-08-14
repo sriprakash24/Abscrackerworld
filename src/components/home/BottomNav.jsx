@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, ClipboardList, Truck } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { useCartStore } from '../../store/useCartStore';
@@ -9,13 +8,23 @@ import navElephants from '../../assets/backgrounds/bottomnav-elephants.jpg';
 const LEFT_TABS = [{ key: 'home', label: 'HOME', icon: Home }, { key: 'orders', label: 'ORDERS', icon: ClipboardList }];
 const RIGHT_TABS = [{ key: 'cart', label: 'CART', icon: null }, { key: 'track', label: 'TRACK', icon: Truck }];
 
+// Route -> tab key, so the highlight always reflects where the user
+// actually is instead of only updating when they tap a tab from
+// *this* mounted copy of BottomNav.
+function tabForPath(pathname) {
+  if (pathname === '/cart') return 'cart';
+  if (pathname === '/orders') return 'orders';
+  if (pathname === '/track-order') return 'track';
+  return 'home';
+}
+
 export default function BottomNav() {
-  const [active, setActive] = useState('home');
   const navigate = useNavigate();
+  const location = useLocation();
+  const active = tabForPath(location.pathname);
   const count = useCartStore((s) => Object.values(s.cart).reduce((a, b) => a + b, 0));
 
   const goTab = (tab) => {
-    setActive(tab);
     if (tab === 'home') {
       navigate('/');
       document.getElementById('app-scroll')?.scrollTo({ top: 0, behavior: 'smooth' });

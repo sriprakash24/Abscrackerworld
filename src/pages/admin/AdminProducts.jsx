@@ -194,6 +194,9 @@ function ProductRow({ product, onEdit, onDelete }) {
 
       <div className="min-w-0 flex-1">
         <p className="truncate text-[12.5px] font-bold text-[#f2ece2]">{product.name}</p>
+        {product.nameTa && (
+          <p className="truncate text-[10px] font-semibold text-gold">{product.nameTa}</p>
+        )}
         <p className="truncate text-[10.5px] font-semibold text-muted">
           {product.category}
           {product.subcategory ? ` · ${product.subcategory}` : ''} · {product.unit}

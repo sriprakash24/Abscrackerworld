@@ -141,6 +141,7 @@ export default function CategoryListing() {
       <CategoryHeader
         categoryName={category.name}
         categoryIcon={category.icon}
+        categoryImage={category.image}
         productCount={filteredProducts.length}
         searchOpen={searchOpen}
         onToggleSearch={() => setSearchOpen((o) => !o)}
@@ -154,6 +155,7 @@ export default function CategoryListing() {
       <CategoryBanner
         name={category.name}
         icon={category.icon}
+        image={category.image}
         tagline={category.tagline}
         productCount={category.items.length}
       />

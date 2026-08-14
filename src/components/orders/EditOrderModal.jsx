@@ -1,20 +1,38 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, Minus, Plus, Search, Check } from 'lucide-react';
+import { X, Minus, Plus, Search, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { db } from '../../firebase/config';
+import { updateOrderItems } from '../../services/ordersFirestore';
 
 /**
- * Fast, category-wise way to add a batch of products to an invoice —
- * instead of adding one blank line at a time and hunting through a single
- * long dropdown for each one. Staff pick a category, tap + on however many
- * products they need (adjusting qty inline), then "Add N items" drops all
- * of them into the invoice at once. Built for phone-in orders with a lot of
- * line items (e.g. 30 products), where the old one-line-at-a-time flow was
- * slow.
+ * Lets a customer add/remove items on an order that's still awaiting
+ * admin confirmation (i.e. before payment) — see OrderCard's "Edit
+ * Order" button, which only shows while that's true. Same "search +
+ * category filter + inline qty stepper" pattern as the admin invoice
+ * product picker, themed for the customer-facing surfaces, so editing
+ * an order feels like a natural extension of browsing the shop rather
+ * than a bolted-on admin tool.
  */
-export default function InvoiceProductPickerModal({ open, products, onAdd, onClose }) {
+export default function EditOrderModal({ open, order, products, onClose, onSaved }) {
   const [category, setCategory] = useState('ALL');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState({}); // { [productId]: qty }
+  const [saving, setSaving] = useState(false);
+
+  // Seed the editable quantities from the order's current items every
+  // time the modal opens (not on every render) so re-opening after a
+  // cancelled edit starts fresh from what's actually saved.
+  useEffect(() => {
+    if (!open) return;
+    const initial = {};
+    (order?.cartItems || []).forEach((item) => {
+      initial[item.productId] = item.quantity;
+    });
+    setSelected(initial);
+    setSearch('');
+    setCategory('ALL');
+  }, [open, order]);
 
   const categories = useMemo(() => {
     const names = [];
@@ -33,29 +51,56 @@ export default function InvoiceProductPickerModal({ open, products, onAdd, onClo
     });
   }, [products, category, search]);
 
-  const selectedCount = Object.keys(selected).length;
-  const selectedTotalQty = Object.values(selected).reduce((sum, q) => sum + q, 0);
+  const productsById = useMemo(() => Object.fromEntries(products.map((p) => [String(p.id), p])), [products]);
 
   const setQty = (productId, qty) => {
     setSelected((prev) => {
       const next = { ...prev };
-      if (qty <= 0) delete next[productId];
-      else next[productId] = qty;
+      const product = productsById[productId];
+      const cap = product?.stockQty ?? 99;
+      const clamped = Math.max(0, Math.min(qty, cap));
+      if (clamped <= 0) delete next[productId];
+      else next[productId] = clamped;
       return next;
     });
   };
 
+  const selectedItems = useMemo(
+    () =>
+      Object.entries(selected)
+        .map(([productId, qty]) => {
+          const product = productsById[productId];
+          return product ? { product, qty } : null;
+        })
+        .filter(Boolean),
+    [selected, productsById]
+  );
+
+  const selectedCount = selectedItems.length;
+  const previewTotal = selectedItems.reduce((sum, { product, qty }) => sum + product.sale * qty, 0);
+
   const handleClose = () => {
-    setSelected({});
-    setSearch('');
-    setCategory('ALL');
+    if (saving) return;
     onClose();
   };
 
-  const handleAdd = () => {
-    if (selectedCount === 0) return;
-    onAdd(Object.entries(selected).map(([productId, qty]) => ({ productId, qty })));
-    handleClose();
+  const handleSave = async () => {
+    if (selectedCount === 0) {
+      toast.error('Add at least one product before saving.');
+      return;
+    }
+    setSaving(true);
+    try {
+      await updateOrderItems(db, order.id, selectedItems);
+      toast.success('Order updated');
+      onSaved?.();
+      onClose();
+    } catch (err) {
+      console.error('Failed to update order', err);
+      toast.error("Couldn't save your changes. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -65,21 +110,24 @@ export default function InvoiceProductPickerModal({ open, products, onAdd, onClo
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto bg-black/70 px-4 py-6"
+          className="fixed inset-0 z-[70] flex items-end justify-center bg-black/70 backdrop-blur-[2px] sm:items-center sm:px-4"
           onClick={handleClose}
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 12 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 12 }}
-            transition={{ duration: 0.2 }}
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 40 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
             onClick={(e) => e.stopPropagation()}
-            className="surface-3d flex w-full max-w-2xl flex-col rounded-2xl p-5 sm:p-6"
-            style={{ maxHeight: '85vh' }}
+            className="surface-3d flex w-full max-w-lg flex-col rounded-t-2xl p-5 sm:rounded-2xl"
+            style={{ maxHeight: '88vh' }}
           >
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-[15px] font-extrabold text-gradient-gold">Add products</h2>
-              <button onClick={handleClose} className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-muted">
+              <div>
+                <h2 className="text-[15px] font-extrabold text-gradient-gold">Edit Order</h2>
+                <p className="text-[10.5px] text-muted">{order?.orderId || order?.id}</p>
+              </div>
+              <button onClick={handleClose} aria-label="Close" className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-muted">
                 <X size={14} />
               </button>
             </div>
@@ -127,17 +175,9 @@ export default function InvoiceProductPickerModal({ open, products, onAdd, onClo
                       <div
                         key={p.id}
                         className={`flex items-center gap-2.5 rounded-xl border px-3 py-2 transition-colors ${
-                          qty > 0 ? 'border-orange/40 bg-orange/[0.06]' : 'border-white/10 bg-[#0c0906]'
+                          qty > 0 ? 'border-gold/45 bg-gold/[0.08]' : 'border-white/10 bg-[#0c0906]'
                         }`}
                       >
-                        <span
-                          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${
-                            qty > 0 ? 'border-orange/60 bg-orange/20 text-orange' : 'border-white/15 text-transparent'
-                          }`}
-                        >
-                          <Check size={12} />
-                        </span>
-
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-[11.5px] font-bold text-[#f2ece2]">{p.name}</div>
                           {p.nameTa && (
@@ -171,17 +211,25 @@ export default function InvoiceProductPickerModal({ open, products, onAdd, onClo
               )}
             </div>
 
-            <div className="mt-4 flex gap-2.5">
-              <button type="button" onClick={handleClose} className="btn-3d-outline flex-1 rounded-xl py-2.5 text-[12.5px] font-bold text-[#f2ece2]">
+            <div className="mt-4 flex items-center justify-between rounded-xl bg-black/20 px-3.5 py-2.5">
+              <span className="text-[10.5px] font-semibold text-muted">
+                {selectedCount} {selectedCount === 1 ? 'item' : 'items'}
+              </span>
+              <span className="text-[13px] font-extrabold text-gradient-gold">₹{previewTotal.toLocaleString('en-IN')}</span>
+            </div>
+
+            <div className="mt-3 flex gap-2.5">
+              <button type="button" onClick={handleClose} disabled={saving} className="btn-3d-outline flex-1 rounded-xl py-2.5 text-[12.5px] font-bold text-[#f2ece2] disabled:opacity-60">
                 Cancel
               </button>
               <button
                 type="button"
-                onClick={handleAdd}
-                disabled={selectedCount === 0}
+                onClick={handleSave}
+                disabled={saving || selectedCount === 0}
                 className="btn-3d flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-[12.5px] font-bold text-white disabled:opacity-50"
               >
-                Add {selectedCount > 0 ? `${selectedCount} product${selectedCount === 1 ? '' : 's'} (${selectedTotalQty} qty)` : 'products'}
+                {saving ? <Loader2 size={13} className="animate-spin" /> : null}
+                {saving ? 'Saving…' : 'Save Changes'}
               </button>
             </div>
           </motion.div>

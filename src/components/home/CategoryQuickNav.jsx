@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { getCategoryTheme } from "../../utils/categoryTheme";
+import CategoryIcon from "./CategoryIcon";
 
 const PREVIEW_VISIBLE_MS = 1700;
 const PREVIEW_CYCLE_MS = 2900;
@@ -9,14 +10,19 @@ const PREVIEW_CYCLE_MS = 2900;
 /** Center glyph for the launcher — a gentle breathing pulse. The spark
  * motion now lives in the `.beacon-ember-ring` orbiting the button itself
  * (see index.css), so this stays focused on the category icon. */
-function CenterGlyph({ glyph }) {
+function CenterGlyph({ image, glyph, name }) {
   return (
     <motion.span
-      className="relative text-[15px]"
+      className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-full text-[15px]"
       animate={{ scale: [1, 1.18, 1] }}
       transition={{ duration: 1.3, repeat: Infinity, ease: "easeInOut" }}
     >
-      {glyph}
+      <CategoryIcon
+        image={image}
+        icon={glyph}
+        name={name}
+        className="flex h-full w-full items-center justify-center leading-none"
+      />
     </motion.span>
   );
 }
@@ -115,7 +121,12 @@ export default function CategoryQuickNav({ categories, activeSlug, onJump }) {
                     color: previewTheme.from,
                   }}
                 >
-                  <span>{previewCategory.icon}</span>
+                  <CategoryIcon
+                    image={previewCategory.image}
+                    icon={previewCategory.icon}
+                    name={previewCategory.name}
+                    className="flex h-4 w-4 shrink-0 items-center justify-center overflow-hidden rounded-full leading-none"
+                  />
                   {previewCategory.name}
                 </motion.div>
               )}
@@ -132,7 +143,11 @@ export default function CategoryQuickNav({ categories, activeSlug, onJump }) {
               className="beacon-3d relative flex h-14 w-14 shrink-0 items-center justify-center !rounded-full"
             >
               <EmberRing />
-              <CenterGlyph glyph={previewCategory?.icon || "🎆"} />
+              <CenterGlyph
+                image={previewCategory?.image}
+                glyph={previewCategory?.icon || "🎆"}
+                name={previewCategory?.name}
+              />
             </motion.button>
           </div>
         )}
@@ -190,10 +205,15 @@ export default function CategoryQuickNav({ categories, activeSlug, onJump }) {
                     }
                   >
                     <span
-                      className="orb-3d flex h-8 w-8 shrink-0 items-center justify-center !rounded-lg text-[15px]"
+                      className="orb-3d flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden !rounded-lg text-[15px]"
                       style={{ border: `1px solid ${catTheme.solid}66` }}
                     >
-                      {cat.icon}
+                      <CategoryIcon
+                        image={cat.image}
+                        icon={cat.icon}
+                        name={cat.name}
+                        className="flex h-full w-full items-center justify-center leading-none"
+                      />
                     </span>
                     <span
                       className="line-clamp-2 text-[10.5px] font-bold leading-tight"

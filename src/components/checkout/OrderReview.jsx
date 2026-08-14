@@ -40,6 +40,9 @@ export default function OrderReview({ items }) {
 
               <div className="min-w-0 flex-1">
                 <div className="line-clamp-1 text-[12px] font-bold text-[#f2ece2]">{product.name}</div>
+                {product.nameTa && (
+                  <div className="line-clamp-1 text-[10px] font-semibold text-gold">{product.nameTa}</div>
+                )}
                 <div className="mt-0.5 text-[10px] text-muted">
                   Qty {qty} × ₹{product.sale}
                 </div>

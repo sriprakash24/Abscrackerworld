@@ -72,6 +72,7 @@ export function buildOrderPayload({ orderId, formValues, pricing }) {
     cartItems: pricing.items.map(({ product, qty }) => ({
       productId: product.id,
       name: product.name,
+      nameTa: product.nameTa || '',
       image: product.img || '',
       category: product.category,
       unitPrice: product.sale,
@@ -177,6 +178,56 @@ export function subscribeAllOrders(db, onChange, onError) {
 export async function updateOrderStatus(db, orderDocId, patch) {
   const ref = doc(db, 'orders', orderDocId);
   await updateDoc(ref, { ...patch, updatedAt: serverTimestamp() });
+}
+
+/**
+ * Recomputes order pricing from a plain list of { product, qty } — the
+ * same formulas useCartStore.getPricing() uses for the live cart, kept as
+ * a standalone function here so editing an already-placed order doesn't
+ * need to touch (or clobber) whatever's currently in the customer's cart.
+ * Note: any coupon originally applied at checkout isn't re-applied here —
+ * order docs only store the already-combined discount total, not which
+ * coupon code was used, so an edited order is repriced without one.
+ */
+export function computeOrderPricing(items) {
+  const PACKING_CHARGE_RATE = 0.03;
+  const subtotalMrp = items.reduce((sum, { product, qty }) => sum + product.mrp * qty, 0);
+  const subtotalSale = items.reduce((sum, { product, qty }) => sum + product.sale * qty, 0);
+  const discount = Math.max(0, subtotalMrp - subtotalSale);
+  const packingCharges = Math.round(subtotalSale * PACKING_CHARGE_RATE);
+  const grandTotal = Math.max(0, subtotalSale + packingCharges);
+
+  return {
+    cartItems: items.map(({ product, qty }) => ({
+      productId: product.id,
+      name: product.name,
+      nameTa: product.nameTa || '',
+      image: product.img || '',
+      category: product.category,
+      unitPrice: product.sale,
+      mrp: product.mrp,
+      quantity: qty,
+      lineTotal: product.sale * qty,
+    })),
+    subtotal: subtotalMrp,
+    discount,
+    packingCharges,
+    deliveryCharges: 0,
+    grandTotal,
+    totalSavings: discount,
+  };
+}
+
+/**
+ * Applies a customer-driven item edit to orders/{orderDocId} — only ever
+ * called while the order is still AWAITING_ADMIN_CONFIRMATION (see
+ * EditOrderModal / OrderCard), so this never touches `status`. Recomputes
+ * every pricing field from the new item list so nothing goes stale.
+ */
+export async function updateOrderItems(db, orderDocId, items) {
+  const pricing = computeOrderPricing(items);
+  const ref = doc(db, 'orders', orderDocId);
+  await updateDoc(ref, { ...pricing, updatedAt: serverTimestamp() });
 }
 
 /**

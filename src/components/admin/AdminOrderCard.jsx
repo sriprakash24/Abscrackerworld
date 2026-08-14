@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/opacity.css';
@@ -29,6 +29,7 @@ import { createInvoiceForOrder, getInvoice } from '../../services/invoicesFirest
 import { generateInvoicePdf } from '../../utils/generateInvoicePdf';
 import InvoicePreviewModal from './InvoicePreviewModal';
 import ConfirmDeleteDialog from './ConfirmDeleteDialog';
+import { useProducts } from '../../contexts/ProductsContext';
 
 const ACTION_ICONS = {
   CircleDollarSign,
@@ -66,6 +67,13 @@ export default function AdminOrderCard({ order, delay = 0 }) {
   const [deleting, setDeleting] = useState(false);
 
   const items = order.cartItems || [];
+  const { products } = useProducts();
+  // Same fallback as the customer-facing OrderCard — older orders don't
+  // have item.nameTa snapshotted yet, so match against the live catalog.
+  const nameTaById = useMemo(
+    () => Object.fromEntries(products.map((p) => [p.id, p.nameTa])),
+    [products]
+  );
   const statusMeta = getOrderStatusMeta(order.status);
   const paymentMeta = PAYMENT_META[order.paymentStatus] || PAYMENT_META.PENDING;
   const nextAction = NEXT_ACTION_BY_STATUS[order.status];
@@ -340,6 +348,11 @@ export default function AdminOrderCard({ order, delay = 0 }) {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="line-clamp-1 text-[11.5px] font-bold text-[#f2ece2]">{item.name}</div>
+                      {(item.nameTa || nameTaById[item.productId]) && (
+                        <div className="line-clamp-1 text-[10px] font-semibold text-gold">
+                          {item.nameTa || nameTaById[item.productId]}
+                        </div>
+                      )}
                       <div className="mt-0.5 text-[10px] text-muted">
                         Qty {item.quantity} × ₹{item.unitPrice}
                       </div>

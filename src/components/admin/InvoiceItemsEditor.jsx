@@ -90,7 +90,7 @@ export default function InvoiceItemsEditor({ control, register, watch, setValue,
                 <option value="">Pick from catalog (optional) — or type a custom line below</option>
                 {products.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} · ₹{p.sale}
+                    {p.name}{p.nameTa ? ` (${p.nameTa})` : ''} · ₹{p.sale}
                   </option>
                 ))}
               </select>

@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
 import FireworkBurst from '../ui/FireworkBurst';
+import CategoryIcon from '../home/CategoryIcon';
 
-export default function CategoryBanner({ name, icon, tagline, productCount }) {
+export default function CategoryBanner({ name, icon, image, tagline, productCount }) {
   return (
     <div className="px-4 pb-3 pt-3">
       <motion.div
@@ -21,8 +22,13 @@ export default function CategoryBanner({ name, icon, tagline, productCount }) {
         <FireworkBurst size={90} className="bottom-[-20px] right-16 opacity-40" delay={1.1} color="orange" />
 
         <div className="relative z-10 flex items-center gap-4">
-          <div className="orb-3d flex h-[64px] w-[64px] shrink-0 items-center justify-center !rounded-2xl text-[32px]">
-            <span className="art-float">{icon}</span>
+          <div className="orb-3d flex h-[64px] w-[64px] shrink-0 items-center justify-center overflow-hidden !rounded-2xl text-[32px]">
+            <CategoryIcon
+              image={image}
+              icon={icon}
+              name={name}
+              className="art-float flex h-full w-full items-center justify-center leading-none"
+            />
           </div>
           <div className="min-w-0">
             <h1 className="text-embossed truncate text-[19px] font-extrabold tracking-wide text-[#f7f0e4]">
