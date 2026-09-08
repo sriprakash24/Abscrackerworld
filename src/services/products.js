@@ -105,6 +105,7 @@ async function normalizeProduct(id, raw) {
     rawImage: raw.image || raw.img || "",
     stock,
     stockQty: Number(raw.stockQty ?? (stock === "out" ? 0 : 99)),
+    hidden: !!raw.hidden,
     featured: !!raw.featured,
     bestSeller: !!raw.bestSeller,
     newArrival: !!raw.newArrival,
@@ -299,6 +300,16 @@ export async function updateProductDoc(id, patch) {
 /** Deletes a product document by id. */
 export async function deleteProductDoc(id) {
   await deleteDoc(doc(db, PRODUCTS_COLLECTION, id));
+}
+
+/**
+ * Toggles a product's storefront visibility without deleting it — used by
+ * the Products list's Hide/Show switch. Hidden products stay in Firestore
+ * (and keep working in carts/orders that already reference them) but are
+ * filtered out of the customer-facing catalog by ProductsProvider.
+ */
+export async function setProductHidden(id, hidden) {
+  await updateProductDoc(id, { hidden: !!hidden });
 }
 
 /**

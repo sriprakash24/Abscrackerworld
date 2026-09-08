@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Plus, Search, Pencil, Trash2, PackageSearch, ImageOff } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, PackageSearch, ImageOff, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { useProducts } from '../../contexts/ProductsContext';
 import AdminSectionHeader from '../../components/admin/AdminSectionHeader';
 import AdminTabsNav from '../../components/admin/AdminTabsNav';
 import ProductFormModal from '../../components/admin/ProductFormModal';
 import ConfirmDeleteDialog from '../../components/admin/ConfirmDeleteDialog';
-import { subscribeToCategoryDocs, deleteProductDoc, deleteProductImageIfOwned } from '../../services/products';
+import { subscribeToCategoryDocs, deleteProductDoc, deleteProductImageIfOwned, setProductHidden } from '../../services/products';
 
 export default function AdminProducts() {
   const { user, logout } = useAdminAuth();
@@ -22,6 +22,7 @@ export default function AdminProducts() {
   const [editingProduct, setEditingProduct] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [togglingId, setTogglingId] = useState(null);
 
   useEffect(() => {
     const unsubscribe = subscribeToCategoryDocs(setCategories, (err) =>
@@ -77,6 +78,19 @@ export default function AdminProducts() {
       toast.error("Couldn't delete the product. Please try again.");
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const toggleHidden = async (product) => {
+    setTogglingId(product.id);
+    try {
+      await setProductHidden(product.id, !product.hidden);
+      toast.success(product.hidden ? `"${product.name}" is visible to customers again` : `"${product.name}" is now hidden from customers`);
+    } catch (err) {
+      console.error('Failed to toggle product visibility', err);
+      toast.error("Couldn't update visibility. Please try again.");
+    } finally {
+      setTogglingId(null);
     }
   };
 
@@ -137,6 +151,8 @@ export default function AdminProducts() {
                 product={product}
                 onEdit={() => openEditModal(product)}
                 onDelete={() => setDeleteTarget(product)}
+                onToggleHidden={() => toggleHidden(product)}
+                toggling={togglingId === product.id}
               />
             ))
           )}
@@ -175,7 +191,7 @@ function FilterChip({ active, onClick, label }) {
   );
 }
 
-function ProductRow({ product, onEdit, onDelete }) {
+function ProductRow({ product, onEdit, onDelete, onToggleHidden, toggling }) {
   const stockMeta = {
     in: { label: 'In stock', className: 'border-[#8fe3a0]/35 bg-[#8fe3a0]/10 text-[#8fe3a0]' },
     low: { label: 'Low stock', className: 'border-gold/35 bg-gold/10 text-gold' },
@@ -183,7 +199,7 @@ function ProductRow({ product, onEdit, onDelete }) {
   }[product.stock];
 
   return (
-    <div className="surface-3d flex items-center gap-3 rounded-2xl p-3">
+    <div className={`surface-3d flex items-center gap-3 rounded-2xl p-3 transition-opacity ${product.hidden ? 'opacity-60' : ''}`}>
       <div className="orb-3d flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden !rounded-xl">
         {product.img ? (
           <img src={product.img} alt={product.name} className="h-full w-full object-cover" />
@@ -193,7 +209,14 @@ function ProductRow({ product, onEdit, onDelete }) {
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[12.5px] font-bold text-[#f2ece2]">{product.name}</p>
+        <div className="flex items-center gap-1.5">
+          <p className="truncate text-[12.5px] font-bold text-[#f2ece2]">{product.name}</p>
+          {product.hidden && (
+            <span className="shrink-0 rounded-full border border-white/15 bg-white/5 px-1.5 py-0.5 text-[8.5px] font-bold tracking-wide text-muted">
+              HIDDEN
+            </span>
+          )}
+        </div>
         {product.nameTa && (
           <p className="truncate text-[10px] font-semibold text-gold">{product.nameTa}</p>
         )}
@@ -212,7 +235,19 @@ function ProductRow({ product, onEdit, onDelete }) {
         </div>
       </div>
 
-      <div className="flex shrink-0 flex-col gap-1.5">
+      <div className="flex shrink-0 flex-col items-center gap-1.5">
+        <button
+          onClick={onToggleHidden}
+          disabled={toggling}
+          title={product.hidden ? 'Show to customers' : 'Hide from customers'}
+          aria-label={product.hidden ? 'Show product' : 'Hide product'}
+          aria-pressed={!product.hidden}
+          className={`orb-3d flex h-8 w-8 items-center justify-center !rounded-full transition-colors disabled:opacity-50 ${
+            product.hidden ? 'text-muted hover:text-[#f2ece2]' : 'text-[#8fe3a0] hover:text-[#8fe3a0]'
+          }`}
+        >
+          {toggling ? <Loader2 size={13} className="animate-spin" /> : product.hidden ? <EyeOff size={13} /> : <Eye size={13} />}
+        </button>
         <button
           onClick={onEdit}
           className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-[#f2ece2] hover:text-orange"

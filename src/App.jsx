@@ -83,8 +83,10 @@ function AdminApp() {
     <AdminAuthProvider>
       {/* Products/Categories management screens read the live catalog via
           useProducts(), so the admin panel needs its own ProductsProvider —
-          separate from CustomerApp's, since the two shells never mount together. */}
-      <ProductsProvider>
+          separate from CustomerApp's, since the two shells never mount together.
+          includeHidden=true so admins can still see/edit/re-show products
+          that are hidden from the customer-facing storefront. */}
+      <ProductsProvider includeHidden>
         <div
           className="relative w-full overflow-y-auto overflow-x-hidden"
           style={{ height: '100dvh', WebkitOverflowScrolling: 'touch' }}

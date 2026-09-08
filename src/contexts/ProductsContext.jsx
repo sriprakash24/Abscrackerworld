@@ -9,10 +9,17 @@ const ProductsContext = createContext(null);
  * src/services/products.js) and shares the catalog — plus a derived
  * `categories` grouping — with every screen via useProducts().
  *
- * Also pushes the latest product list into useCartStore so cart pricing,
- * stock caps, etc. always read live data instead of a stale snapshot.
+ * By default, products marked `hidden` (see setProductHidden) are filtered
+ * out of the `products`/`categories` the rest of the app sees — that's what
+ * powers the admin "Hide" toggle actually hiding an item from customers.
+ * Pass `includeHidden` (used by the /admin/* screens) to see every product,
+ * hidden or not, so admins can still find and re-show them.
+ *
+ * Also pushes the *unfiltered* product list into useCartStore so a product
+ * hidden after being added to someone's cart still resolves its name/price
+ * there instead of silently disappearing.
  */
-export function ProductsProvider({ children }) {
+export function ProductsProvider({ children, includeHidden = false }) {
   const [products, setProducts] = useState([]);
   const [categoryOrder, setCategoryOrder] = useState({});
   const [loading, setLoading] = useState(true);
@@ -47,11 +54,16 @@ export function ProductsProvider({ children }) {
     return unsubscribe;
   }, []);
 
-  const categories = useMemo(() => groupByCategory(products, categoryOrder), [products, categoryOrder]);
+  const visibleProducts = useMemo(
+    () => (includeHidden ? products : products.filter((p) => !p.hidden)),
+    [products, includeHidden]
+  );
+
+  const categories = useMemo(() => groupByCategory(visibleProducts, categoryOrder), [visibleProducts, categoryOrder]);
 
   const value = useMemo(
-    () => ({ products, categories, loading, error }),
-    [products, categories, loading, error]
+    () => ({ products: visibleProducts, categories, loading, error }),
+    [visibleProducts, categories, loading, error]
   );
 
   return <ProductsContext.Provider value={value}>{children}</ProductsContext.Provider>;

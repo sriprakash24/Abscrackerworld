@@ -4,7 +4,7 @@ import 'react-lazy-load-image-component/src/effects/opacity.css';
 import { showAddedToast, showRemovedToast } from '../../utils/cartToast';
 import { useCartStore } from '../../store/useCartStore';
 import { useCustomerGateStore } from '../../store/useCustomerGateStore';
-import DiscountBadge from './DiscountBadge';
+import ProductBadges from './ProductBadges';
 import WishlistButton from './WishlistButton';
 import PriceSection from './PriceSection';
 import AddToCartButton from './AddToCartButton';
@@ -14,9 +14,8 @@ const cardVariants = {
   show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: 'easeOut' } },
 };
 
-const STOCK_LABEL = {
+const STOCK_META = {
   in: { text: 'In Stock', className: 'text-[#8fe3a0]' },
-  low: { className: 'text-gold' },
   out: { text: 'Sold Out', className: 'text-[#e35226]' },
 };
 
@@ -30,9 +29,7 @@ export default function ProductCard({ product, theme }) {
   const toggleWishlist = useCartStore((s) => s.toggleWishlist);
   const requestDetails = useCustomerGateStore((s) => s.requestDetails);
 
-  const stock = STOCK_LABEL[product.stock] || STOCK_LABEL.in;
   const soldOut = product.stock === 'out';
-  const stockLabelText = product.stock === 'low' ? `Only ${product.stockQty} Left` : stock.text;
   const accent = theme?.solid || 'var(--color-orange)';
 
   return (
@@ -60,7 +57,7 @@ export default function ProductCard({ product, theme }) {
         style={{ background: theme ? `linear-gradient(90deg, ${theme.from}, ${theme.to})` : accent }}
       />
 
-      <DiscountBadge percent={product.discountPercentage} />
+      <ProductBadges product={product} />
       <WishlistButton active={wished} onToggle={() => toggleWishlist(product.id)} />
 
       <div className="orb-3d orb-cream relative flex h-[86px] items-center justify-center overflow-hidden !rounded-xl">
@@ -93,7 +90,15 @@ export default function ProductCard({ product, theme }) {
       )}
       <div className="flex items-center justify-between">
         <span className="text-[10px] text-muted">{product.unit}</span>
-        <span className={`text-[9.5px] font-bold ${stock.className}`}>{stockLabelText}</span>
+        {product.stock === 'low' ? (
+          <span className="rounded-full border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[9px] font-bold text-gold">
+            Limited Stock · {product.stockQty} left
+          </span>
+        ) : (
+          <span className={`text-[9.5px] font-bold ${STOCK_META[product.stock]?.className || STOCK_META.in.className}`}>
+            {STOCK_META[product.stock]?.text || STOCK_META.in.text}
+          </span>
+        )}
       </div>
 
       <PriceSection mrp={product.mrp} sale={product.sale} discountPercentage={product.discountPercentage} />
