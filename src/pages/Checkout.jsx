@@ -14,14 +14,10 @@ import { submitOrder } from '../services/ordersFirestore';
 import CheckoutHeader from '../components/checkout/CheckoutHeader';
 import CustomerForm from '../components/checkout/CustomerForm';
 import AddressForm from '../components/checkout/AddressForm';
-import OrderReview from '../components/checkout/OrderReview';
-import OrderNotes from '../components/checkout/OrderNotes';
-import TermsCheckbox from '../components/checkout/TermsCheckbox';
 import PlaceOrderButton from '../components/checkout/PlaceOrderButton';
 import OrderSuccessScreen from '../components/checkout/OrderSuccessScreen';
 import FreeDeliveryProgress from '../components/cart/FreeDeliveryProgress';
 import OrderSummary from '../components/cart/OrderSummary';
-import EmberParticles from '../components/ui/EmberParticles';
 import FestiveBackdrop from '../components/ui/FestiveBackdrop';
 
 export default function Checkout() {
@@ -52,7 +48,6 @@ export default function Checkout() {
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(checkoutSchema),
@@ -63,8 +58,6 @@ export default function Checkout() {
     },
     mode: 'onTouched',
   });
-
-  const agreeTerms = watch('agreeTerms');
 
   // Guard: nothing to check out with an empty cart (and no order just placed).
   useEffect(() => {
@@ -113,7 +106,6 @@ export default function Checkout() {
   return (
     <div className="relative min-h-screen w-full pb-4">
       <FestiveBackdrop />
-      <EmberParticles count={8} className="opacity-30" />
 
       <CheckoutHeader onBack={() => navigate(-1)} />
 
@@ -125,7 +117,6 @@ export default function Checkout() {
           <div {...sectionFocusHandlers('address')}>
             <AddressForm register={register} errors={errors} isActive={activeSection === 'address'} />
           </div>
-          <OrderReview items={pricing.items} />
 
           <FreeDeliveryProgress
             unlocked={pricing.freeDeliveryUnlocked}
@@ -133,24 +124,11 @@ export default function Checkout() {
             amountRemaining={pricing.amountToFreeDelivery}
           />
 
-          <div {...sectionFocusHandlers('notes')}>
-            <OrderNotes register={register} errors={errors} isActive={activeSection === 'notes'} />
-          </div>
           <OrderSummary pricing={pricing} />
-
-          <TermsCheckbox
-            checked={!!agreeTerms}
-            registration={register('agreeTerms')}
-            error={errors.agreeTerms}
-          />
         </div>
 
         <div className="mt-1">
-          <PlaceOrderButton
-            disabled={!agreeTerms}
-            loading={isSubmitting}
-            grandTotal={pricing.grandTotal}
-          />
+          <PlaceOrderButton loading={isSubmitting} grandTotal={pricing.grandTotal} />
         </div>
       </form>
     </div>

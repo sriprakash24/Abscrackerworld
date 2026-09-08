@@ -12,14 +12,6 @@ const optionalMobile = z
     message: 'Enter a valid 10-digit mobile number',
   });
 
-const optionalEmail = z
-  .string()
-  .trim()
-  .optional()
-  .refine((val) => !val || z.string().email().safeParse(val).success, {
-    message: 'Enter a valid email address',
-  });
-
 export const checkoutSchema = z.object({
   // Customer information
   fullName: z
@@ -33,7 +25,6 @@ export const checkoutSchema = z.object({
     .min(1, 'Mobile number is required')
     .regex(mobileRegex, 'Enter a valid 10-digit mobile number'),
   alternateMobile: optionalMobile,
-  email: optionalEmail,
 
   // Delivery address
   houseNumber: z.string().trim().min(1, 'Door / house number is required'),
@@ -47,23 +38,12 @@ export const checkoutSchema = z.object({
     .trim()
     .min(1, 'PIN code is required')
     .regex(pincodeRegex, 'Enter a valid 6-digit PIN code'),
-  landmark: z.string().trim().optional(),
-  deliveryNotes: z.string().trim().optional(),
-
-  // Order notes
-  orderNotes: z.string().trim().max(300, 'Keep notes under 300 characters').optional(),
-
-  // Terms
-  agreeTerms: z.literal(true, {
-    errorMap: () => ({ message: 'Please accept the Terms & Conditions to continue' }),
-  }),
 });
 
 export const checkoutDefaultValues = {
   fullName: '',
   mobile: '',
   alternateMobile: '',
-  email: '',
   houseNumber: '',
   street: '',
   area: '',
@@ -71,8 +51,4 @@ export const checkoutDefaultValues = {
   district: '',
   state: '',
   pincode: '',
-  landmark: '',
-  deliveryNotes: '',
-  orderNotes: '',
-  agreeTerms: false,
 };

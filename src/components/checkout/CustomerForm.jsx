@@ -47,14 +47,6 @@ export default function CustomerForm({ register, errors, isActive = false }) {
             error={errors.alternateMobile}
           />
         </div>
-
-        <FormField
-          label="Email Address"
-          type="email"
-          placeholder="Optional — you@example.com"
-          registration={register('email')}
-          error={errors.email}
-        />
       </div>
     </motion.div>
   );

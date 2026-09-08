@@ -79,22 +79,6 @@ export default function AddressForm({ register, errors, isActive = false }) {
             error={errors.pincode}
           />
         </div>
-
-        <FormField
-          label="Landmark"
-          placeholder="Optional — near ... "
-          registration={register('landmark')}
-          error={errors.landmark}
-        />
-
-        <FormField
-          label="Delivery Notes"
-          as="textarea"
-          rows={2}
-          placeholder="Optional — gate colour, floor, timing, etc."
-          registration={register('deliveryNotes')}
-          error={errors.deliveryNotes}
-        />
       </div>
     </motion.div>
   );

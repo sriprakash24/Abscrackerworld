@@ -124,7 +124,7 @@ export default function OrderSuccessScreen({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.55, duration: 0.4 }}
-        className="relative z-10 mt-5 max-w-xs text-[11.5px] leading-relaxed text-[#cfc7bd]"
+        className="relative z-10 mt-5 max-w-xs text-[15px] font-medium leading-relaxed text-[#cfc7bd]"
       >
         Thank you for shopping with{" "}
         <span className="font-bold text-[#f2ece2]">ABS Crackers World</span>.

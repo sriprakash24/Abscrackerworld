@@ -14,9 +14,6 @@ import { submitOrder } from '../../services/ordersFirestore';
 
 import CustomerForm from '../checkout/CustomerForm';
 import AddressForm from '../checkout/AddressForm';
-import OrderReview from '../checkout/OrderReview';
-import OrderNotes from '../checkout/OrderNotes';
-import TermsCheckbox from '../checkout/TermsCheckbox';
 import PlaceOrderButton from '../checkout/PlaceOrderButton';
 import OrderSuccessScreen from '../checkout/OrderSuccessScreen';
 import OrderSummary from './OrderSummary';
@@ -49,7 +46,6 @@ export default function CheckoutModal({ open, onClose, pricing }) {
   const {
     register,
     handleSubmit,
-    watch,
     reset,
     formState: { errors },
   } = useForm({
@@ -61,8 +57,6 @@ export default function CheckoutModal({ open, onClose, pricing }) {
     },
     mode: 'onTouched',
   });
-
-  const agreeTerms = watch('agreeTerms');
 
   // Lock background scroll while the sheet is open.
   useEffect(() => {
@@ -186,19 +180,10 @@ export default function CheckoutModal({ open, onClose, pricing }) {
                     <div {...sectionFocusHandlers('address')}>
                       <AddressForm register={register} errors={errors} isActive={activeSection === 'address'} />
                     </div>
-                    <OrderReview items={pricing.items} />
-                    <div {...sectionFocusHandlers('notes')}>
-                      <OrderNotes register={register} errors={errors} isActive={activeSection === 'notes'} />
-                    </div>
                     <OrderSummary pricing={pricing} />
-                    <TermsCheckbox
-                      checked={!!agreeTerms}
-                      registration={register('agreeTerms')}
-                      error={errors.agreeTerms}
-                    />
                   </div>
 
-                  <PlaceOrderButton disabled={!agreeTerms} loading={isSubmitting} grandTotal={pricing.grandTotal} />
+                  <PlaceOrderButton loading={isSubmitting} grandTotal={pricing.grandTotal} />
                 </form>
               )}
             </div>
