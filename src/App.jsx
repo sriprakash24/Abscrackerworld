@@ -19,6 +19,7 @@ import AdminLogin from "./pages/admin/AdminLogin";
 import AdminOverview from "./pages/admin/AdminOverview";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
+import AdminPriceUpdate from "./pages/admin/AdminPriceUpdate";
 import AdminInventory from "./pages/admin/AdminInventory";
 import AdminCategories from "./pages/admin/AdminCategories";
 import AdminInvoices from "./pages/admin/AdminInvoices";
@@ -103,6 +104,14 @@ function AdminApp() {
               element={
                 <AdminRoute>
                   <AdminProducts />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="price-update"
+              element={
+                <AdminRoute>
+                  <AdminPriceUpdate />
                 </AdminRoute>
               }
             />

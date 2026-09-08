@@ -2,7 +2,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X, Loader2, ShieldCheck, Lock } from "lucide-react";
+import { X, Loader2, ShieldCheck, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import {
   customerSchema,
@@ -12,9 +12,13 @@ import { useCustomerGateStore } from "../../store/useCustomerGateStore";
 import { useCustomerStore } from "../../store/useCustomerStore";
 import { db } from "../../firebase/config";
 import { saveUserProfile } from "../../services/usersFirestore";
-import FormField from "../checkout/FormField";
-import elephantStageBg from "../../assets/backgrounds/popup-diwali-stage-bg.png";
-import absLogo from "../../assets/abs-logo.png";
+import customerGateArt from "../../assets/customer/customer-gate-bg.png";
+
+// Native pixel size of customerGateArt — used only to size the wrapper's
+// aspect-ratio so the % based overlay positions below always land inside
+// the blank cream card painted into the artwork, at any screen width.
+const ART_W = 1144;
+const ART_H = 1375;
 
 /**
  * Centered "who's shopping?" gate — fired once, on the very first Add to
@@ -23,9 +27,10 @@ import absLogo from "../../assets/abs-logo.png";
  * Closing it cancels the pending add; submitting saves locally + to
  * Firestore, then lets the original Add to Cart action continue.
  *
- * Visual treatment mirrors the festive Diwali storefront: the same
- * elephant/fireworks hero photo used in the header sits behind the card
- * as a dimmed backdrop, with bilingual (English + Tamil) copy throughout.
+ * The whole card IS the festive family photo-frame artwork (ABS Crackers
+ * World branded), with the Name / Mobile / Continue mini-form dropped
+ * directly into the blank cream space the artwork was designed with —
+ * no separate dark modal chrome layered on top of it.
  */
 export default function CustomerDetailsSheet() {
   const isOpen = useCustomerGateStore((s) => s.isOpen);
@@ -69,10 +74,8 @@ export default function CustomerDetailsSheet() {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          {/* Backdrop: a simple dim scrim — the artwork itself now lives directly on
-              the card below, since "contain"-fitting it full-screen made it shrink
-              to near-invisibility on tall phone aspect ratios. */}
+        <div className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto p-4 py-6">
+          {/* Backdrop */}
           <motion.div
             key="backdrop"
             initial={{ opacity: 0 }}
@@ -83,208 +86,134 @@ export default function CustomerDetailsSheet() {
             className="absolute inset-0"
             style={{
               background:
-                "radial-gradient(120% 90% at 50% 40%, rgba(20,4,5,0.7) 0%, rgba(10,2,3,0.88) 60%, rgba(6,1,1,0.95) 100%)",
+                "radial-gradient(120% 90% at 50% 40%, rgba(20,4,5,0.72) 0%, rgba(10,2,3,0.88) 60%, rgba(6,1,1,0.95) 100%)",
             }}
           />
 
-          {/* Card — the twin-elephant Diwali stage art sits directly behind the form,
-              cropped to cover (never shrinks away like the old full-screen version),
-              with a translucent crimson wash on top so the text stays readable while
-              the lights, mandala and elephants underneath still show through. */}
+          {/* Card — the artwork itself, full bleed, at its native aspect ratio
+              so the % positioned form overlay below always lands exactly in
+              the blank cream space the art was designed with. */}
           <motion.div
             key="card"
             initial={{ opacity: 0, scale: 0.92, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 10 }}
             transition={{ type: "spring", damping: 24, stiffness: 300 }}
-            className="relative z-10 w-full max-w-[380px] rounded-[24px] border border-[rgba(255,193,84,0.38)] px-6 pb-7 pt-7"
+            className="relative z-10 w-full"
             style={{
-              boxShadow:
-                "0 0 0 1px rgba(255,193,84,0.08) inset, 0 1px 0 rgba(255,210,150,0.15) inset, 0 24px 60px -16px rgba(0,0,0,0.85), 0 0 46px rgba(216,28,43,0.22)",
+              maxWidth: "min(90vw, 390px)",
+              aspectRatio: `${ART_W} / ${ART_H}`,
+              boxShadow: "0 24px 70px -18px rgba(0,0,0,0.85), 0 0 46px rgba(216,28,43,0.2)",
             }}
           >
-            {/* Clipped background layer: the artwork + crimson wash, kept separate from
-                the card so corner-radius clipping doesn't also cut off the diya accent
-                that sits below the card's bottom edge. */}
-            <div
-              className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-[24px]"
-              style={{
-                backgroundImage: `linear-gradient(165deg, rgba(48,10,13,0.86) 0%, rgba(26,5,7,0.9) 55%, rgba(14,2,3,0.95) 100%), url(${elephantStageBg})`,
-                backgroundSize: "cover, cover",
-                backgroundPosition: "center, center",
-                backgroundRepeat: "no-repeat, no-repeat",
-              }}
+            <img
+              src={customerGateArt}
+              alt=""
+              className="absolute inset-0 h-full w-full rounded-[18px] object-cover"
+              draggable={false}
             />
-
-            {/* corner flourishes */}
-            <span className="pointer-events-none absolute left-3 top-3 z-10 h-4 w-4 rounded-tl-lg border-l border-t border-gold/40" />
-            <span className="pointer-events-none absolute right-3 top-3 z-10 h-4 w-4 rounded-tr-lg border-r border-t border-gold/40" />
-            <span className="pointer-events-none absolute bottom-3 left-3 z-10 h-4 w-4 rounded-bl-lg border-b border-l border-gold/40" />
-            <span className="pointer-events-none absolute bottom-3 right-3 z-10 h-4 w-4 rounded-br-lg border-b border-r border-gold/40" />
 
             <button
               onClick={handleClose}
               aria-label="Close"
-              className="orb-3d absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full text-white/70"
+              className="absolute flex items-center justify-center rounded-full bg-black/45 text-white/90 backdrop-blur-sm transition-colors hover:bg-black/65"
+              style={{ top: "1.6%", right: "1.6%", width: "7.5%", aspectRatio: "1 / 1" }}
             >
               <X size={14} />
             </button>
 
-            <img
-              src={absLogo}
-              alt="ABS Crackers World"
-              className="relative z-10 mx-auto h-14 w-auto object-contain"
-            />
-
-            <div className="relative z-10 mt-4 text-center">
-              <h2 className="text-[17px] font-extrabold text-embossed text-[#f6efe4]">
-                Just one quick step
-              </h2>
-              <p className="mx-auto mt-1.5 max-w-[280px] text-[11px] font-medium leading-snug text-muted">
-                Tell us who's shopping so we can keep your cart and order
-                updates ready for you.
-              </p>
-
-              <div className="mx-auto my-4 flex w-full items-center gap-2 opacity-60">
-                <span className="h-px flex-1 bg-gradient-to-r from-transparent to-gold/50" />
-                <span className="h-1 w-1 rounded-full bg-gold" />
-                <span className="h-px flex-1 bg-gradient-to-l from-transparent to-gold/50" />
+            {/* Form overlay — positioned by % so it always sits inside the
+                blank cream card painted into the artwork. */}
+            <div
+              className="absolute flex flex-col justify-center gap-[3%] px-[3%]"
+              style={{ left: "18%", right: "18%", top: "32%", bottom: "21%" }}
+            >
+              <div className="text-center">
+                <p className="text-[13px] font-extrabold leading-tight text-[#3a2410]">
+                  Quick Details
+                </p>
+                <p className="text-[9.5px] font-bold leading-tight text-[#8a5a2b]">
+                  உங்கள் விவரங்களை பதிவு செய்யுங்கள்
+                </p>
               </div>
 
-              <p className="text-[15px] font-bold text-gold">
-                ஒரே ஒரு சிறிய படி!
-              </p>
-              <p className="mx-auto mt-1 max-w-[280px] text-[10.5px] font-medium leading-snug text-muted">
-                உங்கள் கார்ட் மற்றும் ஆர்டர் அப்டேட்களை உடனுக்குடன் பெற, யார்
-                ஷாப்பிங் செய்கிறீர்கள் என்று பதிவு செய்யுங்கள்.
-              </p>
-            </div>
-
-            <form
-              onSubmit={handleSubmit(onSubmit)}
-              className="relative z-10 mt-5 flex flex-col gap-3.5"
-            >
-              <FormField
-                label="Your Name / உங்கள் பெயர்"
-                required
-                registration={register("name")}
-                error={errors.name}
-                placeholder="e.g. Arun Kumar"
-                autoComplete="name"
-              />
-
-              <label className="block">
-                <span className="mb-1.5 flex items-center gap-1 text-[11px] font-bold tracking-wide text-[#cfc7bd]">
-                  Mobile Number / மொபைல் எண்
-                  <span className="text-orange">*</span>
-                </span>
-                <div
-                  className={`flex items-center overflow-hidden rounded-xl border bg-[#0c0906] transition-all duration-200 ${
-                    errors.mobile
-                      ? "border-[#e35226] shadow-[0_0_0_3px_rgba(227,82,38,0.15)]"
-                      : "border-white/10 focus-within:border-orange/70 focus-within:shadow-[0_0_0_3px_rgba(255,122,0,0.14)]"
-                  }`}
-                >
-                  <span className="flex items-center gap-1 border-r border-white/10 px-3 py-2.5 text-[12.5px] font-bold text-[#f2ece2]">
-                    <span aria-hidden>🇮🇳</span>+91
+              <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-[6%]">
+                <label className="block">
+                  <span className="mb-[3px] block text-[9.5px] font-bold tracking-wide text-[#6b4423]">
+                    Name / பெயர்
                   </span>
                   <input
-                    {...register("mobile")}
-                    placeholder="10-digit mobile number"
-                    inputMode="numeric"
-                    maxLength={10}
-                    autoComplete="tel"
-                    className="w-full bg-transparent px-3.5 py-2.5 text-[12.5px] font-semibold text-[#f2ece2] outline-none placeholder:text-muted placeholder:font-normal"
+                    {...register("name")}
+                    placeholder="Your name"
+                    autoComplete="name"
+                    className={`w-full rounded-[10px] border bg-white/85 px-2.5 py-[7px] text-[12px] font-bold text-[#3a2410] outline-none placeholder:font-medium placeholder:text-[#a9895f] ${
+                      errors.name
+                        ? "border-[#c23b1f] shadow-[0_0_0_2px_rgba(194,59,31,0.15)]"
+                        : "border-[#c99a5b]/60 focus:border-[#c23b1f]/70"
+                    }`}
                   />
-                </div>
-                <AnimatePresence>
-                  {errors.mobile && (
-                    <motion.p
-                      initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                      animate={{ opacity: 1, height: "auto", marginTop: 5 }}
-                      exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                      className="text-[10.5px] font-semibold text-[#e35226]"
-                    >
-                      {errors.mobile.message}
-                    </motion.p>
+                  {errors.name && (
+                    <span className="mt-[2px] block text-[8.5px] font-bold text-[#c23b1f]">
+                      {errors.name.message}
+                    </span>
                   )}
-                </AnimatePresence>
-              </label>
+                </label>
 
-              <p className="flex items-start gap-1.5 text-[10px] font-semibold leading-snug text-muted">
-                <ShieldCheck
-                  size={13}
-                  className="mt-[1px] shrink-0 text-gold"
-                />
-                No password, no OTP — we'll only use this to reach you about
-                your order.
-                <br />
-                <span className="text-[9.5px] font-medium text-gold/80">
-                  கடவுச்சொல் இல்லை, OTP இல்லை — ஆர்டர் தொடர்பாக மட்டுமே
-                  பயன்படுத்துவோம்.
-                </span>
+                <label className="block">
+                  <span className="mb-[3px] block text-[9.5px] font-bold tracking-wide text-[#6b4423]">
+                    Mobile / மொபைல்
+                  </span>
+                  <div
+                    className={`flex items-center overflow-hidden rounded-[10px] border bg-white/85 ${
+                      errors.mobile
+                        ? "border-[#c23b1f] shadow-[0_0_0_2px_rgba(194,59,31,0.15)]"
+                        : "border-[#c99a5b]/60 focus-within:border-[#c23b1f]/70"
+                    }`}
+                  >
+                    <span className="border-r border-[#c99a5b]/40 px-2 py-[7px] text-[11px] font-extrabold text-[#3a2410]">
+                      +91
+                    </span>
+                    <input
+                      {...register("mobile")}
+                      placeholder="10-digit number"
+                      inputMode="numeric"
+                      maxLength={10}
+                      autoComplete="tel"
+                      className="w-full bg-transparent px-2 py-[7px] text-[12px] font-bold text-[#3a2410] outline-none placeholder:font-medium placeholder:text-[#a9895f]"
+                    />
+                  </div>
+                  {errors.mobile && (
+                    <span className="mt-[2px] block text-[8.5px] font-bold text-[#c23b1f]">
+                      {errors.mobile.message}
+                    </span>
+                  )}
+                </label>
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className={`mt-[1%] flex items-center justify-center gap-1.5 rounded-[10px] bg-gradient-to-b from-[#f2872e] to-[#c23b1f] py-[8px] text-[12px] font-extrabold text-white shadow-[0_8px_16px_-8px_rgba(194,59,31,0.6)] transition-transform active:scale-[0.97] ${
+                    submitting ? "cursor-not-allowed opacity-70" : ""
+                  }`}
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 size={13} className="animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      Continue
+                      <ArrowRight size={13} />
+                    </>
+                  )}
+                </button>
+              </form>
+
+              <p className="flex items-center justify-center gap-1 text-center text-[8px] font-bold leading-tight text-[#8a5a2b]">
+                <ShieldCheck size={9} className="shrink-0" />
+                No password, no OTP — just for order updates.
               </p>
-
-              <button
-                type="submit"
-                disabled={submitting}
-                className={`btn-3d mt-1 flex items-center justify-center gap-2 rounded-xl py-3 text-[13px] font-extrabold text-black transition-opacity ${
-                  submitting ? "cursor-not-allowed opacity-60" : ""
-                }`}
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 size={15} className="animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <ShieldCheck size={15} />
-                    Continue
-                  </>
-                )}
-              </button>
-
-              <p className="flex items-center justify-center gap-1.5 text-center text-[9.5px] font-semibold leading-snug text-gold/90">
-                <Lock size={10} className="shrink-0" />
-                உங்கள் தகவல்கள் பாதுகாப்பாக இருக்கும். உங்கள் அனுமதியின்றி
-                அழைப்புகள் வராது.
-              </p>
-            </form>
-
-            {/* diya accent, straddling the bottom edge of the card */}
-            <div className="pointer-events-none absolute -bottom-4 left-1/2 z-10 -translate-x-1/2">
-              <svg
-                width="34"
-                height="30"
-                viewBox="0 0 34 30"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <ellipse
-                  cx="17"
-                  cy="23"
-                  rx="15"
-                  ry="6"
-                  fill="#3a1608"
-                  stroke="#ffc154"
-                  strokeWidth="1.2"
-                />
-                <ellipse
-                  cx="17"
-                  cy="21"
-                  rx="10"
-                  ry="3"
-                  fill="#ffb347"
-                  opacity="0.35"
-                />
-                <path
-                  d="M17 6c2.2 3 2.6 5.4 1.2 7.4-1 1.4-1 2.8.4 3.8-2.6.4-4.6-1.2-4.4-3.6.1-1.7 1.4-2.6 1.2-4.4-.1-1.1-.6-2.2 1.6-3.2Z"
-                  fill="#ffcb66"
-                  className="animate-flame-flicker"
-                  style={{ transformOrigin: "17px 15px" }}
-                />
-              </svg>
             </div>
           </motion.div>
         </div>

@@ -453,6 +453,31 @@ export async function moveCategoryOrder(
   await batch.commit();
 }
 
+/**
+ * Bulk-updates mrp / salePrice / discountPercentage for a batch of products
+ * in one go — powers the Admin "Bulk Price Update" screen, where every item
+ * in a category is rewritten with a single click instead of editing products
+ * one by one. `updates` is an array of { id, mrp, salePrice, discountPercentage }.
+ * Firestore batches cap at 500 writes, so this chunks automatically for
+ * large categories.
+ */
+export async function bulkUpdateProductPrices(updates) {
+  const CHUNK_SIZE = 450;
+  for (let i = 0; i < updates.length; i += CHUNK_SIZE) {
+    const chunk = updates.slice(i, i + CHUNK_SIZE);
+    const batch = writeBatch(db);
+    chunk.forEach(({ id, mrp, salePrice, discountPercentage }) => {
+      batch.update(doc(db, PRODUCTS_COLLECTION, id), {
+        mrp,
+        salePrice,
+        discountPercentage,
+        updatedAt: serverTimestamp(),
+      });
+    });
+    await batch.commit();
+  }
+}
+
 /** Best-effort delete of a Storage-hosted product image (ignores plain https:// URLs and failures). */
 export async function deleteProductImageIfOwned(image) {
   if (!image || /^https?:\/\//i.test(image)) return;
