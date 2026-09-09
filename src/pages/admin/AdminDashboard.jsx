@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { db } from '../../firebase/config';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
-import { subscribeAllOrders } from '../../services/ordersFirestore';
+import { useAdminData } from '../../contexts/AdminDataContext';
 import { ADMIN_STATUS_FILTERS } from '../../constants/orderActions';
 import AdminOrdersHeader from '../../components/admin/AdminOrdersHeader';
 import AdminTabsNav from '../../components/admin/AdminTabsNav';
@@ -18,27 +17,10 @@ export default function AdminDashboard() {
   const { user, logout } = useAdminAuth();
   const navigate = useNavigate();
 
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [errored, setErrored] = useState(false);
+  const { orders, ordersLoading: loading, ordersError } = useAdminData();
+  const errored = !!ordersError;
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [search, setSearch] = useState('');
-
-  useEffect(() => {
-    setLoading(true);
-    const unsubscribe = subscribeAllOrders(
-      db,
-      (fetched) => {
-        setOrders(fetched);
-        setLoading(false);
-      },
-      () => {
-        setErrored(true);
-        setLoading(false);
-      }
-    );
-    return () => unsubscribe?.();
-  }, []);
 
   const handleLogout = async () => {
     try {

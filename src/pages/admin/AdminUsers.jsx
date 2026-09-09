@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Users as UsersIcon, Search, Pencil, Trash2, Phone, MapPin } from 'lucide-react';
@@ -8,8 +8,8 @@ import AdminTabsNav from '../../components/admin/AdminTabsNav';
 import UserFormModal from '../../components/admin/UserFormModal';
 import ConfirmDeleteDialog from '../../components/admin/ConfirmDeleteDialog';
 import { db } from '../../firebase/config';
-import { subscribeAllUsers, deleteUserProfile } from '../../services/usersFirestore';
-import { subscribeAllOrders } from '../../services/ordersFirestore';
+import { deleteUserProfile } from '../../services/usersFirestore';
+import { useAdminData } from '../../contexts/AdminDataContext';
 
 function formatJoinedDate(createdAt) {
   const date = createdAt?.toDate ? createdAt.toDate() : createdAt ? new Date(createdAt) : null;
@@ -28,34 +28,17 @@ export default function AdminUsers() {
   const { user, logout } = useAdminAuth();
   const navigate = useNavigate();
 
-  const [users, setUsers] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Users don't store an address themselves (no auth, just name + mobile
+  // from the "who's shopping?" sheet) — so it's derived below from each
+  // customer's most recent order/checkout address instead. Both orders and
+  // users come from the shared AdminDataProvider (mounted once for the
+  // whole admin session) rather than a subscription local to this page.
+  const { users, usersLoading: loading, orders } = useAdminData();
   const [search, setSearch] = useState('');
   const [editingUser, setEditingUser] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
-
-  useEffect(() => {
-    const unsubscribe = subscribeAllUsers(
-      db,
-      (fetched) => {
-        setUsers(fetched);
-        setLoading(false);
-      },
-      () => setLoading(false)
-    );
-    return () => unsubscribe?.();
-  }, []);
-
-  useEffect(() => {
-    // Users don't store an address themselves (no auth, just name + mobile
-    // from the "who's shopping?" sheet) — so it's derived here from each
-    // customer's most recent order/checkout address instead.
-    const unsubscribe = subscribeAllOrders(db, setOrders, () => {});
-    return () => unsubscribe?.();
-  }, []);
 
   const statsByMobile = useMemo(() => {
     const map = new Map();

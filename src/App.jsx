@@ -14,6 +14,7 @@ import CustomerDetailsSheet from "./components/customer/CustomerDetailsSheet";
 import { useCartFirestoreSync } from "./hooks/useCartFirestoreSync";
 import { ProductsProvider } from "./contexts/ProductsContext";
 import { AdminAuthProvider } from "./contexts/AdminAuthContext";
+import { AdminDataProvider } from "./contexts/AdminDataContext";
 import AdminRoute from "./components/admin/AdminRoute";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminOverview from "./pages/admin/AdminOverview";
@@ -87,6 +88,7 @@ function AdminApp() {
           includeHidden=true so admins can still see/edit/re-show products
           that are hidden from the customer-facing storefront. */}
       <ProductsProvider includeHidden>
+       <AdminDataProvider>
         <div
           className="relative w-full overflow-y-auto overflow-x-hidden"
           style={{ height: '100dvh', WebkitOverflowScrolling: 'touch' }}
@@ -159,6 +161,7 @@ function AdminApp() {
             />
           </Routes>
         </div>
+       </AdminDataProvider>
       </ProductsProvider>
     </AdminAuthProvider>
   );

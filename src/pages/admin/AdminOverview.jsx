@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -13,11 +13,9 @@ import {
   ArrowUpRight,
   ImageOff,
 } from 'lucide-react';
-import { db } from '../../firebase/config';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { useProducts } from '../../contexts/ProductsContext';
-import { subscribeAllOrders } from '../../services/ordersFirestore';
-import { subscribeAllUsers } from '../../services/usersFirestore';
+import { useAdminData } from '../../contexts/AdminDataContext';
 import { getOrderStatusMeta, ORDER_STATUS_META } from '../../constants/orderStatusMeta';
 import AdminSectionHeader from '../../components/admin/AdminSectionHeader';
 import AdminTabsNav from '../../components/admin/AdminTabsNav';
@@ -33,27 +31,7 @@ export default function AdminOverview() {
   const { user, logout } = useAdminAuth();
   const navigate = useNavigate();
   const { products, loading: productsLoading } = useProducts();
-
-  const [orders, setOrders] = useState([]);
-  const [ordersLoading, setOrdersLoading] = useState(true);
-  const [users, setUsers] = useState([]);
-
-  useEffect(() => {
-    const unsubscribe = subscribeAllOrders(
-      db,
-      (fetched) => {
-        setOrders(fetched);
-        setOrdersLoading(false);
-      },
-      () => setOrdersLoading(false)
-    );
-    return () => unsubscribe?.();
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = subscribeAllUsers(db, setUsers, () => {});
-    return () => unsubscribe?.();
-  }, []);
+  const { orders, ordersLoading, users } = useAdminData();
 
   const handleLogout = async () => {
     try {
