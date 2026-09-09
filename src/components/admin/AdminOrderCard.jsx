@@ -20,6 +20,8 @@ import {
   Receipt,
   FileText,
   Trash2,
+  Paperclip,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import { getOrderStatusMeta } from "../../constants/orderStatusMeta";
@@ -32,6 +34,7 @@ import { db } from "../../firebase/config";
 import {
   updateOrderStatus,
   deleteOrderDoc,
+  markBillWhatsappSent,
 } from "../../services/ordersFirestore";
 import {
   createInvoiceForOrder,
@@ -39,7 +42,7 @@ import {
 } from "../../services/invoicesFirestore";
 import { generateInvoicePdf } from "../../utils/generateInvoicePdf";
 import { generateBillPdf } from "../../utils/generateBillPdf";
-import { shareBillOnWhatsapp } from "../../utils/shareBillWhatsapp";
+import { sendBillMessage, sendBillFile } from "../../utils/shareBillWhatsapp";
 import InvoicePreviewModal from "./InvoicePreviewModal";
 import BillPreviewModal from "./BillPreviewModal";
 import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
@@ -51,6 +54,27 @@ const ACTION_ICONS = {
   Truck,
   CheckCheck,
 };
+
+// Small manual-toggle checkbox used to track "did I actually send this on
+// WhatsApp" next to the Message / Bill buttons — separate tap target from
+// the button itself, so ticking/unticking never re-triggers a send.
+function SentCheckbox({ checked, onClick, title }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      aria-pressed={checked}
+      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors ${
+        checked
+          ? "border-[#25D366] bg-[#25D366] text-black"
+          : "border-white/20 bg-black/20 text-transparent hover:border-white/40"
+      }`}
+    >
+      <Check size={12} strokeWidth={3} />
+    </button>
+  );
+}
 
 function formatOrderDate(createdAt) {
   const date = createdAt?.toDate
@@ -91,7 +115,8 @@ export default function AdminOrderCard({ order, delay = 0 }) {
   const [deleting, setDeleting] = useState(false);
   const [previewBill, setPreviewBill] = useState(null);
   const [downloadingBill, setDownloadingBill] = useState(false);
-  const [sharingBill, setSharingBill] = useState(false);
+  const [sendingBillMessage, setSendingBillMessage] = useState(false);
+  const [sendingBillFile, setSendingBillFile] = useState(false);
 
   const items = order.cartItems || [];
   const { products } = useProducts();
@@ -231,22 +256,66 @@ export default function AdminOrderCard({ order, delay = 0 }) {
     }
   };
 
-  const handleShareBill = async () => {
-    if (sharingBill) return;
-    setSharingBill(true);
+  const handleSendBillMessage = () => {
+    if (sendingBillMessage) return;
+    setSendingBillMessage(true);
     try {
-      const { method } = await shareBillOnWhatsapp(order);
+      sendBillMessage(order);
+      markBillWhatsappSent(db, order.id, { messageSent: true }).catch((err) =>
+        console.error("Failed to mark message as sent", err),
+      );
+    } catch (err) {
+      console.error("Failed to open WhatsApp chat", err);
+      toast.error("Couldn't open WhatsApp. Please try again.");
+    } finally {
+      setSendingBillMessage(false);
+    }
+  };
+
+  const handleSendBillFile = async () => {
+    if (sendingBillFile) return;
+    setSendingBillFile(true);
+    try {
+      const { method } = await sendBillFile(order);
       if (method === "fallback") {
         toast(
           "Bill downloaded — attach it in the WhatsApp chat that just opened.",
         );
       }
+      if (method !== "cancelled") {
+        markBillWhatsappSent(db, order.id, { fileSent: true }).catch((err) =>
+          console.error("Failed to mark bill as sent", err),
+        );
+      }
     } catch (err) {
-      console.error("Failed to share bill", err);
-      toast.error("Couldn't share the bill. Please try again.");
+      console.error("Failed to send bill file", err);
+      toast.error("Couldn't send the bill. Please try again.");
     } finally {
-      setSharingBill(false);
+      setSendingBillFile(false);
     }
+  };
+
+  // Manual override for the tracking checkboxes — lets the admin tick/untick
+  // independently of actually triggering a send (e.g. it was sent from
+  // another device, or ticked by mistake).
+  const toggleBillMessageSent = (e) => {
+    e.stopPropagation();
+    markBillWhatsappSent(db, order.id, {
+      messageSent: !order.billMessageSentAt,
+    }).catch((err) => {
+      console.error("Failed to update message tracking", err);
+      toast.error("Couldn't update. Please try again.");
+    });
+  };
+
+  const toggleBillFileSent = (e) => {
+    e.stopPropagation();
+    markBillWhatsappSent(db, order.id, {
+      fileSent: !order.billFileSentAt,
+    }).catch((err) => {
+      console.error("Failed to update bill tracking", err);
+      toast.error("Couldn't update. Please try again.");
+    });
   };
 
   const handleCancel = () => {
@@ -344,22 +413,58 @@ export default function AdminOrderCard({ order, delay = 0 }) {
                 {statusMeta.emoji} {statusMeta.label}
               </span>
               {!order.invoiceId && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleShareBill();
-                  }}
-                  disabled={sharingBill}
-                  title="Share bill on WhatsApp"
-                  className="flex shrink-0 items-center gap-1 rounded-full border border-[#25D366]/40 bg-[#25D366]/10 px-2 py-0.5 text-[10px] font-bold text-[#25D366] transition-colors hover:bg-[#25D366]/20 disabled:opacity-60"
-                >
-                  {sharingBill ? (
-                    <Loader2 size={10} className="animate-spin" />
-                  ) : (
-                    <MessageCircleMore size={10} />
-                  )}
-                  Share Bill
-                </button>
+                <>
+                  <SentCheckbox
+                    checked={!!order.billMessageSentAt}
+                    onClick={toggleBillMessageSent}
+                    title={
+                      order.billMessageSentAt
+                        ? "Message marked as sent — tap to un-tick"
+                        : "Tick once the bill message has been sent"
+                    }
+                  />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSendBillMessage();
+                    }}
+                    disabled={sendingBillMessage}
+                    title="Send bill message on WhatsApp"
+                    className="flex shrink-0 items-center gap-1 rounded-full border border-[#25D366]/40 bg-[#25D366]/10 px-2 py-0.5 text-[10px] font-bold text-[#25D366] transition-colors hover:bg-[#25D366]/20 disabled:opacity-60"
+                  >
+                    {sendingBillMessage ? (
+                      <Loader2 size={10} className="animate-spin" />
+                    ) : (
+                      <MessageCircleMore size={10} />
+                    )}
+                    Message
+                  </button>
+                  <SentCheckbox
+                    checked={!!order.billFileSentAt}
+                    onClick={toggleBillFileSent}
+                    title={
+                      order.billFileSentAt
+                        ? "Bill marked as sent — tap to un-tick"
+                        : "Tick once the bill file has been sent"
+                    }
+                  />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSendBillFile();
+                    }}
+                    disabled={sendingBillFile}
+                    title="Send bill file on WhatsApp"
+                    className="flex shrink-0 items-center gap-1 rounded-full border border-[#25D366]/40 bg-[#25D366]/10 px-2 py-0.5 text-[10px] font-bold text-[#25D366] transition-colors hover:bg-[#25D366]/20 disabled:opacity-60"
+                  >
+                    {sendingBillFile ? (
+                      <Loader2 size={10} className="animate-spin" />
+                    ) : (
+                      <Paperclip size={10} />
+                    )}
+                    Bill
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -592,17 +697,47 @@ export default function AdminOrderCard({ order, delay = 0 }) {
                         )}
                       </button>
                       <button
-                        onClick={handleShareBill}
-                        disabled={sharingBill}
-                        title="Share bill on WhatsApp"
+                        onClick={handleSendBillMessage}
+                        disabled={sendingBillMessage}
+                        title="Send bill message on WhatsApp"
                         className="orb-3d flex h-9 w-9 shrink-0 items-center justify-center !rounded-full text-[#25D366] disabled:opacity-60"
                       >
-                        {sharingBill ? (
+                        {sendingBillMessage ? (
                           <Loader2 size={13} className="animate-spin" />
                         ) : (
                           <MessageCircleMore size={13} />
                         )}
                       </button>
+                      <SentCheckbox
+                        checked={!!order.billMessageSentAt}
+                        onClick={toggleBillMessageSent}
+                        title={
+                          order.billMessageSentAt
+                            ? "Message marked as sent — tap to un-tick"
+                            : "Tick once the bill message has been sent"
+                        }
+                      />
+                      <button
+                        onClick={handleSendBillFile}
+                        disabled={sendingBillFile}
+                        title="Send bill file on WhatsApp"
+                        className="orb-3d flex h-9 w-9 shrink-0 items-center justify-center !rounded-full text-[#25D366] disabled:opacity-60"
+                      >
+                        {sendingBillFile ? (
+                          <Loader2 size={13} className="animate-spin" />
+                        ) : (
+                          <Paperclip size={13} />
+                        )}
+                      </button>
+                      <SentCheckbox
+                        checked={!!order.billFileSentAt}
+                        onClick={toggleBillFileSent}
+                        title={
+                          order.billFileSentAt
+                            ? "Bill marked as sent — tap to un-tick"
+                            : "Tick once the bill file has been sent"
+                        }
+                      />
                     </div>
                   </div>
                 )}

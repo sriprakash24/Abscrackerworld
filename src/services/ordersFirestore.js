@@ -15,8 +15,8 @@ import {
   where,
   orderBy,
   onSnapshot,
-} from 'firebase/firestore';
-import { reserveSequentialId } from '../utils/sequentialId';
+} from "firebase/firestore";
+import { reserveSequentialId } from "../utils/sequentialId";
 
 /**
  * Generates the order id, e.g. "ABSO20260801108" — ABSO + today's date +
@@ -24,7 +24,7 @@ import { reserveSequentialId } from '../utils/sequentialId';
  * the shared format (invoices use the same helper with the ABSI prefix).
  */
 export function generateOrderId(db) {
-  return reserveSequentialId(db, { prefix: 'ABSO', counterKey: 'orders' });
+  return reserveSequentialId(db, { prefix: "ABSO", counterKey: "orders" });
 }
 
 /**
@@ -54,8 +54,8 @@ export function buildOrderPayload({ orderId, formValues, pricing }) {
     customer: {
       name: fullName.trim(),
       mobile: mobile.trim(),
-      alternateMobile: alternateMobile?.trim() || '',
-      email: email?.trim() || '',
+      alternateMobile: alternateMobile?.trim() || "",
+      email: email?.trim() || "",
     },
     address: {
       houseNumber: houseNumber.trim(),
@@ -65,15 +65,15 @@ export function buildOrderPayload({ orderId, formValues, pricing }) {
       district: district.trim(),
       state: state.trim(),
       pincode: pincode.trim(),
-      landmark: landmark?.trim() || '',
-      deliveryNotes: deliveryNotes?.trim() || '',
+      landmark: landmark?.trim() || "",
+      deliveryNotes: deliveryNotes?.trim() || "",
     },
-    orderNotes: orderNotes?.trim() || '',
+    orderNotes: orderNotes?.trim() || "",
     cartItems: pricing.items.map(({ product, qty }) => ({
       productId: product.id,
       name: product.name,
-      nameTa: product.nameTa || '',
-      image: product.img || '',
+      nameTa: product.nameTa || "",
+      image: product.img || "",
       category: product.category,
       unitPrice: product.sale,
       mrp: product.mrp,
@@ -86,9 +86,9 @@ export function buildOrderPayload({ orderId, formValues, pricing }) {
     deliveryCharges: pricing.deliveryCharges,
     grandTotal: pricing.grandTotal,
     totalSavings: pricing.totalSavings,
-    orderStage: 'ORDER_SUBMITTED',
-    status: 'AWAITING_ADMIN_CONFIRMATION',
-    paymentStatus: 'PENDING',
+    orderStage: "ORDER_SUBMITTED",
+    status: "AWAITING_ADMIN_CONFIRMATION",
+    paymentStatus: "PENDING",
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   };
@@ -98,7 +98,7 @@ export function buildOrderPayload({ orderId, formValues, pricing }) {
 export async function submitOrder(db, { formValues, pricing }) {
   const orderId = await generateOrderId(db);
   const payload = buildOrderPayload({ orderId, formValues, pricing });
-  const ref = doc(db, 'orders', orderId);
+  const ref = doc(db, "orders", orderId);
   await setDoc(ref, payload);
   return { orderId };
 }
@@ -118,9 +118,9 @@ export function subscribeOrdersByMobile(db, mobile, onChange, onError) {
   }
 
   const q = query(
-    collection(db, 'orders'),
-    where('customer.mobile', '==', mobile.trim()),
-    orderBy('createdAt', 'desc')
+    collection(db, "orders"),
+    where("customer.mobile", "==", mobile.trim()),
+    orderBy("createdAt", "desc"),
   );
 
   return onSnapshot(
@@ -130,9 +130,9 @@ export function subscribeOrdersByMobile(db, mobile, onChange, onError) {
       onChange(orders);
     },
     (err) => {
-      console.error('Failed to load order history', err);
+      console.error("Failed to load order history", err);
       onError?.(err);
-    }
+    },
   );
 }
 
@@ -151,7 +151,7 @@ export function subscribeAllOrders(db, onChange, onError) {
     return () => {};
   }
 
-  const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
+  const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
 
   return onSnapshot(
     q,
@@ -160,9 +160,9 @@ export function subscribeAllOrders(db, onChange, onError) {
       onChange(orders);
     },
     (err) => {
-      console.error('Failed to load orders', err);
+      console.error("Failed to load orders", err);
       onError?.(err);
-    }
+    },
   );
 }
 
@@ -176,7 +176,7 @@ export function subscribeAllOrders(db, onChange, onError) {
  * `{ status: 'CONFIRMED', paymentStatus: 'RECEIVED' }`.
  */
 export async function updateOrderStatus(db, orderDocId, patch) {
-  const ref = doc(db, 'orders', orderDocId);
+  const ref = doc(db, "orders", orderDocId);
   await updateDoc(ref, { ...patch, updatedAt: serverTimestamp() });
 }
 
@@ -191,8 +191,14 @@ export async function updateOrderStatus(db, orderDocId, patch) {
  */
 export function computeOrderPricing(items) {
   const PACKING_CHARGE_RATE = 0.03;
-  const subtotalMrp = items.reduce((sum, { product, qty }) => sum + product.mrp * qty, 0);
-  const subtotalSale = items.reduce((sum, { product, qty }) => sum + product.sale * qty, 0);
+  const subtotalMrp = items.reduce(
+    (sum, { product, qty }) => sum + product.mrp * qty,
+    0,
+  );
+  const subtotalSale = items.reduce(
+    (sum, { product, qty }) => sum + product.sale * qty,
+    0,
+  );
   const discount = Math.max(0, subtotalMrp - subtotalSale);
   const packingCharges = Math.round(subtotalSale * PACKING_CHARGE_RATE);
   const grandTotal = Math.max(0, subtotalSale + packingCharges);
@@ -201,8 +207,8 @@ export function computeOrderPricing(items) {
     cartItems: items.map(({ product, qty }) => ({
       productId: product.id,
       name: product.name,
-      nameTa: product.nameTa || '',
-      image: product.img || '',
+      nameTa: product.nameTa || "",
+      image: product.img || "",
       category: product.category,
       unitPrice: product.sale,
       mrp: product.mrp,
@@ -226,8 +232,34 @@ export function computeOrderPricing(items) {
  */
 export async function updateOrderItems(db, orderDocId, items) {
   const pricing = computeOrderPricing(items);
-  const ref = doc(db, 'orders', orderDocId);
+  const ref = doc(db, "orders", orderDocId);
   await updateDoc(ref, { ...pricing, updatedAt: serverTimestamp() });
+}
+
+/**
+ * Tracks whether the admin has sent the WhatsApp bill message and/or bill
+ * file for this order — powers the little checkboxes next to the Message /
+ * Bill buttons on the order card so it's obvious at a glance what's still
+ * pending, even after a page refresh (the flags live on the order doc, not
+ * local state). Pass only the flag(s) that changed, e.g.
+ * `markBillWhatsappSent(db, orderDocId, { messageSent: true })`.
+ * Setting a flag to `false` clears its timestamp (used when the admin
+ * un-ticks a checkbox by mistake).
+ */
+export async function markBillWhatsappSent(
+  db,
+  orderDocId,
+  { messageSent, fileSent } = {},
+) {
+  const ref = doc(db, "orders", orderDocId);
+  const patch = { updatedAt: serverTimestamp() };
+  if (messageSent !== undefined) {
+    patch.billMessageSentAt = messageSent ? serverTimestamp() : null;
+  }
+  if (fileSent !== undefined) {
+    patch.billFileSentAt = fileSent ? serverTimestamp() : null;
+  }
+  await updateDoc(ref, patch);
 }
 
 /**
@@ -237,5 +269,5 @@ export async function updateOrderItems(db, orderDocId, items) {
  * the invoice stays on the Invoices page and can be deleted separately.
  */
 export async function deleteOrderDoc(db, orderDocId) {
-  await deleteDoc(doc(db, 'orders', orderDocId));
+  await deleteDoc(doc(db, "orders", orderDocId));
 }
