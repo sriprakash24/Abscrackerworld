@@ -6,8 +6,8 @@
 export const SHOP_INFO = {
   name: "ABS CRACKERS WORLD",
   tagline: "Festival Fireworks Store",
-  addressLine1: "Your Street, Your Area,",
-  addressLine2: "Your City - 6XXXXX, Tamil Nadu.",
+  addressLine1: "Chinnakamanpatti",
+  addressLine2: "Sivakasi - 626189, Tamil Nadu.",
   phone: "+91 9597189599",
   whatsapp: "+91 9597189599",
   upiId: "",
