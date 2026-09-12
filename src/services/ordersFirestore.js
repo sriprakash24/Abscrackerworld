@@ -227,8 +227,9 @@ export function computeOrderPricing(items) {
 /**
  * Applies a customer-driven item edit to orders/{orderDocId} — only ever
  * called while the order is still AWAITING_ADMIN_CONFIRMATION (see
- * EditOrderModal / OrderCard), so this never touches `status`. Recomputes
- * every pricing field from the new item list so nothing goes stale.
+ * OrderCard's "Edit Order" button and EditOrderReviewModal's "Confirm"),
+ * so this never touches `status`. Recomputes every pricing field from the
+ * new item list so nothing goes stale.
  */
 export async function updateOrderItems(db, orderDocId, items) {
   const pricing = computeOrderPricing(items);

@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/opacity.css';
@@ -6,11 +7,11 @@ import { ChevronDown, Copy, MapPin, MessageCircleMore, Download, Loader2, Pencil
 import { toast } from 'sonner';
 import { getOrderStatusMeta, normalizeOrderStage } from '../../constants/orderStatusMeta';
 import OrderStatusStepper from '../checkout/OrderStatusStepper';
-import EditOrderModal from './EditOrderModal';
 import { db } from '../../firebase/config';
 import { getInvoice } from '../../services/invoicesFirestore';
 import { generateInvoicePdf } from '../../utils/generateInvoicePdf';
 import { useProducts } from '../../contexts/ProductsContext';
+import { useCartStore } from '../../store/useCartStore';
 
 function formatOrderDate(createdAt) {
   const date = createdAt?.toDate ? createdAt.toDate() : createdAt ? new Date(createdAt) : null;
@@ -21,7 +22,8 @@ function formatOrderDate(createdAt) {
 export default function OrderCard({ order, delay = 0 }) {
   const [open, setOpen] = useState(false);
   const [downloadingInvoice, setDownloadingInvoice] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
+  const navigate = useNavigate();
+  const startEditOrder = useCartStore((s) => s.startEditOrder);
   const { products } = useProducts();
   const items = order.cartItems || [];
   // Older orders were placed before item.nameTa started being snapshotted
@@ -73,6 +75,19 @@ export default function OrderCard({ order, delay = 0 }) {
     window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener,noreferrer');
   };
 
+  // Seeds the shopping cart with this order's current items and drops the
+  // customer on Home — from there editing is just normal browsing, with
+  // EditOrderBar (mounted globally) tracking the running total and handling
+  // the final "Review & Update" save back onto this same order doc.
+  const handleEditOrder = () => {
+    const items = (order.cartItems || []).map((item) => ({
+      productId: item.productId,
+      quantity: item.quantity,
+    }));
+    startEditOrder(order.id, items);
+    navigate('/');
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
@@ -80,7 +95,7 @@ export default function OrderCard({ order, delay = 0 }) {
       transition={{ duration: 0.4, delay, ease: 'easeOut' }}
       className="surface-3d overflow-hidden rounded-2xl"
     >
-      <button onClick={() => setOpen((v) => !v)} className="flex w-full flex-col gap-3 p-4 text-left">
+      <div className="flex flex-col gap-3 p-4">
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
             <div className="truncate text-[12.5px] font-extrabold text-[#f2ece2]">{order.orderId || order.id}</div>
@@ -93,7 +108,10 @@ export default function OrderCard({ order, delay = 0 }) {
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Always visible — amount and item thumbnails, no need to expand
+            the dropdown just to see what you're paying. The chevron here
+            is the ONLY thing that toggles the items dropdown below. */}
+        <button onClick={() => setOpen((v) => !v)} className="flex items-center gap-2 text-left">
           <div className="flex -space-x-3">
             {items.slice(0, 3).map((item, i) => (
               <div
@@ -131,8 +149,22 @@ export default function OrderCard({ order, delay = 0 }) {
           >
             <ChevronDown size={15} />
           </motion.span>
-        </div>
-      </button>
+        </button>
+
+        {/* Always visible — the one action customers actually need in a
+            hurry, right on the card face instead of buried behind the
+            dropdown. */}
+        {canEdit && (
+          <button
+            type="button"
+            onClick={handleEditOrder}
+            className="btn-3d flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[11.5px] font-extrabold text-white"
+          >
+            <Pencil size={13} />
+            Edit Order
+          </button>
+        )}
+      </div>
 
       <AnimatePresence initial={false}>
         {open && (
@@ -188,17 +220,6 @@ export default function OrderCard({ order, delay = 0 }) {
                 </div>
               )}
 
-              {canEdit && (
-                <button
-                  type="button"
-                  onClick={() => setEditOpen(true)}
-                  className="btn-3d flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[11.5px] font-extrabold text-white"
-                >
-                  <Pencil size={13} />
-                  Edit Order
-                </button>
-              )}
-
               {order.invoiceId && (
                 <button
                   onClick={handleDownloadInvoice}
@@ -230,14 +251,6 @@ export default function OrderCard({ order, delay = 0 }) {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <EditOrderModal
-        open={editOpen}
-        order={order}
-        products={products}
-        onClose={() => setEditOpen(false)}
-        onSaved={() => {}}
-      />
     </motion.div>
   );
 }

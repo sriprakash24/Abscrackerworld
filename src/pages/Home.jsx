@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import TopBar from '../components/home/TopBar';
 import SearchBar from '../components/home/SearchBar';
-import HeroSlider from '../components/home/HeroSlider';
+import OfferCountdownBanner from '../components/home/OfferCountdownBanner';
 import TrustStrip from '../components/home/TrustStrip';
 import CategoryGrid from '../components/home/CategoryGrid';
 import FloatingButtons from '../components/home/FloatingButtons';
@@ -37,7 +37,7 @@ export default function Home() {
 
       <TopBar onOpenSearch={() => setQuickSearchOpen(true)} />
       <SearchBar products={products} />
-      <HeroSlider />
+      <OfferCountdownBanner />
       <motion.div initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.2 }} variants={fadeUp}>
         <TrustStrip />
       </motion.div>

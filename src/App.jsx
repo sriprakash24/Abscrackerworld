@@ -11,6 +11,7 @@ import TrackOrder from "./pages/TrackOrder";
 import AmbientBackground from "./components/ui/AmbientBackground";
 import GlobalFestiveFX from "./components/ui/GlobalFestiveFX";
 import CustomerDetailsSheet from "./components/customer/CustomerDetailsSheet";
+import EditOrderBar from "./components/orders/EditOrderBar";
 import { useCartFirestoreSync } from "./hooks/useCartFirestoreSync";
 import { ProductsProvider } from "./contexts/ProductsContext";
 import { AdminAuthProvider } from "./contexts/AdminAuthContext";
@@ -71,6 +72,7 @@ function CustomerApp() {
           )}
         </div>
         <CustomerDetailsSheet />
+        <EditOrderBar />
       </div>
     </ProductsProvider>
   );

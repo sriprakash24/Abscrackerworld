@@ -224,21 +224,9 @@ function buildBillDoc(order) {
 
   const afterTableY = doc.lastAutoTable.finalY + 8;
 
-  // --- Left column: plain-language note instead of a payment-mode banner —
-  // there's no payment mode to record yet at estimate stage. ---
-  const noteBoxW = 92;
-  doc.setFont('helvetica', 'italic');
-  doc.setFontSize(8.5);
-  doc.setTextColor(...MUTED);
-  const noteLines = doc.splitTextToSize(
-    'This is an estimate bill for your reference. A tax invoice will be shared once payment is confirmed.',
-    noteBoxW
-  );
-  doc.text(noteLines, margin, afterTableY + 5);
-
   // --- Totals box (right column): plain sales price + a reference-only
   // discount percentage (highlighted in gold) and packing charges — no
-  // MRP-minus-discount math, no delivery-charge line. ---
+  // MRP-minus-delivery math, no delivery-charge line. ---
   const totalsBoxW = 70;
   const totalsX = pageWidth - margin - totalsBoxW;
   const totalsInnerX = totalsX + 4;
@@ -249,13 +237,46 @@ function buildBillDoc(order) {
   ];
   const rowH = 6.5;
   const totalsBoxH = rowH * totalsRows.length + 11;
+
+  // The thank-you/signature block and footer bar sit at a FIXED distance
+  // from the bottom of the page, no matter how tall the items table ended
+  // up being. When the table nearly fills the page, `afterTableY` lands
+  // close to that fixed footer position, and drawing the totals box right
+  // there made it collide with "Thank You!" / the signature line / the
+  // footer bar itself. Compute the footer position up front and — if the
+  // totals box wouldn't leave enough breathing room above it — start a
+  // fresh page for the totals/footer section instead of cramming it in.
+  const footerBarH = 20;
+  const footerBarY = pageHeight - footerBarH - 7;
+  const thankYouY = footerBarY - 12;
+  const minGapAboveThankYou = 8;
+
+  let sectionTop = afterTableY;
+  if (sectionTop + totalsBoxH + minGapAboveThankYou > thankYouY) {
+    doc.addPage();
+    drawPageBorder(doc, pageWidth, pageHeight);
+    sectionTop = margin + 10;
+  }
+
+  // --- Left column: plain-language note instead of a payment-mode banner —
+  // there's no payment mode to record yet at estimate stage. ---
+  const noteBoxW = 92;
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...MUTED);
+  const noteLines = doc.splitTextToSize(
+    'This is an estimate bill for your reference. A tax invoice will be shared once payment is confirmed.',
+    noteBoxW
+  );
+  doc.text(noteLines, margin, sectionTop + 5);
+
   doc.setFillColor(...TOTALS_FILL);
   doc.setDrawColor(...GOLD);
   doc.setLineWidth(0.3);
-  doc.roundedRect(totalsX, afterTableY, totalsBoxW, totalsBoxH, 2, 2, 'FD');
+  doc.roundedRect(totalsX, sectionTop, totalsBoxW, totalsBoxH, 2, 2, 'FD');
 
   doc.setFontSize(9);
-  let totalsY = afterTableY + 6;
+  let totalsY = sectionTop + 6;
   totalsRows.forEach(([label, value], idx) => {
     const isDiscountRow = idx === 1;
     if (isDiscountRow) {
@@ -270,7 +291,7 @@ function buildBillDoc(order) {
     totalsY += rowH;
   });
 
-  const grandTotalY = afterTableY + totalsBoxH - 5.5;
+  const grandTotalY = sectionTop + totalsBoxH - 5.5;
   doc.setFillColor(...ORANGE);
   doc.rect(totalsX, grandTotalY - 5, totalsBoxW, 7.5, 'F');
   doc.setFont('helvetica', 'bold');
@@ -280,9 +301,6 @@ function buildBillDoc(order) {
   doc.text(`Rs. ${Number(bill.grandTotal || 0).toLocaleString('en-IN')}`, totalsX + totalsBoxW - 4, grandTotalY, { align: 'right' });
 
   // --- Thank you + signature block, above the footer bar ---
-  const footerBarH = 20;
-  const footerBarY = pageHeight - footerBarH - 7;
-  const thankYouY = footerBarY - 12;
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(13);

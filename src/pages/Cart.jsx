@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import { useCartPricing } from "../hooks/useCartPricing";
+import { useCartStore } from "../store/useCartStore";
 import CartHeader from "../components/cart/CartHeader";
 import CartItem from "../components/cart/CartItem";
 import OrderSummary from "../components/cart/OrderSummary";
@@ -17,6 +18,12 @@ export default function Cart() {
   const navigate = useNavigate();
   const pricing = useCartPricing();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  // While editing a placed order (see OrderCard's "Edit Order" + the
+  // globally-mounted EditOrderBar), this same cart holds that order's
+  // items — but "checking out" doesn't apply here, updating does. Hide the
+  // normal checkout bar so it doesn't sit on top of EditOrderBar, which
+  // already shows the running total and the "Review & Update" action.
+  const isEditingOrder = useCartStore((s) => Boolean(s.editingOrderId));
 
   const isEmpty = pricing.items.length === 0;
 
@@ -74,68 +81,75 @@ export default function Cart() {
         </button>
       </motion.div>
 
-      {/* Fixed total + checkout bar — always visible above the bottom nav */}
-      <div className="fixed inset-x-0 bottom-[84px] z-40 mx-auto w-full max-w-[430px] px-4">
-        <div
-          className="panel-3d flex items-center justify-between gap-3 rounded-2xl px-4 py-3"
-          style={{
-            boxShadow:
-              "0 12px 30px -10px rgba(0,0,0,.65), 0 0 20px rgba(255,122,0,.12)",
-          }}
-        >
-          <div className="min-w-0">
-            <div className="text-[9px] font-semibold uppercase tracking-wide text-muted">
-              Grand Total
-            </div>
-            <motion.div
-              key={pricing.grandTotal}
-              initial={{ scale: 1.1, opacity: 0.6 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-              className="text-embossed truncate text-[17px] font-extrabold text-gold"
-            >
-              ₹{pricing.grandTotal}
-            </motion.div>
-          </div>
-          <motion.button
-            onClick={() => setCheckoutOpen(true)}
-            animate={{ scale: [1, 1.035, 1] }}
-            transition={{ duration: 1.7, repeat: Infinity, ease: "easeInOut" }}
-            className="btn-3d animate-glow-pulse relative shrink-0 rounded-xl px-5 py-3 text-[12.5px] font-extrabold text-black"
+      {/* Fixed total + checkout bar — always visible above the bottom nav.
+          Hidden while editing a placed order: EditOrderBar (mounted
+          globally) already occupies this exact spot with the equivalent
+          "Review & Update" action for that flow. */}
+      {!isEditingOrder && (
+        <div className="fixed inset-x-0 bottom-[84px] z-40 mx-auto w-full max-w-[430px] px-4">
+          <div
+            className="panel-3d flex items-center justify-between gap-3 rounded-2xl px-4 py-3"
+            style={{
+              boxShadow:
+                "0 12px 30px -10px rgba(0,0,0,.65), 0 0 20px rgba(255,122,0,.12)",
+            }}
           >
-            {/* Lit-sparkler embers popping off the button — the fireworks-
-                store nod. Cheap CSS animation, see ButtonSparks. */}
-            <ButtonSparks count={7} />
+            <div className="min-w-0">
+              <div className="text-[9px] font-semibold uppercase tracking-wide text-muted">
+                Grand Total
+              </div>
+              <motion.div
+                key={pricing.grandTotal}
+                initial={{ scale: 1.1, opacity: 0.6 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
+                className="text-embossed truncate text-[17px] font-extrabold text-gold"
+              >
+                ₹{pricing.grandTotal}
+              </motion.div>
+            </div>
+            <motion.button
+              onClick={() => setCheckoutOpen(true)}
+              animate={{ scale: [1, 1.035, 1] }}
+              transition={{ duration: 1.7, repeat: Infinity, ease: "easeInOut" }}
+              className="btn-3d animate-glow-pulse relative shrink-0 rounded-xl px-5 py-3 text-[12.5px] font-extrabold text-black"
+            >
+              {/* Lit-sparkler embers popping off the button — the fireworks-
+                  store nod. Cheap CSS animation, see ButtonSparks. */}
+              <ButtonSparks count={7} />
 
-            {/* Light sweep, clipped to the pill shape */}
-            <span className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl">
-              <span
-                className="animate-shimmer absolute inset-0"
-                style={{
-                  background:
-                    "linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.65) 50%, transparent 70%)",
-                  backgroundSize: "250% 100%",
-                  animationDuration: "2.2s",
-                  mixBlendMode: "screen",
-                }}
-              />
-            </span>
+              {/* Light sweep, clipped to the pill shape */}
+              <span className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl">
+                <span
+                  className="animate-shimmer absolute inset-0"
+                  style={{
+                    background:
+                      "linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.65) 50%, transparent 70%)",
+                    backgroundSize: "250% 100%",
+                    animationDuration: "2.2s",
+                    mixBlendMode: "screen",
+                  }}
+                />
+              </span>
 
-            <span className="relative z-10 flex items-center gap-1.5">
-              <Sparkles size={14} className="animate-twinkle" />
-              Proceed to Checkout
-            </span>
-          </motion.button>
+              <span className="relative z-10 flex items-center gap-1.5">
+                <Sparkles size={14} className="animate-twinkle" />
+                Proceed to Checkout
+              </span>
+            </motion.button>
+          </div>
         </div>
-      </div>
+      )}
 
       <BottomNav />
 
-      <CheckoutModal
-        open={checkoutOpen}
-        onClose={() => setCheckoutOpen(false)}
-        pricing={pricing}
-      />
+      {!isEditingOrder && (
+        <CheckoutModal
+          open={checkoutOpen}
+          onClose={() => setCheckoutOpen(false)}
+          pricing={pricing}
+        />
+      )}
     </div>
   );
 }

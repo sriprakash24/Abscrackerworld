@@ -179,18 +179,53 @@ export function generateInvoicePdf(invoice) {
 
   const afterTableY = doc.lastAutoTable.finalY + 8;
 
-  // --- Payment mode banner + checkboxes (left column) ---
+  // The thank-you/signature block and footer bar sit at a FIXED distance
+  // from the bottom of the page, no matter how tall the table or the
+  // payment-mode/notes column end up being. When those pushed afterTableY
+  // close to that fixed footer position, the totals box (and sometimes the
+  // payment-mode column) collided with "Thank You!" / the signature line /
+  // the footer bar. Estimate how tall this whole section will be first,
+  // and if it won't fit above the footer, start a fresh page for it.
   const paymentBoxW = 92;
   const paymentBannerH = 6.5;
+  let estimatedLeftH = paymentBannerH + 7 + 7; // banner + gap-to-checkboxes + gap-to-notes
+  if (invoice.transactionRef) estimatedLeftH += 6;
+  if (invoice.notes) {
+    const notePreview = doc.splitTextToSize(`Notes: ${invoice.notes}`, paymentBoxW);
+    estimatedLeftH += notePreview.length * 4 + 2;
+  }
+  if (invoice.cartDiscountAmount > 0) {
+    const discountPreview = doc.splitTextToSize(
+      `Cart Discount Applied: Rs. ${Number(invoice.cartDiscountAmount).toLocaleString('en-IN')} (already reflected in item rates)`,
+      paymentBoxW
+    );
+    estimatedLeftH += discountPreview.length * 4;
+  }
+  const estimatedTotalsH = 6 * 2 + 11; // matches totalsBoxH below (2 rows)
+
+  const footerBarH = 20;
+  const footerBarY = pageHeight - footerBarH - 7;
+  const thankYouY = footerBarY - 12;
+  const minGapAboveThankYou = 8;
+  const sectionH = Math.max(estimatedLeftH, estimatedTotalsH);
+
+  let sectionTop = afterTableY;
+  if (sectionTop + sectionH + minGapAboveThankYou > thankYouY) {
+    doc.addPage();
+    drawPageBorder(doc, pageWidth, pageHeight);
+    sectionTop = margin + 10;
+  }
+
+  // --- Payment mode banner + checkboxes (left column) ---
   doc.setFillColor(...DEEP_RED);
-  doc.roundedRect(margin, afterTableY, paymentBoxW, paymentBannerH, 1.2, 1.2, 'F');
+  doc.roundedRect(margin, sectionTop, paymentBoxW, paymentBannerH, 1.2, 1.2, 'F');
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9.5);
   doc.setTextColor(255, 255, 255);
-  doc.text('PAYMENT MODE', margin + paymentBoxW / 2, afterTableY + paymentBannerH / 2 + 1.2, { align: 'center' });
+  doc.text('PAYMENT MODE', margin + paymentBoxW / 2, sectionTop + paymentBannerH / 2 + 1.2, { align: 'center' });
 
   const modeKey = invoice.paymentMode;
-  const checkboxY = afterTableY + paymentBannerH + 7;
+  const checkboxY = sectionTop + paymentBannerH + 7;
   let cbX = margin + 2;
   const cbSize = 3.6;
   PAYMENT_MODES.forEach((mode) => {
@@ -240,10 +275,10 @@ export function generateInvoicePdf(invoice) {
   doc.setFillColor(...TOTALS_FILL);
   doc.setDrawColor(...GOLD);
   doc.setLineWidth(0.3);
-  doc.roundedRect(totalsX, afterTableY, totalsBoxW, totalsBoxH, 2, 2, 'FD');
+  doc.roundedRect(totalsX, sectionTop, totalsBoxW, totalsBoxH, 2, 2, 'FD');
 
   doc.setFontSize(9);
-  let totalsY = afterTableY + 6;
+  let totalsY = sectionTop + 6;
   totalsRows.forEach(([label, value]) => {
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...MUTED);
@@ -255,7 +290,7 @@ export function generateInvoicePdf(invoice) {
     totalsY += rowH;
   });
 
-  const grandTotalY = afterTableY + totalsBoxH - 5.5;
+  const grandTotalY = sectionTop + totalsBoxH - 5.5;
   doc.setFillColor(...ORANGE);
   doc.rect(totalsX, grandTotalY - 5, totalsBoxW, 7.5, 'F');
   doc.setFont('helvetica', 'bold');
@@ -265,10 +300,6 @@ export function generateInvoicePdf(invoice) {
   doc.text(`Rs. ${Number(invoice.grandTotal || 0).toLocaleString('en-IN')}`, totalsX + totalsBoxW - 4, grandTotalY, { align: 'right' });
 
   // --- Thank you + signature block, above the footer bar ---
-  const footerBarH = 20;
-  const footerBarY = pageHeight - footerBarH - 7;
-  const thankYouY = footerBarY - 12;
-
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(13);
   doc.setTextColor(...DEEP_RED);

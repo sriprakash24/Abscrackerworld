@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useCartStore } from "../../store/useCartStore";
 import { useCartPricing } from "../../hooks/useCartPricing";
+import { cn } from "../../utils/cn";
 
 /** The real WhatsApp brand glyph (phone-in-speech-bubble), traced from the
  * official mark so it actually reads as "WhatsApp" instead of a generic
@@ -28,6 +29,13 @@ export default function FloatingButtons() {
     Object.values(s.cart).reduce((a, b) => a + b, 0),
   );
   const { subtotalSale } = useCartPricing();
+  // EditOrderBar (see components/orders/EditOrderBar.jsx) sits fixed at
+  // bottom-[84px] while a customer is editing a placed order, and these
+  // two floating buttons normally live at bottom-24 (96px) — close enough
+  // to overlap it. Bump them up out of the way only while editing; every
+  // other screen/state is untouched.
+  const isEditingOrder = useCartStore((s) => Boolean(s.editingOrderId));
+  const floatingBottomClass = isEditingOrder ? "bottom-44" : "bottom-24";
 
   // Reacts to a rocket landing (see AddToCartButton) with a quick shake +
   // bright flash, so the cart icon visibly "catches" what just flew into it.
@@ -55,7 +63,10 @@ export default function FloatingButtons() {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ type: "spring", stiffness: 380, damping: 20 }}
         whileTap={{ scale: 0.9 }}
-        className="fixed bottom-24 left-4 z-40 flex h-14 w-14 items-center justify-center rounded-full text-white"
+        className={cn(
+          "fixed left-4 z-40 flex h-14 w-14 items-center justify-center rounded-full text-white transition-[bottom] duration-300",
+          floatingBottomClass
+        )}
         style={{
           background: "linear-gradient(180deg,#3ee878,#20bd5a 55%,#189649)",
           boxShadow:
@@ -97,7 +108,10 @@ export default function FloatingButtons() {
             }
             whileTap={{ scale: 0.96 }}
             onClick={() => navigate("/cart")}
-            className="fixed bottom-24 right-4 z-40 flex items-stretch overflow-hidden rounded-2xl text-white"
+            className={cn(
+              "fixed right-4 z-40 flex items-stretch overflow-hidden rounded-2xl text-white transition-[bottom] duration-300",
+              floatingBottomClass
+            )}
             style={{
               boxShadow: hit
                 ? "0 0 0 2px rgba(255,200,150,1), 0 0 26px 8px rgba(255,120,20,.9), 0 8px 20px -6px rgba(0,0,0,.7)"

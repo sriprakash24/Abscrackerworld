@@ -54,6 +54,37 @@ export const useCartStore = create(
       couponStatus: null, // 'success' | 'error' | null
       couponMessage: null,
 
+      // --- Edit-order mode ---------------------------------------------
+      // When a customer taps "Edit Order" on a placed-but-unconfirmed
+      // order, we seed the *same* cart the rest of the app already reads
+      // (Home, category pages, Cart) with that order's items, and drop a
+      // sticky bar (see EditOrderBar) on top of every screen so they can
+      // add/remove products exactly like normal shopping. `editingOrderId`
+      // is the Firestore doc id being edited; `preEditCart` is whatever was
+      // in the shopping cart *before* editing started, so cancelling
+      // restores it instead of losing it.
+      editingOrderId: null,
+      preEditCart: null,
+
+      startEditOrder: (orderId, items) =>
+        set((state) => ({
+          editingOrderId: orderId,
+          preEditCart: state.editingOrderId ? state.preEditCart : state.cart,
+          cart: Object.fromEntries(items.map((i) => [String(i.productId), i.quantity])),
+        })),
+
+      cancelEditOrder: () =>
+        set((state) => ({
+          cart: state.preEditCart || {},
+          editingOrderId: null,
+          preEditCart: null,
+        })),
+
+      // Called once the edited order has been saved to Firestore — clears
+      // the cart (there's nothing left to "check out", the order is
+      // already placed) and exits edit mode.
+      finishEditOrder: () => set({ cart: {}, editingOrderId: null, preEditCart: null }),
+
       // Live product catalog keyed by id — kept in sync with Firestore by
       // ProductsProvider (see src/contexts/ProductsContext.jsx) rather than
       // the old static mock catalog. Not persisted to localStorage.
@@ -214,6 +245,10 @@ export const useCartStore = create(
         couponCode: state.couponCode,
         couponStatus: state.couponStatus,
         couponMessage: state.couponMessage,
+        // Persisted so a refresh mid-edit doesn't silently drop the
+        // customer back into a normal (non-edit) cart.
+        editingOrderId: state.editingOrderId,
+        preEditCart: state.preEditCart,
       }),
     }
   )
