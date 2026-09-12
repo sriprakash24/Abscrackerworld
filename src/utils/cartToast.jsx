@@ -58,6 +58,13 @@ export function showRemovedToast(productName) {
   });
 }
 
+/** Quantity jumped straight to a specific number via the quantity picker. */
+export function showQuantityUpdatedToast(productName, qty) {
+  toast.custom(() => <CrackerToast variant="success" title={productName} subtitle={`Quantity set to ${qty}`} />, {
+    duration: 1800,
+  });
+}
+
 /** Hit the max-stock cap while incrementing quantity. */
 export function showStockLimitToast(productName, maxQty) {
   toast.custom(() => <CrackerToast variant="warn" title={`Only ${maxQty} in stock`} subtitle={productName} />, {

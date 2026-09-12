@@ -10,7 +10,7 @@ export const SHOP_INFO = {
   addressLine2: "Sivakasi - 626189, Tamil Nadu.",
   phone: "+91 9597189599",
   whatsapp: "+91 9597189599",
-  upiId: "",
+  upiId: "abscrackersworld@tmb",
   termsLine: "Goods once sold will not be taken back or exchanged.",
   thankYouLine: "Have a Safe & Prosperous Festival",
 };

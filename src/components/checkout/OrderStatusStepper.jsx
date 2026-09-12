@@ -13,9 +13,18 @@ const STAGE_ICONS = {
  * Premium animated status strip: completed steps glow + scale in with a
  * check, the current step gets a breathing orange glow, future steps sit
  * quiet and grey. Connecting dashed lines light up as progress advances.
+ *
+ * `completed` marks every stage — including `currentStageId` itself — as
+ * done. Without it, `currentStageId` always renders as the "in progress"
+ * step, which is right for the first three stages but would leave the
+ * final "Order Packed & Delivered" node pulsing forever since there's no
+ * stage after it to promote it to "done". Pass `completed` once the order
+ * has actually reached that terminal state.
  */
-export default function OrderStatusStepper({ currentStageId = 'CONTACT', delay = 0.7 }) {
-  const currentIndex = Math.max(0, ORDER_STAGE_IDS.indexOf(currentStageId));
+export default function OrderStatusStepper({ currentStageId = 'CONTACT', completed = false, delay = 0.7 }) {
+  const currentIndex = completed
+    ? ORDER_STAGE_IDS.length
+    : Math.max(0, ORDER_STAGE_IDS.indexOf(currentStageId));
 
   return (
     <motion.div

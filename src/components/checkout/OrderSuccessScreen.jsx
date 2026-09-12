@@ -1,23 +1,11 @@
 import { motion } from "framer-motion";
-import * as LottieModule from "lottie-react";
 import { Copy, MessageCircleMore } from "lucide-react";
 import { toast } from "sonner";
 import EmberParticles from "../ui/EmberParticles";
 import FestiveBackdrop from "../ui/FestiveBackdrop";
-import FireworkBurst from "../ui/FireworkBurst";
+import { SHOP_INFO } from "../../constants/invoiceConstants";
 import OrderStatusStepper from "./OrderStatusStepper";
-import successBurst from "../../assets/lottie/orderSuccessBurst.json";
 import heroArt from "../../assets/order-success-hero.png";
-
-// This project's bundler double-wraps lottie-react's CJS export: the
-// namespace's `.default` holds the raw `module.exports` object rather than
-// the component itself, and that object *also* has a `.default` (since the
-// package does `exports.default = Lottie`). Unwrap `.default` until we
-// land on an actual function — this is what was causing the render crash.
-let Lottie = LottieModule;
-for (let i = 0; i < 3 && Lottie && typeof Lottie !== "function"; i++) {
-  Lottie = Lottie.default;
-}
 
 export default function OrderSuccessScreen({
   orderId,
@@ -35,53 +23,47 @@ export default function OrderSuccessScreen({
     }
   };
 
+  // Sends a tidy confirmation message — with the order ID called out and a
+  // link back to Track Order — straight to the shop's WhatsApp number, so
+  // the team has everything they need to look the order up right away.
+  const messageOnWhatsapp = () => {
+    const trackLink = `${window.location.origin}/track-order`;
+    const lines = [
+      `Hi! I've just placed an order on ${SHOP_INFO.name}.`,
+      '',
+      `Order ID: *${orderId}*`,
+      typeof grandTotal === "number" ? `Amount: ₹${grandTotal.toLocaleString("en-IN")}` : null,
+      '',
+      `Track it here: ${trackLink}`,
+    ].filter(Boolean);
+    const text = encodeURIComponent(lines.join("\n"));
+    const mobileDigits = SHOP_INFO.whatsapp.replace(/\D/g, "").slice(-10);
+    window.open(`https://wa.me/91${mobileDigits}?text=${text}`, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <div className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden px-6 py-10 text-center">
       <FestiveBackdrop />
-      <EmberParticles count={14} className="opacity-40" />
-      <FireworkBurst
-        size={130}
-        className="left-2 top-8 opacity-70"
-        delay={0}
-        color="gold"
-      />
-      <FireworkBurst
-        size={100}
-        className="right-2 top-24 opacity-60"
-        delay={0.5}
-        color="orange"
-      />
-      <FireworkBurst
-        size={90}
-        className="bottom-16 left-8 opacity-50"
-        delay={1}
-        color="gold"
-      />
+      <EmberParticles count={10} className="opacity-25" />
 
       <motion.div
-        initial={{ scale: 0.6, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 220, damping: 16 }}
-        className="relative z-10 h-44 w-44"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4 }}
+        className="relative z-10 h-32 w-32"
       >
-        {/* Confetti burst plays once behind the branded artwork */}
-        <Lottie
-          animationData={successBurst}
-          loop={false}
-          className="pointer-events-none absolute inset-0 h-full w-full scale-125 opacity-80"
-        />
         <img
           src={heroArt}
           alt=""
-          className="art-float relative z-10 h-full w-full object-contain"
+          className="relative z-10 h-full w-full object-contain"
         />
       </motion.div>
 
       <motion.h1
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.4 }}
-        className="text-embossed relative z-10 mt-4 text-[20px] font-extrabold uppercase leading-snug tracking-wide text-gradient-gold"
+        transition={{ delay: 0.15, duration: 0.4 }}
+        className="text-embossed relative z-10 mt-4 text-[19px] font-extrabold uppercase leading-snug tracking-wide text-gradient-gold"
       >
         Order Placed Successfully!
       </motion.h1>
@@ -158,6 +140,14 @@ export default function OrderSuccessScreen({
         transition={{ delay: 0.85, duration: 0.4 }}
         className="relative z-10 mt-6 flex w-full max-w-xs flex-col gap-2.5"
       >
+        <button
+          onClick={messageOnWhatsapp}
+          className="flex w-full items-center justify-center gap-1.5 rounded-xl py-3 text-[12px] font-extrabold text-white"
+          style={{ background: 'linear-gradient(180deg,#2fce5f,#1fa64d)', boxShadow: '0 8px 18px -8px rgba(31,166,77,.6)' }}
+        >
+          <MessageCircleMore size={15} />
+          Message Us on WhatsApp
+        </button>
         <button
           onClick={onContinueShopping}
           className="btn-3d w-full rounded-xl py-3 text-[12.5px] font-extrabold text-black"

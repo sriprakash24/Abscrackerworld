@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Plus, Search, Pencil, Download, Receipt, Link2, PenSquare, Eye, Trash2 } from 'lucide-react';
+import { Plus, Search, Pencil, Download, Receipt, Link2, PenSquare, Eye, Trash2, MessageCircleMore, Loader2 } from 'lucide-react';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import AdminSectionHeader from '../../components/admin/AdminSectionHeader';
 import AdminTabsNav from '../../components/admin/AdminTabsNav';
@@ -11,6 +11,7 @@ import ConfirmDeleteDialog from '../../components/admin/ConfirmDeleteDialog';
 import { db } from '../../firebase/config';
 import { subscribeAllInvoices, deleteInvoiceDoc } from '../../services/invoicesFirestore';
 import { generateInvoicePdf } from '../../utils/generateInvoicePdf';
+import { sendInvoiceFile } from '../../utils/shareInvoiceWhatsapp';
 
 const SOURCE_FILTERS = ['ALL', 'ORDER', 'MANUAL'];
 
@@ -169,6 +170,24 @@ export default function AdminInvoices() {
 }
 
 function InvoiceRow({ invoice, onView, onEdit, onDelete }) {
+  const [sending, setSending] = useState(false);
+
+  const handleShare = async () => {
+    if (sending) return;
+    setSending(true);
+    try {
+      const { method } = await sendInvoiceFile(invoice);
+      if (method === 'fallback') {
+        toast('Invoice downloaded — attach it in the WhatsApp chat that just opened.');
+      }
+    } catch (err) {
+      console.error('Failed to share invoice', err);
+      toast.error("Couldn't share the invoice. Please try again.");
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <div className="surface-3d flex items-center gap-3 rounded-2xl p-3">
       <div className="orb-3d flex h-12 w-12 shrink-0 items-center justify-center !rounded-xl text-orange">
@@ -205,6 +224,14 @@ function InvoiceRow({ invoice, onView, onEdit, onDelete }) {
           className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-[#f2ece2] hover:text-orange"
         >
           <Download size={13} />
+        </button>
+        <button
+          onClick={handleShare}
+          disabled={sending}
+          title="Share invoice on WhatsApp"
+          className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-[#25D366] disabled:opacity-60"
+        >
+          {sending ? <Loader2 size={13} className="animate-spin" /> : <MessageCircleMore size={13} />}
         </button>
         <button
           onClick={onDelete}

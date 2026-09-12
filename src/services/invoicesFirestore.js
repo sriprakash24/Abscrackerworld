@@ -9,6 +9,13 @@
 //   2. MANUAL — created from scratch on the admin Invoices page for phone-in
 //      orders that never went through the website (createManualInvoice).
 //
+// Editing an ORDER-linked invoice (updateInvoice, with orderDocId passed in)
+// writes the same item list back onto orders/{orderDocId}.cartItems in the
+// same batch, so admin Order Management and the customer's Order History /
+// Track Order screens — which all read the order doc live — pick up the
+// change immediately. Editing a MANUAL invoice only ever touches the
+// invoice, since there's no order doc behind it.
+//
 // Invoice numbers, e.g. "ABSI20260801108" — ABSI + today's date + a 3-digit
 // counter that resets daily, via an atomic Firestore transaction, so two
 // admins confirming payment at the same moment never collide. Orders use
@@ -25,6 +32,7 @@ import {
   query,
   orderBy,
   onSnapshot,
+  writeBatch,
 } from 'firebase/firestore';
 import { DEFAULT_PACKAGE_PERCENT, INVOICE_SOURCE } from '../constants/invoiceConstants';
 import { reserveSequentialId } from '../utils/sequentialId';
@@ -156,8 +164,51 @@ export async function createManualInvoice(db, values) {
   return { id: ref.id, ...payload };
 }
 
-/** Edits an existing invoice (either source) from the admin Invoices page. Recomputes totals from the submitted items. */
-export async function updateInvoice(db, invoiceDocId, values) {
+/**
+ * Maps invoice line items (description/qty/rate, optionally productId) into
+ * the orders/{id}.cartItems shape, so an invoice edit can be written back
+ * onto the linked order in the same format the order was created with.
+ * When a line was picked from the catalog (has productId), the live product
+ * fills in name/nameTa/image/category/mrp; a hand-typed custom line has no
+ * catalog match, so it falls back to the invoice's own description/rate and
+ * treats mrp as equal to the rate (no discount to report on that line).
+ */
+function invoiceItemsToOrderCartItems(items, products = []) {
+  const byId = new Map(products.map((p) => [p.id, p]));
+  return (items || []).map((item) => {
+    const product = item.productId ? byId.get(item.productId) : null;
+    const quantity = Number(item.qty) || 0;
+    const unitPrice = Number(item.rate) || 0;
+    const lineTotal = Number(item.amount ?? unitPrice * quantity);
+    return {
+      productId: item.productId || '',
+      name: product?.name || item.description || '',
+      nameTa: product?.nameTa || '',
+      image: product?.img || '',
+      category: product?.category || '',
+      unitPrice,
+      mrp: product?.mrp ?? unitPrice,
+      quantity,
+      lineTotal,
+    };
+  });
+}
+
+/**
+ * Edits an existing invoice (either source) from the admin Invoices page.
+ * Recomputes totals from the submitted items.
+ *
+ * When the invoice is linked to a website order (`orderDocId` passed in
+ * `opts`), the order's `cartItems` and pricing fields are rewritten in the
+ * same write so both the admin Order Management screen and the customer's
+ * Order History / Track Order pages (all of which read straight from the
+ * order doc, live) reflect the edited item list immediately — not just the
+ * invoice. `opts.products` is the live catalog, used to fill in
+ * name/mrp/image/category for lines that were picked from a product; a
+ * writeBatch keeps the invoice and order writes atomic.
+ */
+export async function updateInvoice(db, invoiceDocId, values, opts = {}) {
+  const { orderDocId = null, products = [] } = opts;
   const packagePercent = values.packagePercent ?? DEFAULT_PACKAGE_PERCENT;
   const { subtotal, packageAmount, grandTotal } = computeInvoiceTotals({
     items: values.items,
@@ -177,7 +228,27 @@ export async function updateInvoice(db, invoiceDocId, values) {
     updatedAt: serverTimestamp(),
   };
 
-  await updateDoc(doc(db, 'invoices', invoiceDocId), patch);
+  const batch = writeBatch(db);
+  batch.update(doc(db, 'invoices', invoiceDocId), patch);
+
+  if (orderDocId) {
+    const cartItems = invoiceItemsToOrderCartItems(values.items, products);
+    const orderSubtotalMrp = cartItems.reduce((sum, it) => sum + it.mrp * it.quantity, 0);
+    const orderSubtotalSale = cartItems.reduce((sum, it) => sum + it.unitPrice * it.quantity, 0);
+    const discount = Math.max(0, orderSubtotalMrp - orderSubtotalSale);
+
+    batch.update(doc(db, 'orders', orderDocId), {
+      cartItems,
+      subtotal: orderSubtotalMrp,
+      discount,
+      packingCharges: packageAmount,
+      grandTotal,
+      totalSavings: discount,
+      updatedAt: serverTimestamp(),
+    });
+  }
+
+  await batch.commit();
   return patch;
 }
 

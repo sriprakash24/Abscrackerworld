@@ -26,6 +26,7 @@ export default function ProductCard({ product, theme }) {
   const incrementQty = useCartStore((s) => s.incrementQty);
   const decrementQty = useCartStore((s) => s.decrementQty);
   const removeFromCart = useCartStore((s) => s.removeFromCart);
+  const setQuantity = useCartStore((s) => s.setQuantity);
   const toggleWishlist = useCartStore((s) => s.toggleWishlist);
   const requestDetails = useCustomerGateStore((s) => s.requestDetails);
 
@@ -123,6 +124,7 @@ export default function ProductCard({ product, theme }) {
             decrementQty(product.id);
           }
         }}
+        onSetQuantity={(qty) => setQuantity(product.id, qty)}
       />
     </motion.div>
   );

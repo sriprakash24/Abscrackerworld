@@ -1,28 +1,54 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { ArrowLeft, Truck, Copy, MapPin, MessageCircleMore, Download, Loader2, ChevronRight } from 'lucide-react';
-import { toast } from 'sonner';
-import { db } from '../firebase/config';
-import { useCustomerStore } from '../store/useCustomerStore';
-import { useCustomerGateStore } from '../store/useCustomerGateStore';
-import { subscribeOrdersByMobile } from '../services/ordersFirestore';
-import { getInvoice } from '../services/invoicesFirestore';
-import { generateInvoicePdf } from '../utils/generateInvoicePdf';
-import { getOrderStatusMeta, normalizeOrderStage } from '../constants/orderStatusMeta';
-import OrderStatusStepper from '../components/checkout/OrderStatusStepper';
-import OrderCardSkeleton from '../components/orders/OrderCardSkeleton';
-import EmptyOrders from '../components/orders/EmptyOrders';
-import EmberParticles from '../components/ui/EmberParticles';
-import FestiveBackdrop from '../components/ui/FestiveBackdrop';
-import BottomNav from '../components/home/BottomNav';
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import {
+  ArrowLeft,
+  Truck,
+  Copy,
+  MapPin,
+  MessageCircleMore,
+  Download,
+  Loader2,
+  ChevronRight,
+} from "lucide-react";
+import { toast } from "sonner";
+import { db } from "../firebase/config";
+import { useCustomerStore } from "../store/useCustomerStore";
+import { useCustomerGateStore } from "../store/useCustomerGateStore";
+import { subscribeOrdersByMobile } from "../services/ordersFirestore";
+import { getInvoice } from "../services/invoicesFirestore";
+import { generateInvoicePdf } from "../utils/generateInvoicePdf";
+import {
+  getOrderStatusMeta,
+  normalizeOrderStage,
+  isOrderStageComplete,
+} from "../constants/orderStatusMeta";
+import OrderStatusStepper from "../components/checkout/OrderStatusStepper";
+import OrderCardSkeleton from "../components/orders/OrderCardSkeleton";
+import EmptyOrders from "../components/orders/EmptyOrders";
+import EmberParticles from "../components/ui/EmberParticles";
+import FestiveBackdrop from "../components/ui/FestiveBackdrop";
+import BottomNav from "../components/home/BottomNav";
 
-const ACTIVE_STATUSES = new Set(['AWAITING_ADMIN_CONFIRMATION', 'CONFIRMED', 'PACKED', 'OUT_FOR_DELIVERY']);
+const ACTIVE_STATUSES = new Set([
+  "AWAITING_ADMIN_CONFIRMATION",
+  "CONFIRMED",
+  "PACKED",
+  "OUT_FOR_DELIVERY",
+]);
 
 function formatOrderDate(createdAt) {
-  const date = createdAt?.toDate ? createdAt.toDate() : createdAt ? new Date(createdAt) : null;
-  if (!date || Number.isNaN(date.getTime())) return 'Just now';
-  return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  const date = createdAt?.toDate
+    ? createdAt.toDate()
+    : createdAt
+      ? new Date(createdAt)
+      : null;
+  if (!date || Number.isNaN(date.getTime())) return "Just now";
+  return date.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 function TrackHeader({ onBack }) {
@@ -30,13 +56,17 @@ function TrackHeader({ onBack }) {
     <div
       className="glass relative sticky top-0 z-30 flex items-center gap-2.5 overflow-hidden px-3 py-3"
       style={{
-        borderBottom: '1px solid rgba(255,154,0,.22)',
-        boxShadow: '0 10px 26px -14px rgba(0,0,0,.7), 0 0 20px rgba(255,122,0,.1)',
+        borderBottom: "1px solid rgba(255,154,0,.22)",
+        boxShadow:
+          "0 10px 26px -14px rgba(0,0,0,.7), 0 0 20px rgba(255,122,0,.1)",
       }}
     >
       <div
         className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-full"
-        style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(255,122,0,0.14) 0%, transparent 70%)' }}
+        style={{
+          background:
+            "radial-gradient(ellipse at 50% 0%, rgba(255,122,0,0.14) 0%, transparent 70%)",
+        }}
       />
       <button
         onClick={onBack}
@@ -53,7 +83,9 @@ function TrackHeader({ onBack }) {
           <div className="text-embossed truncate text-[14.5px] font-extrabold leading-tight text-[#f2ece2]">
             Track Order
           </div>
-          <div className="text-[10px] font-semibold text-muted">Live status, straight from packing to delivery</div>
+          <div className="text-[10px] font-semibold text-muted">
+            Live status, straight from packing to delivery
+          </div>
         </div>
       </div>
     </div>
@@ -87,7 +119,7 @@ export default function TrackOrder() {
       () => {
         setErrored(true);
         setLoading(false);
-      }
+      },
     );
     return () => unsubscribe?.();
   }, [customer?.mobile]);
@@ -112,15 +144,21 @@ export default function TrackOrder() {
   const copyOrderId = async (order) => {
     try {
       await navigator.clipboard.writeText(order.orderId || order.id);
-      toast('Order ID copied');
+      toast("Order ID copied");
     } catch {
-      toast('Could not copy — long press to select');
+      toast("Could not copy — long press to select");
     }
   };
 
   const contactSupport = (order) => {
-    const text = encodeURIComponent(`Hi, I'd like an update on my order ${order.orderId || order.id}.`);
-    window.open(`https://wa.me/919597189599?text=${text}`, '_blank', 'noopener,noreferrer');
+    const text = encodeURIComponent(
+      `Hi, I'd like an update on my order ${order.orderId || order.id}.`,
+    );
+    window.open(
+      `https://wa.me/919597012599?text=${text}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
   };
 
   const handleDownloadInvoice = async (order) => {
@@ -129,12 +167,12 @@ export default function TrackOrder() {
     try {
       const invoice = await getInvoice(db, order.invoiceId);
       if (!invoice) {
-        toast.error('Invoice not found');
+        toast.error("Invoice not found");
         return;
       }
       generateInvoicePdf(invoice);
     } catch (err) {
-      console.error('Failed to download invoice', err);
+      console.error("Failed to download invoice", err);
       toast.error("Couldn't download the invoice. Please try again.");
     } finally {
       setDownloadingInvoice(false);
@@ -155,14 +193,18 @@ export default function TrackOrder() {
           <OrderCardSkeleton />
         ) : errored ? (
           <div className="surface-3d rounded-2xl px-4 py-6 text-center text-[12px] text-muted">
-            Couldn't load your order right now. Please check your connection and try again.
+            Couldn't load your order right now. Please check your connection and
+            try again.
           </div>
         ) : !selectedOrder ? (
-          <EmptyOrders onShopNow={() => navigate('/')} />
+          <EmptyOrders onShopNow={() => navigate("/")} />
         ) : (
           <>
             {orders.length > 1 && (
-              <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1" style={{ scrollbarWidth: 'none' }}>
+              <div
+                className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1"
+                style={{ scrollbarWidth: "none" }}
+              >
                 {orders.map((order) => {
                   const meta = getOrderStatusMeta(order.status);
                   const isSelected = order.id === selectedOrder.id;
@@ -171,7 +213,9 @@ export default function TrackOrder() {
                       key={order.id}
                       onClick={() => setSelectedId(order.id)}
                       className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-[10.5px] font-bold transition-colors ${
-                        isSelected ? meta.className : 'border-white/10 bg-black/20 text-muted'
+                        isSelected
+                          ? meta.className
+                          : "border-white/10 bg-black/20 text-muted"
                       }`}
                     >
                       {meta.emoji} {order.orderId || order.id}
@@ -185,7 +229,7 @@ export default function TrackOrder() {
               key={selectedOrder.id}
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, ease: 'easeOut' }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
               className="surface-3d flex flex-col gap-3 rounded-2xl p-4"
             >
               <div className="flex items-center justify-between gap-2">
@@ -193,29 +237,37 @@ export default function TrackOrder() {
                   <div className="truncate text-[13px] font-extrabold text-[#f2ece2]">
                     {selectedOrder.orderId || selectedOrder.id}
                   </div>
-                  <div className="text-[10px] text-muted">{formatOrderDate(selectedOrder.createdAt)}</div>
+                  <div className="text-[10px] text-muted">
+                    {formatOrderDate(selectedOrder.createdAt)}
+                  </div>
                 </div>
                 <span
                   className={`flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-bold ${
                     getOrderStatusMeta(selectedOrder.status).className
                   }`}
                 >
-                  {getOrderStatusMeta(selectedOrder.status).emoji} {getOrderStatusMeta(selectedOrder.status).label}
+                  {getOrderStatusMeta(selectedOrder.status).emoji}{" "}
+                  {getOrderStatusMeta(selectedOrder.status).label}
                 </span>
               </div>
 
-              {selectedOrder.status !== 'CANCELLED' && (
+              {selectedOrder.status !== "CANCELLED" && (
                 <div className="flex justify-center py-1">
                   <OrderStatusStepper
-                    currentStageId={normalizeOrderStage(selectedOrder.orderStage, selectedOrder.status)}
+                    currentStageId={normalizeOrderStage(
+                      selectedOrder.orderStage,
+                      selectedOrder.status,
+                    )}
+                    completed={isOrderStageComplete(selectedOrder.status)}
                     delay={0.05}
                   />
                 </div>
               )}
 
-              {selectedOrder.status === 'CANCELLED' && (
+              {selectedOrder.status === "CANCELLED" && (
                 <div className="rounded-xl border border-[#e35226]/30 bg-[#e35226]/10 px-3 py-2.5 text-center text-[11px] font-semibold text-[#e35226]">
-                  This order was cancelled. Reach out on WhatsApp if that doesn't look right.
+                  This order was cancelled. Reach out on WhatsApp if that
+                  doesn't look right.
                 </div>
               )}
 
@@ -227,7 +279,11 @@ export default function TrackOrder() {
                     style={{ zIndex: 5 - i }}
                   >
                     {item.image ? (
-                      <img src={item.image} alt={item.name} className="h-full w-full object-contain" />
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="h-full w-full object-contain"
+                      />
                     ) : (
                       <span className="text-base">🎆</span>
                     )}
@@ -254,7 +310,7 @@ export default function TrackOrder() {
                       selectedOrder.address.pincode,
                     ]
                       .filter(Boolean)
-                      .join(', ')}
+                      .join(", ")}
                   </span>
                 </div>
               )}
@@ -265,7 +321,11 @@ export default function TrackOrder() {
                   disabled={downloadingInvoice}
                   className="btn-3d-outline flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[11px] font-bold text-gold disabled:opacity-60"
                 >
-                  {downloadingInvoice ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
+                  {downloadingInvoice ? (
+                    <Loader2 size={13} className="animate-spin" />
+                  ) : (
+                    <Download size={13} />
+                  )}
                   Download Invoice
                 </button>
               )}
@@ -289,7 +349,7 @@ export default function TrackOrder() {
             </motion.div>
 
             <button
-              onClick={() => navigate('/orders')}
+              onClick={() => navigate("/orders")}
               className="flex items-center justify-center gap-1 py-2 text-[11px] font-bold text-muted transition-colors hover:text-orange"
             >
               View all your orders

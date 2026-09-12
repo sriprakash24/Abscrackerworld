@@ -43,6 +43,7 @@ import {
 import { generateInvoicePdf } from "../../utils/generateInvoicePdf";
 import { generateBillPdf } from "../../utils/generateBillPdf";
 import { sendBillMessage, sendBillFile } from "../../utils/shareBillWhatsapp";
+import { sendInvoiceFile } from "../../utils/shareInvoiceWhatsapp";
 import InvoicePreviewModal from "./InvoicePreviewModal";
 import BillPreviewModal from "./BillPreviewModal";
 import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
@@ -117,6 +118,7 @@ export default function AdminOrderCard({ order, delay = 0 }) {
   const [downloadingBill, setDownloadingBill] = useState(false);
   const [sendingBillMessage, setSendingBillMessage] = useState(false);
   const [sendingBillFile, setSendingBillFile] = useState(false);
+  const [sendingInvoiceFile, setSendingInvoiceFile] = useState(false);
 
   const items = order.cartItems || [];
   const { products } = useProducts();
@@ -236,6 +238,33 @@ export default function AdminOrderCard({ order, delay = 0 }) {
       toast.error("Couldn't download the invoice. Please try again.");
     } finally {
       setDownloadingInvoice(false);
+    }
+  };
+
+  // Shares the invoice PDF straight to the customer's WhatsApp — same native
+  // share-sheet-first, download-fallback approach as handleSendBillFile
+  // above, just pulling the invoice doc (fresh, in case it was edited)
+  // instead of building a PDF from the order.
+  const handleSendInvoiceFile = async () => {
+    if (!order.invoiceId || sendingInvoiceFile) return;
+    setSendingInvoiceFile(true);
+    try {
+      const invoice = await getInvoice(db, order.invoiceId);
+      if (!invoice) {
+        toast.error("Invoice not found");
+        return;
+      }
+      const { method } = await sendInvoiceFile(invoice);
+      if (method === "fallback") {
+        toast(
+          "Invoice downloaded — attach it in the WhatsApp chat that just opened.",
+        );
+      }
+    } catch (err) {
+      console.error("Failed to send invoice", err);
+      toast.error("Couldn't share the invoice. Please try again.");
+    } finally {
+      setSendingInvoiceFile(false);
     }
   };
 
@@ -767,6 +796,18 @@ export default function AdminOrderCard({ order, delay = 0 }) {
                         <Loader2 size={13} className="animate-spin" />
                       ) : (
                         <Download size={13} />
+                      )}
+                    </button>
+                    <button
+                      onClick={handleSendInvoiceFile}
+                      disabled={sendingInvoiceFile}
+                      title="Share invoice on WhatsApp"
+                      className="orb-3d flex h-9 w-9 shrink-0 items-center justify-center !rounded-full text-[#25D366] disabled:opacity-60"
+                    >
+                      {sendingInvoiceFile ? (
+                        <Loader2 size={13} className="animate-spin" />
+                      ) : (
+                        <MessageCircleMore size={13} />
                       )}
                     </button>
                   </div>

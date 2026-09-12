@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/opacity.css';
 import { Trash2, PackageCheck } from 'lucide-react';
-import { showRemovedToast, showStockLimitToast } from '../../utils/cartToast';
+import { showRemovedToast, showStockLimitToast, showQuantityUpdatedToast } from '../../utils/cartToast';
 import { useCartStore } from '../../store/useCartStore';
 import QuantityStepper from './QuantityStepper';
 
@@ -21,6 +21,7 @@ const cardVariants = {
 export default function CartItem({ product, qty }) {
   const incrementQty = useCartStore((s) => s.incrementQty);
   const decrementQty = useCartStore((s) => s.decrementQty);
+  const setQuantity = useCartStore((s) => s.setQuantity);
   const removeFromCart = useCartStore((s) => s.removeFromCart);
 
   const stock = STOCK_LABEL[product.stock] || STOCK_LABEL.in;
@@ -129,6 +130,7 @@ export default function CartItem({ product, qty }) {
               disabled={soldOut}
               atMin={qty <= 1}
               atMax={atMax}
+              maxQty={stockCap}
               onIncrement={() => {
                 if (atMax) {
                   showStockLimitToast(product.name, stockCap);
@@ -137,6 +139,15 @@ export default function CartItem({ product, qty }) {
                 incrementQty(product.id);
               }}
               onDecrement={() => decrementQty(product.id)}
+              onSetQuantity={(nextQty) => {
+                if (nextQty > stockCap) {
+                  showStockLimitToast(product.name, stockCap);
+                  setQuantity(product.id, stockCap);
+                  return;
+                }
+                setQuantity(product.id, nextQty);
+                showQuantityUpdatedToast(product.name, nextQty);
+              }}
             />
           </div>
 

@@ -13,6 +13,13 @@
 //      customer's chat. Falls back to download + open-chat (no text) only
 //      where the share sheet isn't supported, or doesn't complete.
 import { getBillPdfBlob, getBillFilename } from "./generateBillPdf";
+import { SHOP_INFO } from "../constants/invoiceConstants";
+
+// Where the customer can view/download their estimate bill. There's no
+// per-order route yet (only /orders, which lists whatever orders match the
+// customer's mobile once they've identified themselves) — that's the
+// closest we've got to a "bill link" without standing up file hosting.
+const ORDERS_URL = "https://abscrackerworld.vercel.app/orders";
 
 function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
@@ -39,41 +46,113 @@ function openWhatsappChat(order, text = "") {
   );
 }
 
+// The delivery address's "state" field is free text (see AddressForm —
+// there's no dropdown, just a placeholder of "e.g. Tamil Nadu"), so admins
+// have typed it every which way: "Tamil Nadu", "TAMILNADU", "tamil nadu ",
+// "TN", etc. Normalize by lowercasing and stripping all whitespace before
+// comparing, and accept the common abbreviation too.
+function isTamilNaduOrder(order) {
+  const state = (order.address?.state || "").toLowerCase().replace(/\s+/g, "");
+  return state === "tamilnadu" || state === "tn";
+}
+
 // function buildShareText(order) {
 //   return `Hi ${order.customer?.name || ''}, please find the estimate bill for your order ${
 //     order.orderId || order.id
 //   } from ${'ABS Crackers World'}. Grand Total: Rs. ${Number(order.grandTotal || 0).toLocaleString('en-IN')} (Payment Pending).`;
 // }
 
-// NOTE: deliberately no emoji here. Emoji (especially the ones needing a
-// surrogate pair — 🙏 🎉 🧾 💰 💳 📌 etc.) render as broken "�" boxes on
-// some phones/WhatsApp builds. *text* is WhatsApp's own bold markdown, so
-// it's plain ASCII underneath and renders correctly everywhere, no font or
-// encoding dependency.
-function buildShareText(order) {
-  return `*அன்பிற்கினிய ${order.customer?.name || ""} அவர்களுக்கு, வணக்கம்!*
+// NOTE on emoji: tried twice — first fixing the source encoding (Unicode
+// escapes instead of literal characters), then confirming it wasn't a
+// copy/paste artifact. Still showed as "?" in the actual WhatsApp message
+// on a real phone, which means the device itself has no glyph for those
+// emoji — a font/rendering limitation on that phone, not something fixable
+// from this file. Since this message goes out to customers on all kinds of
+// phones (not just one known-good device), and it's already failing on at
+// least one real phone, emoji aren't reliable here. Using WhatsApp's own
+// bold markdown (*text*) for visual structure instead — that's plain ASCII
+// underneath, so it renders identically on every device.
 
-ABS Crackers World குடும்பத்திற்கு உங்களை அன்புடன் வரவேற்கிறோம்.
+// NOTE on blank lines: wa.me strips genuinely empty lines when it pre-fills
+// the compose box, collapsing any "\n\n" back down to a single line break —
+// so a real blank line needs something invisible sitting on it. A
+// zero-width space (U+200B) does that: WhatsApp renders it as nothing, but
+// it stops the line from being empty and getting stripped.
+const BLANK = "\u200B";
 
-*உங்கள் கொண்டாட்டத்திற்கான Estimated Bill விவரங்கள்:*
+// NOTE on the UPI ID line: this used to also include a upi://pay deep link
+// (tap the line to open a UPI app with the payee pre-filled, or with the
+// bill amount pre-filled for a second "Tap to Pay" line). Pulled both back
+// out for now — the UPI-side setup for that isn't finished yet, so the
+// links weren't reliably opening a payment app. Once that's sorted, add the
+// upi://pay link back onto this line (and optionally a second one with
+// "&am=<amount>" appended for a one-tap "pay this exact bill" link).
+// WhatsApp itself has no way to show custom "click here"-style hypertext —
+// it only auto-links a *raw* URL/URI sitting in the plain text, so whatever
+// link goes here will always be visible in full, not hidden behind a label.
+//
+// NOTE on language: the message below is Tamil. Orders whose delivery
+// address state isn't Tamil Nadu get the English version further down —
+// see isTamilNaduOrder / buildShareText.
+function buildShareTextTamil(order) {
+  const amount = Number(order.grandTotal || 0);
 
+  return `அன்பிற்கினிய ${order.customer?.name || ""} அவர்களுக்கு, வணக்கம்!
+ABS Crackers World குடும்பத்திற்கு உங்களை அன்புடன் வரவேற்கிறோம்!
+${BLANK}
+*Estimated Bill விவரங்கள்:*
 Order ID: ${order.orderId || order.id}
-Grand Total: ₹${Number(order.grandTotal || 0).toLocaleString("en-IN")}
+Grand Total: ₹${amount.toLocaleString("en-IN")}
 Payment Status: Payment Pending
-
-Please review your estimate and proceed with the payment at your convenience.
-
-உங்கள் ஆர்டரை எங்களிடம் நம்பிக்கையுடன் வழங்கியதற்கு மிக்க நன்றி.
-உங்கள் ஒவ்வொரு கொண்டாட்டமும் சிறப்பாக அமைய, எங்களால் முடிந்த சிறந்த சேவையை வழங்குவது எங்கள் மகிழ்ச்சி.
-
-*ABS Crackers World*
+Download Estimate Bill: ${ORDERS_URL}
+${BLANK}
+*Payment Details:*
+UPI ID: ${SHOP_INFO.upiId}
+${BLANK}
+தயவுசெய்து உங்கள் Estimate-ஐ சரிபார்த்து, பணம் செலுத்தவும்.
+பணம் செலுத்திய பிறகு payment screenshot எங்களுக்கு அனுப்பவும்.
+உங்கள் நம்பிக்கைக்கும் ஆதரவிற்கும் மிக்க நன்றி!
+${BLANK}
+ABS Crackers World
 Your Celebration, Our Responsibility!`;
+}
+
+// English counterpart for non-Tamil Nadu orders. Same structure and same
+// fields as the Tamil version above, so keep the two in sync if either one
+// changes.
+function buildShareTextEnglish(order) {
+  const amount = Number(order.grandTotal || 0);
+
+  return `Dear ${order.customer?.name || ""}, greetings!
+Welcome to the ABS Crackers World family!
+${BLANK}
+*Estimated Bill details:*
+Order ID: ${order.orderId || order.id}
+Grand Total: ₹${amount.toLocaleString("en-IN")}
+Payment Status: Payment Pending
+Download Estimate Bill: ${ORDERS_URL}
+${BLANK}
+*Payment Details:*
+UPI ID: ${SHOP_INFO.upiId}
+${BLANK}
+Kindly review your estimate and proceed with the payment.
+After making the payment, please send us a screenshot of the payment.
+Thank you for your trust and support!
+${BLANK}
+ABS Crackers World
+Your Celebration, Our Responsibility!`;
+}
+
+function buildShareText(order) {
+  return isTamilNaduOrder(order)
+    ? buildShareTextTamil(order)
+    : buildShareTextEnglish(order);
 }
 
 /**
  * Button 1 — opens the customer's WhatsApp chat with the ready-made bill
- * message pre-filled. No file, no download. Admin just taps Send in
- * WhatsApp.
+ * message pre-filled (Tamil for Tamil Nadu addresses, English otherwise).
+ * No file, no download. Admin just taps Send in WhatsApp.
  */
 export function sendBillMessage(order) {
   const text = buildShareText(order);

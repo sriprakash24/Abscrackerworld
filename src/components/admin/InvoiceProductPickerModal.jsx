@@ -79,7 +79,7 @@ export default function InvoiceProductPickerModal({ open, products, onAdd, onClo
           >
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-[15px] font-extrabold text-gradient-gold">Add products</h2>
-              <button onClick={handleClose} className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-muted">
+              <button type="button" onClick={handleClose} className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-muted">
                 <X size={14} />
               </button>
             </div>
@@ -96,6 +96,7 @@ export default function InvoiceProductPickerModal({ open, products, onAdd, onClo
 
             <div className="mb-3 flex gap-1.5 overflow-x-auto pb-1">
               <button
+                type="button"
                 onClick={() => setCategory('ALL')}
                 className={`shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-bold tracking-wide transition-colors ${
                   category === 'ALL' ? 'border-orange/50 bg-orange/15 text-orange' : 'border-white/10 bg-[#0c0906] text-muted'
@@ -106,6 +107,7 @@ export default function InvoiceProductPickerModal({ open, products, onAdd, onClo
               {categories.map((c) => (
                 <button
                   key={c}
+                  type="button"
                   onClick={() => setCategory(c)}
                   className={`shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-bold tracking-wide transition-colors ${
                     category === c ? 'border-orange/50 bg-orange/15 text-orange' : 'border-white/10 bg-[#0c0906] text-muted'
@@ -150,6 +152,7 @@ export default function InvoiceProductPickerModal({ open, products, onAdd, onClo
 
                         <div className="flex shrink-0 items-center gap-2 rounded-full border border-white/10 bg-black/30 px-1 py-1">
                           <button
+                            type="button"
                             onClick={() => setQty(p.id, qty - 1)}
                             disabled={qty === 0}
                             className="orb-3d flex h-6 w-6 shrink-0 items-center justify-center !rounded-full text-orange disabled:opacity-30"
@@ -158,6 +161,7 @@ export default function InvoiceProductPickerModal({ open, products, onAdd, onClo
                           </button>
                           <span className="w-4 text-center text-[11px] font-extrabold text-[#f2ece2]">{qty}</span>
                           <button
+                            type="button"
                             onClick={() => setQty(p.id, qty + 1)}
                             className="orb-3d flex h-6 w-6 shrink-0 items-center justify-center !rounded-full text-orange"
                           >

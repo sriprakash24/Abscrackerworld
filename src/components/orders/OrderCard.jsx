@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/opacity.css';
-import { ChevronDown, Copy, MapPin, MessageCircleMore, Download, Loader2, Pencil } from 'lucide-react';
+import { ChevronDown, Copy, MapPin, MessageCircleMore, Download, Loader2, Pencil, Receipt } from 'lucide-react';
 import { toast } from 'sonner';
-import { getOrderStatusMeta, normalizeOrderStage } from '../../constants/orderStatusMeta';
+import { getOrderStatusMeta, normalizeOrderStage, isOrderStageComplete } from '../../constants/orderStatusMeta';
 import OrderStatusStepper from '../checkout/OrderStatusStepper';
 import { db } from '../../firebase/config';
 import { getInvoice } from '../../services/invoicesFirestore';
 import { generateInvoicePdf } from '../../utils/generateInvoicePdf';
+import { generateBillPdf } from '../../utils/generateBillPdf';
 import { useProducts } from '../../contexts/ProductsContext';
 import { useCartStore } from '../../store/useCartStore';
 
@@ -22,6 +23,7 @@ function formatOrderDate(createdAt) {
 export default function OrderCard({ order, delay = 0 }) {
   const [open, setOpen] = useState(false);
   const [downloadingInvoice, setDownloadingInvoice] = useState(false);
+  const [downloadingBill, setDownloadingBill] = useState(false);
   const navigate = useNavigate();
   const startEditOrder = useCartStore((s) => s.startEditOrder);
   const { products } = useProducts();
@@ -58,6 +60,23 @@ export default function OrderCard({ order, delay = 0 }) {
       toast.error("Couldn't download the invoice. Please try again.");
     } finally {
       setDownloadingInvoice(false);
+    }
+  };
+
+  // Estimate bill is built straight from the order doc (no Firestore invoice
+  // needed), so it's available any time before payment is confirmed. Once
+  // payment's confirmed the button gets disabled — the real invoice below
+  // takes over as the document of record.
+  const handleDownloadBill = () => {
+    if (downloadingBill) return;
+    setDownloadingBill(true);
+    try {
+      generateBillPdf(order);
+    } catch (err) {
+      console.error('Failed to download estimate bill', err);
+      toast.error("Couldn't download the estimate bill. Please try again.");
+    } finally {
+      setDownloadingBill(false);
     }
   };
 
@@ -151,10 +170,23 @@ export default function OrderCard({ order, delay = 0 }) {
           </motion.span>
         </button>
 
-        {/* Always visible — the one action customers actually need in a
-            hurry, right on the card face instead of buried behind the
-            dropdown. */}
-        {canEdit && (
+        {/* Always visible — the actions customers actually need in a hurry,
+            right on the card face instead of buried behind the dropdown.
+            Estimate Bill is available before payment is confirmed and gets
+            disabled the moment it is; Edit Order swaps for Download Invoice
+            at that same moment, since editing is no longer safe once the
+            order's been acted on. */}
+        <button
+          type="button"
+          onClick={handleDownloadBill}
+          disabled={!canEdit || downloadingBill}
+          className="btn-3d-outline flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[11px] font-bold text-gold disabled:opacity-50"
+        >
+          {downloadingBill ? <Loader2 size={13} className="animate-spin" /> : <Receipt size={13} />}
+          Download Estimate Bill
+        </button>
+
+        {canEdit ? (
           <button
             type="button"
             onClick={handleEditOrder}
@@ -163,6 +195,19 @@ export default function OrderCard({ order, delay = 0 }) {
             <Pencil size={13} />
             Edit Order
           </button>
+        ) : (
+          !isCancelled && (
+            <button
+              type="button"
+              onClick={handleDownloadInvoice}
+              disabled={!order.invoiceId || downloadingInvoice}
+              style={{ borderColor: 'rgba(143, 227, 160, 0.55)' }}
+              className="btn-3d-outline flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[11.5px] font-extrabold text-[#8fe3a0] disabled:opacity-50"
+            >
+              {downloadingInvoice ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
+              Download Invoice
+            </button>
+          )
         )}
       </div>
 
@@ -216,19 +261,8 @@ export default function OrderCard({ order, delay = 0 }) {
 
               {!isCancelled && (
                 <div className="flex justify-center">
-                  <OrderStatusStepper currentStageId={stage} delay={0.05} />
+                  <OrderStatusStepper currentStageId={stage} completed={isOrderStageComplete(order.status)} delay={0.05} />
                 </div>
-              )}
-
-              {order.invoiceId && (
-                <button
-                  onClick={handleDownloadInvoice}
-                  disabled={downloadingInvoice}
-                  className="btn-3d-outline flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[11px] font-bold text-gold disabled:opacity-60"
-                >
-                  {downloadingInvoice ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
-                  Download Invoice
-                </button>
               )}
 
               <div className="flex items-center gap-2 border-t border-dashed border-white/10 pt-3">

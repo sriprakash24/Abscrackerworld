@@ -67,10 +67,10 @@ function drawCheckbox(doc, x, y, size, checked, label) {
 }
 
 /**
- * Renders `invoice` (a doc from invoices/{invoiceDocId}) to a PDF and
- * triggers a browser download named after the invoice number.
+ * Builds the jsPDF doc for `invoice` (a doc from invoices/{invoiceDocId}).
+ * Shared by download and WhatsApp-share so both stay byte-identical.
  */
-export function generateInvoicePdf(invoice) {
+function buildInvoiceDoc(invoice) {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -340,5 +340,25 @@ export function generateInvoicePdf(invoice) {
   doc.setTextColor(255, 235, 220);
   doc.text(SHOP_INFO.termsLine, pageWidth / 2, footerBarY + footerBarH - 3, { align: 'center' });
 
-  doc.save(`${invoice.invoiceNo || 'invoice'}.pdf`);
+  return doc;
+}
+
+/** Filename used for both the download button and the WhatsApp-share attachment. */
+export function getInvoiceFilename(invoice) {
+  return `${invoice.invoiceNo || 'invoice'}.pdf`;
+}
+
+/**
+ * Renders `invoice` to a PDF and triggers a browser download named after
+ * the invoice number.
+ */
+export function generateInvoicePdf(invoice) {
+  const doc = buildInvoiceDoc(invoice);
+  doc.save(getInvoiceFilename(invoice));
+}
+
+/** Renders `invoice` and returns it as a Blob (for the WhatsApp-share flow, where we need the file bytes rather than a download). */
+export function getInvoicePdfBlob(invoice) {
+  const doc = buildInvoiceDoc(invoice);
+  return doc.output('blob');
 }

@@ -20,9 +20,12 @@ import { useProducts } from '../../contexts/ProductsContext';
 /**
  * Add/edit invoice modal. `invoice` (a doc from invoices/{id}) is present
  * when editing, null when creating a brand-new manual invoice for a
- * phone-in order. ORDER-sourced invoices can also be edited here (e.g. to
- * fix a typo or add a discount after the fact) — editing never touches the
- * linked order doc, only the invoice.
+ * phone-in order. ORDER-sourced invoices can also be edited here — e.g. the
+ * customer added or swapped an item after the invoice was generated.
+ * Editing items on an ORDER-linked invoice also rewrites the linked order's
+ * cartItems/totals in the same write (see updateInvoice), so admin Order
+ * Management and the customer's Order History / Track Order pages stay in
+ * sync automatically.
  */
 export default function InvoiceFormModal({ open, invoice, onClose }) {
   const isEdit = !!invoice;
@@ -59,8 +62,13 @@ export default function InvoiceFormModal({ open, invoice, onClose }) {
     try {
       const payload = formValuesToInvoicePayload(values);
       if (isEdit) {
-        await updateInvoice(db, invoice.id, payload);
-        toast.success('Invoice updated');
+        await updateInvoice(db, invoice.id, payload, {
+          orderDocId: invoice.source === 'ORDER' ? invoice.orderDocId : null,
+          products,
+        });
+        toast.success(
+          invoice.source === 'ORDER' ? 'Invoice and order updated' : 'Invoice updated'
+        );
       } else {
         await createManualInvoice(db, payload);
         toast.success('Invoice created');
@@ -96,14 +104,14 @@ export default function InvoiceFormModal({ open, invoice, onClose }) {
               <h2 className="text-[15px] font-extrabold text-gradient-gold">
                 {isEdit ? `Edit Invoice ${invoice.invoiceNo || ''}` : 'New Manual Invoice'}
               </h2>
-              <button onClick={onClose} className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-muted">
+              <button type="button" onClick={onClose} className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-muted">
                 <X size={14} />
               </button>
             </div>
 
             {isEdit && invoice.source === 'ORDER' && (
               <div className="mb-3.5 rounded-xl border border-orange/25 bg-orange/10 px-3 py-2 text-[10.5px] font-semibold text-orange">
-                Linked to website order {invoice.orderId} — editing here only changes the invoice, not the order.
+                Linked to website order {invoice.orderId} — saving here also updates the item list and totals on that order, so it reflects everywhere (admin Orders, customer Order History &amp; Track Order).
               </div>
             )}
 

@@ -3,8 +3,13 @@ import { createPortal } from "react-dom";
 import { ShoppingBag, Loader2, Rocket, Check } from "lucide-react";
 import { Minus, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { showStockLimitToast } from "../../utils/cartToast";
+import { showStockLimitToast, showQuantityUpdatedToast } from "../../utils/cartToast";
 import { cn } from "../../utils/cn";
+
+// Frequent bulk-order sizes for fireworks — tapping one of these is a
+// single store write (setQuantity) instead of tapping "+" that many times,
+// which is what used to turn a 20-piece order into 20 separate taps.
+const QUICK_PICKS = [2, 5, 10, 15, 20];
 
 const CRACKER_COLORS = [
   "#ffd23f",
@@ -193,14 +198,39 @@ export default function AddToCartButton({
   onAdd,
   onIncrement,
   onDecrement,
+  onSetQuantity,
 }) {
   const [loading, setLoading] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
   const [launchBursts, setLaunchBursts] = useState([]);
   const [rockets, setRockets] = useState([]);
   const [landingBursts, setLandingBursts] = useState([]);
+  const [editingQty, setEditingQty] = useState(false);
+  const [editValue, setEditValue] = useState("");
 
   const atMax = inCart >= maxQty;
+
+  const clampQty = (n) => Math.max(1, Math.min(Math.round(n) || 1, maxQty));
+
+  // Directly sets the cart to an exact quantity — one state write, used by
+  // both the inline editable count and the quick-pick chips below it.
+  const applyQuantity = (n) => {
+    const clamped = clampQty(n);
+    if (clamped === inCart) return;
+    onSetQuantity?.(clamped);
+    showQuantityUpdatedToast(productName, clamped);
+  };
+
+  const startEditingQty = () => {
+    if (disabled) return;
+    setEditValue(String(inCart || 1));
+    setEditingQty(true);
+  };
+
+  const commitEditingQty = () => {
+    if (editValue !== "") applyQuantity(Number(editValue));
+    setEditingQty(false);
+  };
 
   const triggerLaunch = (e) => {
     const originX = e.clientX;
@@ -280,6 +310,32 @@ export default function AddToCartButton({
     </>
   );
 
+  // Compact row of frequent-quantity chips, sat directly on the card (no
+  // modal) below the Add/stepper button — tapping one is a single
+  // setQuantity write straight to the value shown.
+  const quickPicksRow = (
+    <div className="mt-1 flex gap-1">
+      {QUICK_PICKS.map((n) => {
+        const chipDisabled = disabled || n > maxQty;
+        return (
+          <button
+            key={n}
+            type="button"
+            onClick={() => applyQuantity(n)}
+            disabled={chipDisabled}
+            className={cn(
+              "flex-1 rounded-md border border-white/10 bg-black/25 py-1 text-[9.5px] font-extrabold text-[#f2ece2] transition-colors active:scale-95",
+              inCart === n && "border-accent/70 bg-accent/25 text-accent",
+              chipDisabled && "cursor-not-allowed opacity-30",
+            )}
+          >
+            {n}
+          </button>
+        );
+      })}
+    </div>
+  );
+
   // --- Quantity stepper mode (already in cart) ---
   if (inCart > 0) {
     return (
@@ -303,18 +359,47 @@ export default function AddToCartButton({
             <Minus size={12} strokeWidth={2.6} />
           </button>
 
-          <AnimatePresence mode="popLayout">
-            <motion.span
-              key={inCart}
-              initial={{ scale: 0.4, opacity: 0, y: -6 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.4, opacity: 0, y: 6 }}
-              transition={{ type: "spring", stiffness: 500, damping: 22 }}
-              className="text-[12px] font-extrabold text-white"
+          {/* Tapping the count turns it into a real editable input right
+              there on the card — no modal — so typing an exact number is
+              one write instead of repeated "+" taps. */}
+          {editingQty ? (
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              autoFocus
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value.replace(/[^\d]/g, ""))}
+              onBlur={commitEditingQty}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") e.currentTarget.blur();
+              }}
+              onFocus={(e) => e.currentTarget.select()}
+              className="w-8 shrink-0 bg-transparent text-center text-[12px] font-extrabold text-white outline-none"
+              aria-label="Edit quantity"
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={startEditingQty}
+              disabled={disabled}
+              aria-label="Edit quantity"
+              className="px-1"
             >
-              {inCart}
-            </motion.span>
-          </AnimatePresence>
+              <AnimatePresence mode="popLayout">
+                <motion.span
+                  key={inCart}
+                  initial={{ scale: 0.4, opacity: 0, y: -6 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  exit={{ scale: 0.4, opacity: 0, y: 6 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 22 }}
+                  className="text-[12px] font-extrabold text-white underline decoration-white/30 decoration-dotted underline-offset-2"
+                >
+                  {inCart}
+                </motion.span>
+              </AnimatePresence>
+            </button>
+          )}
 
           <button
             onClick={handleIncrement}
@@ -328,6 +413,7 @@ export default function AddToCartButton({
             <Plus size={12} strokeWidth={2.6} />
           </button>
         </motion.div>
+        {quickPicksRow}
         {flightOverlay}
       </>
     );
@@ -335,53 +421,56 @@ export default function AddToCartButton({
 
   // --- Add mode (not yet in cart) ---
   return (
-    <motion.button
-      layout
-      onClick={handleAddClick}
-      disabled={disabled}
-      whileTap={!disabled ? { scale: 0.94 } : {}}
-      animate={justAdded ? { scale: [1, 1.08, 1] } : { scale: 1 }}
-      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-      className={cn(
-        "btn-3d relative mt-2 flex items-center justify-center gap-1.5 overflow-hidden rounded-lg py-1.5 text-[11px] font-bold text-white transition-[filter]",
-        disabled && "cursor-not-allowed opacity-40 grayscale",
-      )}
-    >
-      <AnimatePresence mode="wait" initial={false}>
-        {loading ? (
-          <motion.span
-            key="loading"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex items-center gap-1.5"
-          >
-            <Loader2 size={13} className="animate-spin" /> Adding
-          </motion.span>
-        ) : justAdded ? (
-          <motion.span
-            key="added"
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.5 }}
-            className="flex items-center gap-1.5"
-          >
-            <Check size={13} strokeWidth={3} /> Added
-          </motion.span>
-        ) : (
-          <motion.span
-            key="idle"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex items-center gap-1.5"
-          >
-            <ShoppingBag size={13} /> {disabled ? "Sold Out" : "Add"}
-          </motion.span>
+    <>
+      <motion.button
+        layout
+        onClick={handleAddClick}
+        disabled={disabled}
+        whileTap={!disabled ? { scale: 0.94 } : {}}
+        animate={justAdded ? { scale: [1, 1.08, 1] } : { scale: 1 }}
+        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        className={cn(
+          "btn-3d relative mt-2 flex items-center justify-center gap-1.5 overflow-hidden rounded-lg py-1.5 text-[11px] font-bold text-white transition-[filter]",
+          disabled && "cursor-not-allowed opacity-40 grayscale",
         )}
-      </AnimatePresence>
+      >
+        <AnimatePresence mode="wait" initial={false}>
+          {loading ? (
+            <motion.span
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex items-center gap-1.5"
+            >
+              <Loader2 size={13} className="animate-spin" /> Adding
+            </motion.span>
+          ) : justAdded ? (
+            <motion.span
+              key="added"
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.5 }}
+              className="flex items-center gap-1.5"
+            >
+              <Check size={13} strokeWidth={3} /> Added
+            </motion.span>
+          ) : (
+            <motion.span
+              key="idle"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex items-center gap-1.5"
+            >
+              <ShoppingBag size={13} /> {disabled ? "Sold Out" : "Add"}
+            </motion.span>
+          )}
+        </AnimatePresence>
 
-      {flightOverlay}
-    </motion.button>
+        {flightOverlay}
+      </motion.button>
+      {!disabled && quickPicksRow}
+    </>
   );
 }
