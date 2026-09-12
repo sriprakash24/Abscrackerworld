@@ -23,18 +23,15 @@ export default function OrderSuccessScreen({
     }
   };
 
-  // Sends a tidy confirmation message — with the order ID called out and a
-  // link back to Track Order — straight to the shop's WhatsApp number, so
-  // the team has everything they need to look the order up right away.
+  // Sends a tidy confirmation message — with the order ID called out — straight
+  // to the shop's WhatsApp number, so the team has what they need to look the
+  // order up right away.
   const messageOnWhatsapp = () => {
-    const trackLink = `${window.location.origin}/track-order`;
     const lines = [
       `Hi! I've just placed an order on ${SHOP_INFO.name}.`,
       '',
       `Order ID: *${orderId}*`,
       typeof grandTotal === "number" ? `Amount: ₹${grandTotal.toLocaleString("en-IN")}` : null,
-      '',
-      `Track it here: ${trackLink}`,
     ].filter(Boolean);
     const text = encodeURIComponent(lines.join("\n"));
     const mobileDigits = SHOP_INFO.whatsapp.replace(/\D/g, "").slice(-10);
