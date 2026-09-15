@@ -137,6 +137,7 @@ const PAYMENT_META = {
 export default function AdminOrderCard({ order, delay = 0, index = 0 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [confirmingPayment, setConfirmingPayment] = useState(false);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [confirmingRevoke, setConfirmingRevoke] = useState(false);
   const [revoking, setRevoking] = useState(false);
@@ -257,6 +258,11 @@ export default function AdminOrderCard({ order, delay = 0, index = 0 }) {
       nextAction.patch,
       `Order moved to "${getOrderStatusMeta(nextAction.patch.status).label}"`,
     );
+  };
+
+  const handleConfirmPayment = async () => {
+    await handleAdvance();
+    setConfirmingPayment(false);
   };
 
   const handleGenerateInvoice = async () => {
@@ -657,7 +663,11 @@ export default function AdminOrderCard({ order, delay = 0, index = 0 }) {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleAdvance();
+                  if (nextAction.patch.status === "CONFIRMED") {
+                    setConfirmingPayment(true);
+                  } else {
+                    handleAdvance();
+                  }
                 }}
                 disabled={busy}
                 className={`flex shrink-0 items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 text-[11px] font-extrabold transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
@@ -1064,6 +1074,16 @@ export default function AdminOrderCard({ order, delay = 0, index = 0 }) {
         busy={deleting}
         onConfirm={handleDeleteOrder}
         onCancel={() => setConfirmingDelete(false)}
+      />
+      <ConfirmDeleteDialog
+        open={confirmingPayment}
+        title="Confirm payment received?"
+        description={`Mark order ${order.orderId || order.id} as paid and move it to Confirmed. An invoice will be generated automatically.`}
+        busy={busy}
+        confirmLabel="Yes, Confirm Payment"
+        tone="success"
+        onConfirm={handleConfirmPayment}
+        onCancel={() => setConfirmingPayment(false)}
       />
       <ConfirmDeleteDialog
         open={confirmingCancel}

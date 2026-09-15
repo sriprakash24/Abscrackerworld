@@ -351,7 +351,7 @@ export default function AdminPacking() {
       />
       <AdminTabsNav />
 
-      <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-5 sm:px-6">
+      <div className="mx-auto flex max-w-5xl flex-col gap-3 px-4 py-3 sm:px-6 sm:py-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex flex-col gap-1">
             <h2 className="text-[15px] font-extrabold text-[#f2ece2]">Packing</h2>

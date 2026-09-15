@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertTriangle, Loader2, Undo2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Loader2, Undo2 } from 'lucide-react';
 
 const TONE_STYLES = {
   danger: {
@@ -10,6 +10,10 @@ const TONE_STYLES = {
   warning: {
     icon: 'border-gold/40 bg-gold/10 text-gold',
     confirmBtn: 'bg-gradient-to-b from-gold to-orange shadow-[0_8px_18px_-8px_rgba(230,178,60,0.5)]',
+  },
+  success: {
+    icon: 'border-[#8fe3a0]/40 bg-[#8fe3a0]/10 text-[#8fe3a0]',
+    confirmBtn: 'bg-gradient-to-b from-[#8fe3a0] to-[#3fae5c] text-black shadow-[0_8px_18px_-8px_rgba(63,174,92,0.6)]',
   },
 };
 
@@ -45,7 +49,7 @@ export default function ConfirmDeleteDialog({
           >
             <div className="mb-3 flex items-center gap-2.5">
               <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border ${toneStyle.icon}`}>
-                {tone === 'warning' ? <Undo2 size={16} /> : <AlertTriangle size={16} />}
+                {tone === 'warning' ? <Undo2 size={16} /> : tone === 'success' ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
               </span>
               <h3 className="text-[14px] font-extrabold text-[#f2ece2]">{title}</h3>
             </div>
