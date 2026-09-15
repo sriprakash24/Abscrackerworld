@@ -103,7 +103,7 @@ export default function AdminInventory() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#050505] pb-16 text-white">
+    <div className="min-h-screen w-full bg-[#050505] pb-28 text-white">
       <AdminSectionHeader
         icon={Boxes}
         title="Inventory & Stock"

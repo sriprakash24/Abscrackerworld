@@ -5,6 +5,7 @@ import { showAddedToast, showRemovedToast } from '../../utils/cartToast';
 import { useCartStore } from '../../store/useCartStore';
 import { useCustomerGateStore } from '../../store/useCustomerGateStore';
 import { cn } from '../../utils/cn';
+import { getOrderQtyCap } from '../../utils/productLimits';
 import AddToCartButton from '../category/AddToCartButton';
 
 export default function ProductCard({ product }) {
@@ -20,6 +21,7 @@ export default function ProductCard({ product }) {
 
   const disc = product.mrp > product.sale ? Math.round(((product.mrp - product.sale) / product.mrp) * 100) : 0;
   const soldOut = product.stock === 'out';
+  const { cap: maxQty, limitedByOrder } = getOrderQtyCap(product);
 
   return (
     <div className="surface-3d relative flex flex-col overflow-hidden rounded-2xl p-2.5">
@@ -66,7 +68,8 @@ export default function ProductCard({ product }) {
       <AddToCartButton
         inCart={inCart}
         disabled={soldOut}
-        maxQty={product.stockQty ?? 99}
+        maxQty={maxQty}
+        limitedByOrder={limitedByOrder}
         productName={product.name}
         onAdd={() => {
           requestDetails(() => {

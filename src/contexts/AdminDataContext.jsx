@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { db } from '../firebase/config';
 import { subscribeAllOrders } from '../services/ordersFirestore';
 import { subscribeAllUsers } from '../services/usersFirestore';
+import { subscribeAllPackingProgress } from '../services/packingFirestore';
 
 const AdminDataContext = createContext(null);
 
@@ -28,6 +29,11 @@ export function AdminDataProvider({ children }) {
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(true);
   const [usersError, setUsersError] = useState(null);
+
+  // Keyed by sanitized mobile number — { [mobileKey]: { packedKeys, updatedAt } }.
+  // See src/services/packingFirestore.js for the shape/reasoning.
+  const [packingProgress, setPackingProgress] = useState({});
+  const [packingProgressLoading, setPackingProgressLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = subscribeAllOrders(
@@ -61,9 +67,41 @@ export function AdminDataProvider({ children }) {
     return () => unsubscribe?.();
   }, []);
 
+  useEffect(() => {
+    const unsubscribe = subscribeAllPackingProgress(
+      db,
+      (fetched) => {
+        setPackingProgress(fetched);
+        setPackingProgressLoading(false);
+      },
+      () => {
+        setPackingProgressLoading(false);
+      }
+    );
+    return () => unsubscribe?.();
+  }, []);
+
   const value = useMemo(
-    () => ({ orders, ordersLoading, ordersError, users, usersLoading, usersError }),
-    [orders, ordersLoading, ordersError, users, usersLoading, usersError]
+    () => ({
+      orders,
+      ordersLoading,
+      ordersError,
+      users,
+      usersLoading,
+      usersError,
+      packingProgress,
+      packingProgressLoading,
+    }),
+    [
+      orders,
+      ordersLoading,
+      ordersError,
+      users,
+      usersLoading,
+      usersError,
+      packingProgress,
+      packingProgressLoading,
+    ]
   );
 
   return <AdminDataContext.Provider value={value}>{children}</AdminDataContext.Provider>;

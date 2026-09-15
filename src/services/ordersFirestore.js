@@ -15,6 +15,7 @@ import {
   where,
   orderBy,
   onSnapshot,
+  writeBatch,
 } from "firebase/firestore";
 import { reserveSequentialId } from "../utils/sequentialId";
 
@@ -261,6 +262,47 @@ export async function markBillWhatsappSent(
     patch.billFileSentAt = fileSent ? serverTimestamp() : null;
   }
   await updateDoc(ref, patch);
+}
+
+/**
+ * Marks every order doc in a merged packing group (same customer mobile,
+ * possibly several order docs across different dates — see AdminPacking.jsx)
+ * as PACKED in a single atomic batch, so the whole customer's job moves
+ * together instead of some orders advancing while a write fails on another.
+ */
+export async function markOrdersPacked(db, orderDocIds) {
+  if (!orderDocIds?.length) return;
+  const batch = writeBatch(db);
+  orderDocIds.forEach((id) => {
+    batch.update(doc(db, "orders", id), {
+      status: "PACKED",
+      updatedAt: serverTimestamp(),
+    });
+  });
+  await batch.commit();
+}
+
+/**
+ * Marks one or more order docs as DELIVERED in a single atomic batch — the
+ * Delivery screen's "Mark Delivered" action (see AdminDelivery.jsx). Jumps
+ * straight to DELIVERED regardless of whether the order is currently PACKED
+ * or OUT_FOR_DELIVERY, since the Delivery screen already only lists orders
+ * that are physically on their way — there's no separate admin step for
+ * "left the shop" vs "arrived". Writes the same `status` field the Orders
+ * page's own per-order "Mark Delivered" action uses, so both stay in sync
+ * automatically through the shared orders listener (AdminDataContext) —
+ * whichever screen updates it, every screen reading `orders` sees it live.
+ */
+export async function markOrdersDelivered(db, orderDocIds) {
+  if (!orderDocIds?.length) return;
+  const batch = writeBatch(db);
+  orderDocIds.forEach((id) => {
+    batch.update(doc(db, "orders", id), {
+      status: "DELIVERED",
+      updatedAt: serverTimestamp(),
+    });
+  });
+  await batch.commit();
 }
 
 /**

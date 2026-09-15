@@ -1,4 +1,5 @@
 import { LogOut } from 'lucide-react';
+import absLogo from '../../assets/abs-logo.png';
 
 /** Sticky header for admin screens other than Orders (which keeps AdminOrdersHeader). */
 export default function AdminSectionHeader({ icon: Icon, title, subtitle, email, onLogout }) {
@@ -16,6 +17,12 @@ export default function AdminSectionHeader({ icon: Icon, title, subtitle, email,
       />
 
       <div className="flex min-w-0 items-center gap-2.5">
+        <img
+          src={absLogo}
+          alt="ABS Crackers World"
+          className="hidden h-8 w-8 shrink-0 object-contain sm:block"
+          style={{ filter: 'drop-shadow(0 0 6px rgba(255,150,0,.5))' }}
+        />
         <span className="orb-3d flex h-9 w-9 shrink-0 items-center justify-center !rounded-full text-orange">
           <Icon size={17} />
         </span>

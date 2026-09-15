@@ -4,6 +4,7 @@ import 'react-lazy-load-image-component/src/effects/opacity.css';
 import { showAddedToast, showRemovedToast } from '../../utils/cartToast';
 import { useCartStore } from '../../store/useCartStore';
 import { useCustomerGateStore } from '../../store/useCustomerGateStore';
+import { getOrderQtyCap } from '../../utils/productLimits';
 import ProductBadges from './ProductBadges';
 import WishlistButton from './WishlistButton';
 import PriceSection from './PriceSection';
@@ -32,6 +33,7 @@ export default function ProductCard({ product, theme }) {
 
   const soldOut = product.stock === 'out';
   const accent = theme?.solid || 'var(--color-orange)';
+  const { cap: maxQty, limitedByOrder } = getOrderQtyCap(product);
 
   return (
     <motion.div
@@ -43,42 +45,59 @@ export default function ProductCard({ product, theme }) {
       whileHover={{ y: -4 }}
       whileTap={{ scale: 0.98 }}
       className="surface-3d group relative flex flex-col overflow-hidden rounded-2xl p-2.5 transition-shadow duration-300"
+      style={{ borderColor: `${accent}70` }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = `0 0 22px ${accent}48`;
+        e.currentTarget.style.boxShadow = `0 0 22px ${accent}70`;
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.boxShadow = '';
       }}
     >
-      {/* Thin category-color edge — the quickest visual cue for which
-          category this card belongs to when everything scrolls together
-          on the home feed. */}
+      {/* Bold category-color band — thick enough to read at a glance, plus
+          a soft wash of the same color bleeding down from the top corner,
+          so cards from different categories are distinguishable even when
+          scrolled past quickly, not just on close inspection. */}
       <span
-        className="pointer-events-none absolute inset-x-0 top-0 z-10 h-[3px]"
-        style={{ background: theme ? `linear-gradient(90deg, ${theme.from}, ${theme.to})` : accent }}
+        className="pointer-events-none absolute inset-x-0 top-0 z-10 h-[6px]"
+        style={{
+          background: theme ? `linear-gradient(90deg, ${theme.from}, ${theme.to})` : accent,
+          boxShadow: `0 0 14px 1px ${accent}90`,
+        }}
+      />
+      <span
+        className="pointer-events-none absolute inset-x-0 top-0 z-0 h-20 opacity-25"
+        style={{ background: `radial-gradient(circle at 18% 0%, ${theme?.from || accent}, transparent 70%)` }}
       />
 
       <ProductBadges product={product} />
       <WishlistButton active={wished} onToggle={() => toggleWishlist(product.id)} />
 
-      <div className="orb-3d orb-cream relative flex h-[86px] items-center justify-center overflow-hidden !rounded-xl">
-        {product.img ? (
-          <LazyLoadImage
-            src={product.img}
-            alt={product.name}
-            effect="opacity"
-            className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-110"
-          />
-        ) : (
-          <span className="art-float text-3xl">🎆</span>
-        )}
-        {soldOut && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/55">
-            <span className="rounded-full border border-white/20 bg-black/50 px-2 py-0.5 text-[9px] font-bold tracking-wide text-white">
-              SOLD OUT
-            </span>
-          </div>
-        )}
+      {/* Colored frame around the photo panel — the single biggest area on
+          the card, so giving it a category-tinted ring (instead of a
+          neutral border) is the fastest way to tell two cards apart. */}
+      <div
+        className="relative z-[1] rounded-xl p-[2px]"
+        style={{ background: theme ? `linear-gradient(135deg, ${theme.from}, ${theme.to})` : accent }}
+      >
+        <div className="orb-3d orb-cream relative flex h-[82px] items-center justify-center overflow-hidden !rounded-[10px]">
+          {product.img ? (
+            <LazyLoadImage
+              src={product.img}
+              alt={product.name}
+              effect="opacity"
+              className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-110"
+            />
+          ) : (
+            <span className="art-float text-3xl">🎆</span>
+          )}
+          {soldOut && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/55">
+              <span className="rounded-full border border-white/20 bg-black/50 px-2 py-0.5 text-[9px] font-bold tracking-wide text-white">
+                SOLD OUT
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="mt-2 line-clamp-2 min-h-[30px] text-[12px] font-bold leading-snug text-[#f2ece2]">
@@ -107,7 +126,8 @@ export default function ProductCard({ product, theme }) {
       <AddToCartButton
         inCart={inCart}
         disabled={soldOut}
-        maxQty={product.stockQty ?? 99}
+        maxQty={maxQty}
+        limitedByOrder={limitedByOrder}
         productName={product.name}
         onAdd={() => {
           requestDetails(() => {

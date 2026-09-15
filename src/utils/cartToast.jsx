@@ -71,3 +71,10 @@ export function showStockLimitToast(productName, maxQty) {
     duration: 2000,
   });
 }
+
+/** Hit the admin-set "max per order" cap (see utils/productLimits.js) while incrementing quantity. */
+export function showOrderLimitToast(productName, maxQty) {
+  toast.custom(() => <CrackerToast variant="warn" title={`Limit ${maxQty} per order`} subtitle={productName} />, {
+    duration: 2000,
+  });
+}

@@ -63,3 +63,34 @@ export function canAdvance(status) {
 export function canCancel(status) {
   return !FINAL_STATUSES.includes(status);
 }
+
+/**
+ * Reverse of NEXT_ACTION_BY_STATUS — lets the admin undo an accidental tap
+ * (e.g. "Confirm Payment" hit by mistake) by moving the order back one step
+ * in ORDER_FLOW. Reverting out of CONFIRMED also resets paymentStatus back
+ * to PENDING, mirroring what advancing into it set. Intentionally has no
+ * entry for AWAITING_ADMIN_CONFIRMATION (nothing before it) or CANCELLED
+ * (we don't track which stage an order was cancelled from).
+ */
+export const PREVIOUS_ACTION_BY_STATUS = {
+  CONFIRMED: {
+    label: 'Revoke payment confirmation',
+    patch: { status: 'AWAITING_ADMIN_CONFIRMATION', paymentStatus: 'PENDING' },
+  },
+  PACKED: {
+    label: 'Revoke — back to Confirmed',
+    patch: { status: 'CONFIRMED' },
+  },
+  OUT_FOR_DELIVERY: {
+    label: 'Revoke — back to Packed',
+    patch: { status: 'PACKED' },
+  },
+  DELIVERED: {
+    label: 'Revoke — back to Out for Delivery',
+    patch: { status: 'OUT_FOR_DELIVERY' },
+  },
+};
+
+export function canRevoke(status) {
+  return Boolean(PREVIOUS_ACTION_BY_STATUS[status]);
+}

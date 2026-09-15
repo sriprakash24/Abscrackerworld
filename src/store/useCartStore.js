@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { getOrderQtyCap } from '../utils/productLimits';
 
 // ---------------------------------------------------------------------------
 // Pricing config — kept here so CartPage / OrderSummary / FreeDeliveryProgress
@@ -96,7 +97,7 @@ export const useCartStore = create(
         set((state) => {
           const product = state.productsById[id];
           if (!product || product.stock === 'out') return state;
-          const cap = product.stockQty ?? 99;
+          const { cap } = getOrderQtyCap(product);
           const current = state.cart[id] || 0;
           if (current >= cap) return state;
           return {
@@ -117,7 +118,7 @@ export const useCartStore = create(
           const product = state.productsById[id];
           if (!product || product.stock === 'out') return state;
           const current = state.cart[id] || 0;
-          const cap = product.stockQty ?? 99;
+          const { cap } = getOrderQtyCap(product);
           if (current >= cap) return state;
           return { cart: { ...state.cart, [id]: current + 1 } };
         }),
@@ -132,7 +133,7 @@ export const useCartStore = create(
       setQuantity: (id, qty) =>
         set((state) => {
           const product = state.productsById[id];
-          const cap = product?.stockQty ?? 99;
+          const { cap } = getOrderQtyCap(product);
           const clamped = Math.max(1, Math.min(Math.round(qty) || 1, cap));
           return { cart: { ...state.cart, [id]: clamped } };
         }),

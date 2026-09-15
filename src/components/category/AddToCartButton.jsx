@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { ShoppingBag, Loader2, Rocket, Check } from "lucide-react";
 import { Minus, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { showStockLimitToast, showQuantityUpdatedToast } from "../../utils/cartToast";
+import { showStockLimitToast, showOrderLimitToast, showQuantityUpdatedToast } from "../../utils/cartToast";
 import { cn } from "../../utils/cn";
 
 // Frequent bulk-order sizes for fireworks — tapping one of these is a
@@ -194,6 +194,7 @@ export default function AddToCartButton({
   inCart,
   disabled,
   maxQty = 99,
+  limitedByOrder = false,
   productName = "Item",
   onAdd,
   onIncrement,
@@ -285,7 +286,8 @@ export default function AddToCartButton({
   // not just the very first Add — so repeat taps keep pointing back at the cart.
   const handleIncrement = (e) => {
     if (atMax) {
-      showStockLimitToast(productName, maxQty);
+      if (limitedByOrder) showOrderLimitToast(productName, maxQty);
+      else showStockLimitToast(productName, maxQty);
       return;
     }
     triggerLaunch(e);

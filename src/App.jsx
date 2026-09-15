@@ -20,11 +20,16 @@ import AdminRoute from "./components/admin/AdminRoute";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminOverview from "./pages/admin/AdminOverview";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminPacking from "./pages/admin/AdminPacking";
+import AdminDelivery from "./pages/admin/AdminDelivery";
+import AdminProductInsights from "./pages/admin/AdminProductInsights";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminPriceUpdate from "./pages/admin/AdminPriceUpdate";
+import AdminOrderLimits from "./pages/admin/AdminOrderLimits";
 import AdminInventory from "./pages/admin/AdminInventory";
 import AdminCategories from "./pages/admin/AdminCategories";
 import AdminInvoices from "./pages/admin/AdminInvoices";
+import AdminEstimates from "./pages/admin/AdminEstimates";
 import AdminUsers from "./pages/admin/AdminUsers";
 
 const SPLASH_DURATION_MS = 4200;
@@ -106,6 +111,30 @@ function AdminApp() {
               }
             />
             <Route
+              path="packing"
+              element={
+                <AdminRoute>
+                  <AdminPacking />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="delivery"
+              element={
+                <AdminRoute>
+                  <AdminDelivery />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="product-insights"
+              element={
+                <AdminRoute>
+                  <AdminProductInsights />
+                </AdminRoute>
+              }
+            />
+            <Route
               path="products"
               element={
                 <AdminRoute>
@@ -118,6 +147,14 @@ function AdminApp() {
               element={
                 <AdminRoute>
                   <AdminPriceUpdate />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="order-limits"
+              element={
+                <AdminRoute>
+                  <AdminOrderLimits />
                 </AdminRoute>
               }
             />
@@ -142,6 +179,14 @@ function AdminApp() {
               element={
                 <AdminRoute>
                   <AdminInvoices />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="estimates"
+              element={
+                <AdminRoute>
+                  <AdminEstimates />
                 </AdminRoute>
               }
             />

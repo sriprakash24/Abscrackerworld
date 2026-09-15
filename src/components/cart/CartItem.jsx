@@ -2,8 +2,9 @@ import { motion } from 'framer-motion';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/opacity.css';
 import { Trash2, PackageCheck } from 'lucide-react';
-import { showRemovedToast, showStockLimitToast, showQuantityUpdatedToast } from '../../utils/cartToast';
+import { showRemovedToast, showStockLimitToast, showOrderLimitToast, showQuantityUpdatedToast } from '../../utils/cartToast';
 import { useCartStore } from '../../store/useCartStore';
+import { getOrderQtyCap } from '../../utils/productLimits';
 import QuantityStepper from './QuantityStepper';
 
 const STOCK_LABEL = {
@@ -26,8 +27,8 @@ export default function CartItem({ product, qty }) {
 
   const stock = STOCK_LABEL[product.stock] || STOCK_LABEL.in;
   const soldOut = product.stock === 'out';
-  const stockCap = product.stockQty ?? 99;
-  const stockLabelText = product.stock === 'low' ? `Only ${stockCap} Left` : stock.text;
+  const { cap: stockCap, limitedByOrder } = getOrderQtyCap(product);
+  const stockLabelText = product.stock === 'low' ? `Only ${product.stockQty ?? 99} Left` : stock.text;
   const atMax = qty >= stockCap;
 
   const lineMrp = product.mrp * qty;
@@ -133,7 +134,8 @@ export default function CartItem({ product, qty }) {
               maxQty={stockCap}
               onIncrement={() => {
                 if (atMax) {
-                  showStockLimitToast(product.name, stockCap);
+                  if (limitedByOrder) showOrderLimitToast(product.name, stockCap);
+                  else showStockLimitToast(product.name, stockCap);
                   return;
                 }
                 incrementQty(product.id);
@@ -141,7 +143,8 @@ export default function CartItem({ product, qty }) {
               onDecrement={() => decrementQty(product.id)}
               onSetQuantity={(nextQty) => {
                 if (nextQty > stockCap) {
-                  showStockLimitToast(product.name, stockCap);
+                  if (limitedByOrder) showOrderLimitToast(product.name, stockCap);
+                  else showStockLimitToast(product.name, stockCap);
                   setQuantity(product.id, stockCap);
                   return;
                 }

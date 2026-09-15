@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import "react-lazy-load-image-component/src/effects/opacity.css";
@@ -22,11 +22,14 @@ import {
   Trash2,
   Paperclip,
   Check,
+  MoreVertical,
+  Undo2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { getOrderStatusMeta } from "../../constants/orderStatusMeta";
 import {
   NEXT_ACTION_BY_STATUS,
+  PREVIOUS_ACTION_BY_STATUS,
   canAdvance,
   canCancel,
 } from "../../constants/orderActions";
@@ -36,6 +39,9 @@ import {
   deleteOrderDoc,
   markBillWhatsappSent,
 } from "../../services/ordersFirestore";
+import { getWhatsappSendStatus } from "../../utils/whatsappSendStatus";
+import { getOrderSlot } from "../../utils/packingAccent";
+import { formatStreetLine } from "../../utils/formatAddress";
 import {
   createInvoiceForOrder,
   getInvoice,
@@ -55,6 +61,30 @@ const ACTION_ICONS = {
   Truck,
   CheckCheck,
 };
+
+// Compact icon-only WhatsApp action used on the card FRONT (before
+// expanding) — "Send Message" / "Share Bill" now live here per admin
+// request, instead of only inside the expanded Estimate Bill section. A
+// small green dot badges the icon once that tick is on, so the sent state
+// is visible without opening the card.
+function QuickWhatsappButton({ onClick, busy, icon: Icon, title, sent }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={busy}
+      title={title}
+      className="orb-3d relative flex h-8 w-8 shrink-0 items-center justify-center !rounded-full text-[#25D366] disabled:opacity-60"
+    >
+      {busy ? <Loader2 size={13} className="animate-spin" /> : <Icon size={13} />}
+      {sent && (
+        <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3 items-center justify-center rounded-full border border-black/40 bg-[#25D366] text-black">
+          <Check size={8} strokeWidth={4} />
+        </span>
+      )}
+    </button>
+  );
+}
 
 // Small manual-toggle checkbox used to track "did I actually send this on
 // WhatsApp" next to the Message / Bill buttons — separate tap target from
@@ -104,10 +134,14 @@ const PAYMENT_META = {
   },
 };
 
-export default function AdminOrderCard({ order, delay = 0 }) {
+export default function AdminOrderCard({ order, delay = 0, index = 0 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [confirmingRevoke, setConfirmingRevoke] = useState(false);
+  const [revoking, setRevoking] = useState(false);
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const actionsRef = useRef(null);
   const [downloadingInvoice, setDownloadingInvoice] = useState(false);
   const [previewInvoice, setPreviewInvoice] = useState(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
@@ -139,6 +173,41 @@ export default function AdminOrderCard({ order, delay = 0 }) {
   // before that logic existed. Surface a manual retry instead of leaving it
   // stuck with no way to produce an invoice.
   const missingInvoice = order.paymentStatus === "RECEIVED" && !order.invoiceId;
+  // Drives the card's outer highlight + header badge so a fully-sent vs.
+  // still-pending WhatsApp bill is obvious without opening the card.
+  const whatsappStatus = getWhatsappSendStatus(order);
+  const revokeAction = PREVIOUS_ACTION_BY_STATUS[order.status];
+
+  // Card background/left-edge accent. Priority: a still-pending WhatsApp
+  // bill (needs attention) beats a confirmed order (good news, green) beats
+  // the plain index-cycled tint that just keeps consecutive cards visually
+  // distinct while scrolling a long list.
+  const orderSlot = getOrderSlot(index);
+  const accent =
+    whatsappStatus === "PENDING"
+      ? {
+          tint: "rgba(230, 178, 60, 0.08)",
+          edge: "rgba(230, 178, 60, 0.55)",
+          badgeClass: "text-gold border-gold/40 bg-gold/10",
+        }
+      : order.status === "CONFIRMED"
+        ? {
+            tint: "rgba(102, 187, 106, 0.08)",
+            edge: "rgba(102, 187, 106, 0.5)",
+            badgeClass: "text-[#8fe3a0] border-[#8fe3a0]/40 bg-[#8fe3a0]/10",
+          }
+        : { tint: orderSlot.tint, edge: orderSlot.edge, badgeClass: orderSlot.badge };
+
+  useEffect(() => {
+    if (!actionsOpen) return;
+    const handleClick = (e) => {
+      if (actionsRef.current && !actionsRef.current.contains(e.target)) {
+        setActionsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [actionsOpen]);
 
   const runUpdate = async (patch, successMessage) => {
     setBusy(true);
@@ -150,7 +219,6 @@ export default function AdminOrderCard({ order, delay = 0 }) {
       toast.error("Couldn't update the order. Please try again.");
     } finally {
       setBusy(false);
-      setConfirmingCancel(false);
     }
   };
 
@@ -347,13 +415,37 @@ export default function AdminOrderCard({ order, delay = 0 }) {
     });
   };
 
-  const handleCancel = () => {
-    if (busy) return;
-    if (!confirmingCancel) {
-      setConfirmingCancel(true);
-      return;
+  const handleCancel = async () => {
+    setBusy(true);
+    try {
+      await updateOrderStatus(db, order.id, { status: "CANCELLED" });
+      toast.success("Order cancelled");
+    } catch (err) {
+      console.error("Failed to cancel order", err);
+      toast.error("Couldn't cancel the order. Please try again.");
+    } finally {
+      setBusy(false);
+      setConfirmingCancel(false);
     }
-    runUpdate({ status: "CANCELLED" }, "Order cancelled");
+  };
+
+  // Undoes an advance the admin didn't mean to make (most commonly an
+  // accidental "Confirm Payment" tap) by moving the order back one step in
+  // ORDER_FLOW — see PREVIOUS_ACTION_BY_STATUS for exactly what each step
+  // reverts.
+  const handleRevoke = async () => {
+    if (!revokeAction) return;
+    setRevoking(true);
+    try {
+      await updateOrderStatus(db, order.id, revokeAction.patch);
+      toast.success("Order reverted to the previous stage");
+    } catch (err) {
+      console.error("Failed to revoke order status", err);
+      toast.error("Couldn't revert the order. Please try again.");
+    } finally {
+      setRevoking(false);
+      setConfirmingRevoke(false);
+    }
   };
 
   const handleDeleteOrder = async () => {
@@ -407,8 +499,21 @@ export default function AdminOrderCard({ order, delay = 0 }) {
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay, ease: "easeOut" }}
-        className="surface-3d overflow-hidden rounded-2xl"
+        className="surface-3d relative overflow-hidden rounded-2xl transition-shadow"
+        style={{ borderColor: accent.edge }}
       >
+        {/* Accent wash — index-cycled by default so consecutive cards read
+            as distinct blocks while scrolling; overridden to amber when a
+            WhatsApp bill tick is still missing, or green once CONFIRMED. */}
+        <span
+          className="pointer-events-none absolute inset-y-0 left-0 z-10 w-[4px]"
+          style={{ background: accent.edge }}
+        />
+        <span
+          className="pointer-events-none absolute inset-0 z-0"
+          style={{ background: `radial-gradient(ellipse at top left, ${accent.tint}, transparent 60%)` }}
+        />
+
         <div
           role="button"
           tabIndex={0}
@@ -419,8 +524,9 @@ export default function AdminOrderCard({ order, delay = 0 }) {
               setOpen((v) => !v);
             }
           }}
-          className="flex w-full cursor-pointer flex-col gap-3 p-4 text-left"
+          className="relative z-[1] flex w-full cursor-pointer flex-col gap-2.5 p-4 pl-[18px] text-left"
         >
+          {/* Row 1 — order id/date, status badges, overflow actions menu */}
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="min-w-0">
               <div className="truncate text-[12.5px] font-extrabold text-[#f2ece2]">
@@ -430,7 +536,7 @@ export default function AdminOrderCard({ order, delay = 0 }) {
                 {formatOrderDate(order.createdAt)}
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex shrink-0 items-center gap-1.5">
               <span
                 className={`flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold ${paymentMeta.className}`}
               >
@@ -441,92 +547,176 @@ export default function AdminOrderCard({ order, delay = 0 }) {
               >
                 {statusMeta.emoji} {statusMeta.label}
               </span>
-              {!order.invoiceId && (
-                <>
-                  <SentCheckbox
-                    checked={!!order.billMessageSentAt}
-                    onClick={toggleBillMessageSent}
-                    title={
-                      order.billMessageSentAt
-                        ? "Message marked as sent — tap to un-tick"
-                        : "Tick once the bill message has been sent"
-                    }
-                  />
+              {whatsappStatus !== "NA" && (
+                <span
+                  title={
+                    whatsappStatus === "SENT"
+                      ? "Bill message and file both marked as sent"
+                      : "Bill message or file still not ticked as sent"
+                  }
+                  className={`flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold ${
+                    whatsappStatus === "SENT"
+                      ? "border-[#25D366]/40 bg-[#25D366]/10 text-[#25D366]"
+                      : "border-gold/40 bg-gold/10 text-gold"
+                  }`}
+                >
+                  {whatsappStatus === "SENT" ? (
+                    <>
+                      <Check size={10} strokeWidth={3} /> Sent
+                    </>
+                  ) : (
+                    "WA Pending"
+                  )}
+                </span>
+              )}
+
+              {/* Overflow menu — Cancel / Delete / Revoke live here so the
+                  card front stays uncluttered and the one action that
+                  matters (Confirm Payment / next stage) stands out below. */}
+              {(showCancel || revokeAction) && (
+                <div ref={actionsRef} className="relative">
                   <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActionsOpen((v) => !v);
+                    }}
+                    title="More actions"
+                    className="orb-3d flex h-7 w-7 shrink-0 items-center justify-center !rounded-full text-muted hover:text-[#f2ece2]"
+                  >
+                    <MoreVertical size={14} />
+                  </button>
+                  <AnimatePresence>
+                    {actionsOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.15 }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="absolute right-0 top-[calc(100%+6px)] z-30 w-48 overflow-hidden rounded-xl border border-white/10 bg-[#150007] py-1 shadow-xl"
+                      >
+                        {revokeAction && (
+                          <button
+                            onClick={() => {
+                              setActionsOpen(false);
+                              setConfirmingRevoke(true);
+                            }}
+                            className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[11.5px] font-bold text-gold hover:bg-white/5"
+                          >
+                            <Undo2 size={13} /> {revokeAction.label}
+                          </button>
+                        )}
+                        {showCancel && (
+                          <button
+                            onClick={() => {
+                              setActionsOpen(false);
+                              setConfirmingCancel(true);
+                            }}
+                            className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[11.5px] font-bold text-[#ff8a63] hover:bg-white/5"
+                          >
+                            <Ban size={13} /> Cancel Order
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            setActionsOpen(false);
+                            setConfirmingDelete(true);
+                          }}
+                          className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[11.5px] font-bold text-[#e35226] hover:bg-white/5"
+                        >
+                          <Trash2 size={13} /> Delete Order
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
+              {!showCancel && !revokeAction && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmingDelete(true);
+                  }}
+                  title="Delete order"
+                  className="orb-3d flex h-7 w-7 shrink-0 items-center justify-center !rounded-full text-muted hover:text-[#e35226]"
+                >
+                  <Trash2 size={12} />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Row 2 — compact action row. The advance/"Confirm Payment" button
+              no longer stretches full-width (it used to eat the whole card);
+              it now sizes to its label and shares the row with the WhatsApp
+              quick actions, pinned to the top so Send Message / Share Bill
+              (or Share Invoice, once one exists) are reachable without
+              expanding the card. */}
+          <div className="flex items-center gap-1.5">
+            {showAdvance && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAdvance();
+                }}
+                disabled={busy}
+                className={`flex shrink-0 items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 text-[11px] font-extrabold transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
+                  nextAction.patch.status === "CONFIRMED"
+                    ? "bg-gradient-to-b from-[#8fe3a0] to-[#3fae5c] text-black shadow-[0_6px_14px_-8px_rgba(63,174,92,0.6)]"
+                    : "btn-3d text-black"
+                }`}
+              >
+                {busy ? (
+                  <Loader2 size={13} className="animate-spin" />
+                ) : (
+                  NextIcon && <NextIcon size={13} />
+                )}
+                {nextAction.label}
+              </button>
+            )}
+
+            <div className="ml-auto flex shrink-0 items-center gap-1.5">
+              {order.invoiceId ? (
+                <QuickWhatsappButton
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSendInvoiceFile();
+                  }}
+                  busy={sendingInvoiceFile}
+                  icon={MessageCircleMore}
+                  title="Share invoice on WhatsApp"
+                />
+              ) : (
+                <>
+                  <QuickWhatsappButton
                     onClick={(e) => {
                       e.stopPropagation();
                       handleSendBillMessage();
                     }}
-                    disabled={sendingBillMessage}
+                    busy={sendingBillMessage}
+                    icon={MessageCircleMore}
                     title="Send bill message on WhatsApp"
-                    className="flex shrink-0 items-center gap-1 rounded-full border border-[#25D366]/40 bg-[#25D366]/10 px-2 py-0.5 text-[10px] font-bold text-[#25D366] transition-colors hover:bg-[#25D366]/20 disabled:opacity-60"
-                  >
-                    {sendingBillMessage ? (
-                      <Loader2 size={10} className="animate-spin" />
-                    ) : (
-                      <MessageCircleMore size={10} />
-                    )}
-                    Message
-                  </button>
-                  <SentCheckbox
-                    checked={!!order.billFileSentAt}
-                    onClick={toggleBillFileSent}
-                    title={
-                      order.billFileSentAt
-                        ? "Bill marked as sent — tap to un-tick"
-                        : "Tick once the bill file has been sent"
-                    }
+                    sent={!!order.billMessageSentAt}
                   />
-                  <button
+                  <QuickWhatsappButton
                     onClick={(e) => {
                       e.stopPropagation();
                       handleSendBillFile();
                     }}
-                    disabled={sendingBillFile}
-                    title="Send bill file on WhatsApp"
-                    className="flex shrink-0 items-center gap-1 rounded-full border border-[#25D366]/40 bg-[#25D366]/10 px-2 py-0.5 text-[10px] font-bold text-[#25D366] transition-colors hover:bg-[#25D366]/20 disabled:opacity-60"
-                  >
-                    {sendingBillFile ? (
-                      <Loader2 size={10} className="animate-spin" />
-                    ) : (
-                      <Paperclip size={10} />
-                    )}
-                    Bill
-                  </button>
+                    busy={sendingBillFile}
+                    icon={Paperclip}
+                    title="Share bill file on WhatsApp"
+                    sent={!!order.billFileSentAt}
+                  />
                 </>
               )}
             </div>
           </div>
 
+          {/* Row 3 — customer + total (no item photos — see Items list below when expanded) */}
           <div className="flex items-center gap-2">
-            <div className="flex -space-x-3">
-              {items.slice(0, 3).map((item, i) => (
-                <div
-                  key={item.productId || i}
-                  className="orb-3d flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden !rounded-lg"
-                  style={{ zIndex: 3 - i }}
-                >
-                  {item.image ? (
-                    <LazyLoadImage
-                      src={item.image}
-                      alt={item.name}
-                      effect="opacity"
-                      className="h-full w-full object-contain"
-                    />
-                  ) : (
-                    <span className="text-base">🎆</span>
-                  )}
-                </div>
-              ))}
-              {items.length > 3 && (
-                <div className="orb-3d flex h-11 w-11 shrink-0 items-center justify-center !rounded-lg text-[10px] font-bold text-gold">
-                  +{items.length - 3}
-                </div>
-              )}
-            </div>
-
-            <div className="min-w-0 flex-1 pl-1">
-              <div className="truncate text-[11.5px] font-bold text-[#f2ece2]">
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-[12px] font-bold text-[#f2ece2]">
                 {order.customer?.name || "Unnamed customer"}
               </div>
               <div className="text-[10px] font-semibold text-muted">
@@ -549,7 +739,31 @@ export default function AdminOrderCard({ order, delay = 0 }) {
               <ChevronDown size={15} />
             </motion.span>
           </div>
+
+          {/* Row 4 — address, district/city highlighted like the Packing screen */}
+          {order.address &&
+            (order.address.city || order.address.district || formatStreetLine(order.address)) && (
+              <div className="flex flex-wrap items-center gap-1.5 border-t border-dashed border-white/10 pt-2.5">
+                <MapPin size={12} className="shrink-0 text-muted" />
+                {formatStreetLine(order.address) && (
+                  <span className="text-[10.5px] text-muted">
+                    {formatStreetLine(order.address)}
+                  </span>
+                )}
+                {order.address.city && (
+                  <span className={`rounded-full border px-2 py-0.5 text-[10px] font-extrabold ${accent.badgeClass}`}>
+                    {order.address.city}
+                  </span>
+                )}
+                {order.address.district && order.address.district !== order.address.city && (
+                  <span className={`rounded-full border px-2 py-0.5 text-[10px] font-extrabold ${accent.badgeClass}`}>
+                    {order.address.district}
+                  </span>
+                )}
+              </div>
+            )}
         </div>
+
 
         <AnimatePresence initial={false}>
           {open && (
@@ -827,51 +1041,6 @@ export default function AdminOrderCard({ order, delay = 0 }) {
                     </button>
                   )
                 )}
-
-                {/* Actions */}
-                {(showAdvance || showCancel) && (
-                  <div className="flex items-center gap-2 border-t border-dashed border-white/10 pt-3">
-                    {showAdvance && (
-                      <button
-                        onClick={handleAdvance}
-                        disabled={busy}
-                        className="btn-3d flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-[11px] font-extrabold text-black disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {busy ? (
-                          <Loader2 size={13} className="animate-spin" />
-                        ) : (
-                          NextIcon && <NextIcon size={13} />
-                        )}
-                        {nextAction.shortLabel}
-                      </button>
-                    )}
-                    {showCancel && (
-                      <button
-                        onClick={handleCancel}
-                        disabled={busy}
-                        className={`flex items-center justify-center gap-1.5 rounded-xl border px-3.5 py-2.5 text-[11px] font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
-                          confirmingCancel
-                            ? "border-[#e35226]/60 bg-[#e35226]/15 text-[#ff8a63]"
-                            : "border-white/10 bg-[#0c0906] text-muted hover:border-[#e35226]/40 hover:text-[#e35226]"
-                        }`}
-                      >
-                        <Ban size={12} />
-                        {confirmingCancel ? "Tap to confirm" : "Cancel"}
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {/* Delete — always available, separate from the status actions above */}
-                <div className="flex items-center justify-end border-t border-dashed border-white/10 pt-3">
-                  <button
-                    onClick={() => setConfirmingDelete(true)}
-                    className="flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-[#0c0906] px-3.5 py-2.5 text-[11px] font-bold text-muted transition-colors hover:border-[#e35226]/40 hover:text-[#e35226]"
-                  >
-                    <Trash2 size={12} />
-                    Delete Order
-                  </button>
-                </div>
               </div>
             </motion.div>
           )}
@@ -896,6 +1065,27 @@ export default function AdminOrderCard({ order, delay = 0 }) {
         onConfirm={handleDeleteOrder}
         onCancel={() => setConfirmingDelete(false)}
       />
+      <ConfirmDeleteDialog
+        open={confirmingCancel}
+        title="Cancel this order?"
+        description={`Order ${order.orderId || order.id} will be marked as cancelled.`}
+        busy={busy}
+        confirmLabel="Cancel Order"
+        onConfirm={handleCancel}
+        onCancel={() => setConfirmingCancel(false)}
+      />
+      {revokeAction && (
+        <ConfirmDeleteDialog
+          open={confirmingRevoke}
+          title="Revert this order?"
+          description={`${revokeAction.label} for order ${order.orderId || order.id} — it goes back to "${getOrderStatusMeta(revokeAction.patch.status).label}". Use this if the last update was a mistake.`}
+          busy={revoking}
+          confirmLabel="Revoke"
+          tone="warning"
+          onConfirm={handleRevoke}
+          onCancel={() => setConfirmingRevoke(false)}
+        />
+      )}
     </>
   );
 }

@@ -157,6 +157,20 @@
     box-shadow: 0 0 32px 6px rgba(255, 122, 0, 0.6);
   }
 }
+@keyframes mergeAvailablePulse {
+  0%,
+  100% {
+    box-shadow: 0 0 8px 0 rgba(255, 213, 79, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 16px 3px rgba(255, 213, 79, 0.65);
+  }
+}
+/* Draws the admin's eye to a merge option they might otherwise miss
+   while scanning a long packing list — gentle, not distracting. */
+.merge-available-pulse {
+  animation: mergeAvailablePulse 2.2s ease-in-out infinite;
+}
 @keyframes shimmer {
   0% {
     background-position: -200% 0;
@@ -329,6 +343,31 @@ button {
     0 0 0 1px rgba(255, 122, 0, 0.35),
     0 0 24px rgba(255, 122, 0, 0.3),
     0 14px 28px -10px rgba(0, 0, 0, 0.65);
+}
+
+/* Distinct surface for the packing checklist modal — deliberately a cool
+   slate/graphite tone rather than the warm dark-maroon used everywhere
+   else, specifically so it doesn't read as "one more dark reddish
+   panel" and so the tally checkboxes (which need to sit ON TOP of this
+   surface) have enough contrast to actually be legible. */
+.surface-packing-modal {
+  position: relative;
+  background: linear-gradient(165deg, #202a33 0%, #161d24 55%, #0e1318 100%);
+  border: 1px solid rgba(120, 170, 200, 0.28);
+  box-shadow:
+    0 1px 0 0 rgba(180, 220, 255, 0.1) inset,
+    0 -18px 30px -22px rgba(80, 160, 200, 0.3) inset,
+    0 14px 28px -10px rgba(0, 0, 0, 0.65),
+    0 3px 8px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(0, 0, 0, 0.4);
+}
+.surface-packing-modal::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(115deg, rgba(255, 255, 255, 0.05) 0%, transparent 30%);
+  pointer-events: none;
 }
 
 /* Glossy 3D button: gradient body + top glass highlight strip + deep shadow,

@@ -105,6 +105,9 @@ async function normalizeProduct(id, raw) {
     rawImage: raw.image || raw.img || "",
     stock,
     stockQty: Number(raw.stockQty ?? (stock === "out" ? 0 : 99)),
+    // Admin-set "max per order" cap (0/undefined = no limit) — see
+    // AdminOrderLimits.jsx + utils/productLimits.js.
+    maxOrderQty: Number(raw.maxOrderQty ?? 0),
     hidden: !!raw.hidden,
     featured: !!raw.featured,
     bestSeller: !!raw.bestSeller,
@@ -482,6 +485,27 @@ export async function bulkUpdateProductPrices(updates) {
         mrp,
         salePrice,
         discountPercentage,
+        updatedAt: serverTimestamp(),
+      });
+    });
+    await batch.commit();
+  }
+}
+
+/**
+ * Bulk-updates `maxOrderQty` (the "max qty a customer can order" cap) for a
+ * batch of products in one go — powers the Admin "Order Limits" screen,
+ * mirroring bulkUpdateProductPrices above. `updates` is an array of
+ * { id, maxOrderQty }; pass 0 to clear a product's limit entirely.
+ */
+export async function bulkUpdateProductOrderLimits(updates) {
+  const CHUNK_SIZE = 450;
+  for (let i = 0; i < updates.length; i += CHUNK_SIZE) {
+    const chunk = updates.slice(i, i + CHUNK_SIZE);
+    const batch = writeBatch(db);
+    chunk.forEach(({ id, maxOrderQty }) => {
+      batch.update(doc(db, PRODUCTS_COLLECTION, id), {
+        maxOrderQty: Math.max(0, Math.round(Number(maxOrderQty) || 0)),
         updatedAt: serverTimestamp(),
       });
     });

@@ -100,7 +100,7 @@ export default function AdminCategories() {
     : 0;
 
   return (
-    <div className="min-h-screen w-full bg-[#050505] pb-16 text-white">
+    <div className="min-h-screen w-full bg-[#050505] pb-28 text-white">
       <AdminSectionHeader
         icon={LayoutGrid}
         title="Category Management"
