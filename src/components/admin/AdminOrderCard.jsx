@@ -38,6 +38,7 @@ import {
   updateOrderStatus,
   deleteOrderDoc,
   markBillWhatsappSent,
+  computeOrderPricing,
 } from "../../services/ordersFirestore";
 import { getWhatsappSendStatus } from "../../utils/whatsappSendStatus";
 import { getOrderSlot } from "../../utils/packingAccent";
@@ -155,7 +156,6 @@ export default function AdminOrderCard({ order, delay = 0, index = 0 }) {
   const [sendingBillFile, setSendingBillFile] = useState(false);
   const [sendingInvoiceFile, setSendingInvoiceFile] = useState(false);
 
-  const items = order.cartItems || [];
   const { products } = useProducts();
   // Same fallback as the customer-facing OrderCard — older orders don't
   // have item.nameTa snapshotted yet, so match against the live catalog.
@@ -163,6 +163,57 @@ export default function AdminOrderCard({ order, delay = 0, index = 0 }) {
     () => Object.fromEntries(products.map((p) => [p.id, p.nameTa])),
     [products],
   );
+  const productsById = useMemo(
+    () => Object.fromEntries(products.map((p) => [p.id, p])),
+    [products],
+  );
+
+  // Orders sitting in AWAITING_ADMIN_CONFIRMATION haven't been paid for yet,
+  // so if a product's price changes after the order was placed (e.g. a
+  // restock-driven price update), the estimate should reflect today's
+  // price — not what it was at checkout. This never touches Firestore by
+  // itself; it just repriced what's shown/sent (card total, price
+  // breakdown, Estimate Bill PDF/WhatsApp) using the live product catalog.
+  // The moment payment is confirmed, handleAdvance below locks these
+  // repriced numbers onto the order doc itself, and from then on this
+  // logic no longer applies — CONFIRMED (and later) orders always render
+  // straight from `order`, untouched.
+  const isAwaitingPayment = order.status === "AWAITING_ADMIN_CONFIRMATION";
+  const pricedOrder = useMemo(() => {
+    const rawItems = order.cartItems || [];
+    if (!isAwaitingPayment) return order;
+    const pricingInputs = rawItems.map((item) => {
+      const liveProduct = productsById[item.productId];
+      return {
+        product: liveProduct
+          ? { id: liveProduct.id, mrp: liveProduct.mrp, sale: liveProduct.sale }
+          // Product no longer in the catalog (e.g. deleted) — keep whatever
+          // was billed originally rather than losing the line item.
+          : { id: item.productId, mrp: item.mrp ?? item.unitPrice, sale: item.unitPrice },
+        qty: item.quantity,
+      };
+    });
+    const pricing = computeOrderPricing(pricingInputs);
+    return {
+      ...order,
+      // computeOrderPricing only knows product id/mrp/sale/qty — merge the
+      // repriced numbers back onto the original item objects so display
+      // fields (name, image, category, nameTa...) aren't lost.
+      cartItems: rawItems.map((item, i) => ({
+        ...item,
+        unitPrice: pricing.cartItems[i].unitPrice,
+        mrp: pricing.cartItems[i].mrp,
+        lineTotal: pricing.cartItems[i].lineTotal,
+      })),
+      subtotal: pricing.subtotal,
+      discount: pricing.discount,
+      packingCharges: pricing.packingCharges,
+      deliveryCharges: pricing.deliveryCharges,
+      grandTotal: pricing.grandTotal,
+      totalSavings: pricing.totalSavings,
+    };
+  }, [order, isAwaitingPayment, productsById]);
+  const items = pricedOrder.cartItems || [];
   const statusMeta = getOrderStatusMeta(order.status);
   const paymentMeta = PAYMENT_META[order.paymentStatus] || PAYMENT_META.PENDING;
   const nextAction = NEXT_ACTION_BY_STATUS[order.status];
@@ -230,9 +281,26 @@ export default function AdminOrderCard({ order, delay = 0, index = 0 }) {
     if (nextAction.patch.status === "CONFIRMED") {
       setBusy(true);
       try {
-        await updateOrderStatus(db, order.id, nextAction.patch);
+        // Lock in today's pricing as the permanent record. For an order
+        // that was AWAITING_ADMIN_CONFIRMATION, pricedOrder already carries
+        // any restock/price-update repricing — write it now so the order
+        // (and the invoice generated from it) reflect what's actually being
+        // paid today, not the price at checkout.
+        const confirmPatch = isAwaitingPayment
+          ? {
+              ...nextAction.patch,
+              cartItems: pricedOrder.cartItems,
+              subtotal: pricedOrder.subtotal,
+              discount: pricedOrder.discount,
+              packingCharges: pricedOrder.packingCharges,
+              deliveryCharges: pricedOrder.deliveryCharges,
+              grandTotal: pricedOrder.grandTotal,
+              totalSavings: pricedOrder.totalSavings,
+            }
+          : nextAction.patch;
+        await updateOrderStatus(db, order.id, confirmPatch);
         try {
-          await createInvoiceForOrder(db, { ...order, ...nextAction.patch });
+          await createInvoiceForOrder(db, { ...order, ...confirmPatch });
           toast.success("Payment confirmed — invoice generated");
         } catch (invoiceErr) {
           // Status update already succeeded — don't tell the admin payment
@@ -343,14 +411,14 @@ export default function AdminOrderCard({ order, delay = 0, index = 0 }) {
   };
 
   const handleViewBill = () => {
-    setPreviewBill(order);
+    setPreviewBill(pricedOrder);
   };
 
   const handleDownloadBill = async () => {
     if (downloadingBill) return;
     setDownloadingBill(true);
     try {
-      generateBillPdf(order);
+      generateBillPdf(pricedOrder);
     } catch (err) {
       console.error("Failed to download bill", err);
       toast.error("Couldn't download the bill. Please try again.");
@@ -363,7 +431,7 @@ export default function AdminOrderCard({ order, delay = 0, index = 0 }) {
     if (sendingBillMessage) return;
     setSendingBillMessage(true);
     try {
-      sendBillMessage(order);
+      sendBillMessage(pricedOrder);
       markBillWhatsappSent(db, order.id, { messageSent: true }).catch((err) =>
         console.error("Failed to mark message as sent", err),
       );
@@ -379,7 +447,7 @@ export default function AdminOrderCard({ order, delay = 0, index = 0 }) {
     if (sendingBillFile) return;
     setSendingBillFile(true);
     try {
-      const { method } = await sendBillFile(order);
+      const { method } = await sendBillFile(pricedOrder);
       if (method === "fallback") {
         toast(
           "Bill downloaded — attach it in the WhatsApp chat that just opened.",
@@ -737,7 +805,7 @@ export default function AdminOrderCard({ order, delay = 0, index = 0 }) {
 
             <div className="shrink-0 text-right">
               <div className="text-[14px] font-extrabold text-gradient-gold">
-                ₹{(order.grandTotal ?? 0).toLocaleString("en-IN")}
+                ₹{(pricedOrder.grandTotal ?? 0).toLocaleString("en-IN")}
               </div>
             </div>
 
@@ -858,33 +926,38 @@ export default function AdminOrderCard({ order, delay = 0, index = 0 }) {
                   <div className="flex justify-between">
                     <span>Subtotal (MRP)</span>
                     <span>
-                      ₹{(order.subtotal ?? 0).toLocaleString("en-IN")}
+                      ₹{(pricedOrder.subtotal ?? 0).toLocaleString("en-IN")}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Discount</span>
                     <span>
-                      -₹{(order.discount ?? 0).toLocaleString("en-IN")}
+                      -₹{(pricedOrder.discount ?? 0).toLocaleString("en-IN")}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Packing charges</span>
                     <span>
-                      ₹{(order.packingCharges ?? 0).toLocaleString("en-IN")}
+                      ₹{(pricedOrder.packingCharges ?? 0).toLocaleString("en-IN")}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Delivery charges</span>
                     <span>
-                      ₹{(order.deliveryCharges ?? 0).toLocaleString("en-IN")}
+                      ₹{(pricedOrder.deliveryCharges ?? 0).toLocaleString("en-IN")}
                     </span>
                   </div>
                   <div className="mt-1 flex justify-between border-t border-dashed border-white/10 pt-1.5 text-[11.5px] font-extrabold text-[#f2ece2]">
                     <span>Grand Total</span>
                     <span>
-                      ₹{(order.grandTotal ?? 0).toLocaleString("en-IN")}
+                      ₹{(pricedOrder.grandTotal ?? 0).toLocaleString("en-IN")}
                     </span>
                   </div>
+                  {isAwaitingPayment && pricedOrder.grandTotal !== order.grandTotal && (
+                    <div className="mt-1 flex items-center gap-1 text-[9.5px] font-semibold text-gold">
+                      Updated to today's prices (was ₹{(order.grandTotal ?? 0).toLocaleString("en-IN")})
+                    </div>
+                  )}
                 </div>
 
                 {/* Address */}

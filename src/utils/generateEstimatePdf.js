@@ -7,6 +7,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { SHOP_INFO, ESTIMATE_TERMS_LINE } from '../constants/estimateConstants';
 import { SHIVA_PARVATI_IMG, MURUGAN_IMG, GANESHA_IMG, ABS_LOGO_IMG } from '../assets/invoiceAssets';
+import { drawText, drawWrappedText } from './pdfUnicodeText';
 
 const ORANGE = [255, 122, 0];
 const GOLD = [200, 150, 40];
@@ -114,11 +115,13 @@ function buildEstimateDoc(estimate) {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9.5);
   doc.setTextColor(...INK);
-  doc.text(`Customer Name: ${estimate.customer?.name || '-'}`, margin + 4, custTop + 7);
-  doc.text(`Mobile No.: ${estimate.customer?.mobile || '-'}`, pageWidth - margin - 4, custTop + 7, { align: 'right' });
+  drawText(doc, `Customer Name: ${estimate.customer?.name || '-'}`, margin + 4, custTop + 7, { color: INK });
+  drawText(doc, `Mobile No.: ${estimate.customer?.mobile || '-'}`, pageWidth - margin - 4, custTop + 7, { align: 'right', color: INK });
   doc.setFont('helvetica', 'normal');
-  const addressLines = doc.splitTextToSize(`Address: ${estimate.customer?.address || '-'}`, pageWidth - margin * 2 - 8);
-  doc.text(addressLines.slice(0, 2), margin + 4, custTop + 14);
+  drawWrappedText(doc, `Address: ${estimate.customer?.address || '-'}`, margin + 4, custTop + 14, pageWidth - margin * 2 - 8, {
+    color: INK,
+    maxLines: 2,
+  });
 
   // --- Items table ---
   const rows = (estimate.items || []).map((item, i) => [
@@ -178,10 +181,9 @@ function buildEstimateDoc(estimate) {
   doc.text('Notes', margin, notesY);
   notesY += 5;
   if (estimate.notes) {
-    const noteLines = doc.splitTextToSize(estimate.notes, notesBoxW);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    doc.text(noteLines, margin, notesY);
+    drawWrappedText(doc, estimate.notes, margin, notesY, notesBoxW, { color: INK });
   } else {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
