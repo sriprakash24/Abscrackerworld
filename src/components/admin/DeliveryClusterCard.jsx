@@ -1,25 +1,31 @@
 import { motion } from "framer-motion";
-import { MapPin, MessageCircle, CheckCheck, Layers, Loader2 } from "lucide-react";
+import { MapPin, MessageCircle, Layers, Loader2, Undo2 } from "lucide-react";
 import { getClusterAccent } from "../../utils/packingAccent";
 import { formatStreetLine } from "../../utils/formatAddress";
 import { openWhatsappChat } from "../../utils/whatsappChat";
 import { getOrderStatusMeta } from "../../constants/orderStatusMeta";
 
 /**
- * Every PACKED (or OUT_FOR_DELIVERY) order for ONE customer, styled to
- * match PackingClusterCard so the Delivery screen reads as the natural
- * next step after Packing rather than a different tool. Unlike packing,
- * there's no checklist here — just two actions per customer: open their
- * WhatsApp chat directly (to send the delivery photo/receipt manually),
- * and mark order(s) delivered once that's done.
+ * Every order at ONE delivery stage for ONE customer. Used for both tabs
+ * on the Delivery page — "Ready to Dispatch" (PACKED -> OUT_FOR_DELIVERY)
+ * and "Out for Delivery" (OUT_FOR_DELIVERY -> DELIVERED, which here means
+ * "handed off to the transport office", not "in the customer's hands") —
+ * so the action label/icon and the revoke target are passed in rather than
+ * hardcoded, instead of building two near-identical components.
  */
 export default function DeliveryClusterCard({
   cluster,
   index = 0,
   delay = 0,
+  actionLabel,
+  actionIcon: ActionIcon,
   markingKey,
-  onMarkDelivered,
-  onMarkAllDelivered,
+  onAction,
+  onActionAll,
+  revokeLabel,
+  revokingKey,
+  onRevoke,
+  onRevokeAll,
 }) {
   const accent = getClusterAccent(index);
   const isMultiOrder = cluster.orders.length > 1;
@@ -95,18 +101,37 @@ export default function DeliveryClusterCard({
       )}
 
       {isMultiOrder && (
-        <button
-          onClick={() => onMarkAllDelivered(cluster)}
-          disabled={markingKey === `cluster:${cluster.mobile}`}
-          className="relative z-[1] ml-1.5 flex items-center justify-center gap-1.5 self-start rounded-full border border-[#8fe3a0]/45 bg-[#8fe3a0]/10 px-3 py-1.5 text-[10.5px] font-extrabold text-[#8fe3a0] disabled:opacity-60"
-        >
-          {markingKey === `cluster:${cluster.mobile}` ? (
-            <Loader2 size={12} className="animate-spin" />
-          ) : (
-            <Layers size={12} />
+        <div className="relative z-[1] ml-1.5 flex flex-wrap items-center gap-2">
+          {onActionAll && (
+            <button
+              onClick={() => onActionAll(cluster)}
+              disabled={markingKey === `cluster:${cluster.mobile}`}
+              className="flex items-center justify-center gap-1.5 self-start rounded-full border border-[#8fe3a0]/45 bg-[#8fe3a0]/10 px-3 py-1.5 text-[10.5px] font-extrabold text-[#8fe3a0] disabled:opacity-60"
+            >
+              {markingKey === `cluster:${cluster.mobile}` ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : (
+                <Layers size={12} />
+              )}
+              {actionLabel} all {cluster.orders.length}
+            </button>
           )}
-          Mark all {cluster.orders.length} delivered
-        </button>
+          {onRevokeAll && (
+            <button
+              onClick={() => onRevokeAll(cluster)}
+              disabled={revokingKey === `cluster:${cluster.mobile}`}
+              title={revokeLabel}
+              className="flex items-center justify-center gap-1.5 self-start rounded-full border border-gold/40 bg-gold/10 px-3 py-1.5 text-[10.5px] font-extrabold text-gold disabled:opacity-60"
+            >
+              {revokingKey === `cluster:${cluster.mobile}` ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : (
+                <Undo2 size={12} />
+              )}
+              Revoke all
+            </button>
+          )}
+        </div>
       )}
 
       <div className="relative z-[1] flex flex-col gap-2.5 pl-1.5">
@@ -132,18 +157,41 @@ export default function DeliveryClusterCard({
               <div className="text-[10.5px] font-semibold text-muted">
                 {itemCount} distinct {itemCount === 1 ? "item" : "items"}
               </div>
-              <button
-                onClick={() => onMarkDelivered(order)}
-                disabled={markingKey === orderKey}
-                className="btn-3d flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[11px] font-extrabold text-black disabled:opacity-60"
-              >
-                {markingKey === orderKey ? (
-                  <Loader2 size={13} className="animate-spin" />
-                ) : (
-                  <CheckCheck size={13} />
+              <div className="flex items-center gap-2">
+                {onAction && (
+                  <button
+                    onClick={() => onAction(order)}
+                    disabled={markingKey === orderKey}
+                    className="btn-3d flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-[11px] font-extrabold text-black disabled:opacity-60"
+                  >
+                    {markingKey === orderKey ? (
+                      <Loader2 size={13} className="animate-spin" />
+                    ) : (
+                      ActionIcon && <ActionIcon size={13} />
+                    )}
+                    {actionLabel}
+                  </button>
                 )}
-                Mark Delivered
-              </button>
+                {onRevoke && (
+                  <button
+                    onClick={() => onRevoke(order)}
+                    disabled={revokingKey === orderKey}
+                    title={revokeLabel}
+                    className={
+                      onAction
+                        ? "orb-3d flex h-9 w-9 shrink-0 items-center justify-center !rounded-full text-gold disabled:opacity-60"
+                        : "flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-gold/40 bg-gold/10 py-2.5 text-[11px] font-extrabold text-gold disabled:opacity-60"
+                    }
+                  >
+                    {revokingKey === orderKey ? (
+                      <Loader2 size={13} className="animate-spin" />
+                    ) : (
+                      <Undo2 size={13} />
+                    )}
+                    {!onAction && (revokeLabel || "Revoke")}
+                  </button>
+                )}
+              </div>
             </div>
           );
         })}

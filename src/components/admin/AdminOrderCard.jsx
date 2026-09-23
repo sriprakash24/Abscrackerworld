@@ -24,6 +24,8 @@ import {
   Check,
   MoreVertical,
   Undo2,
+  RotateCcw,
+  History,
 } from "lucide-react";
 import { toast } from "sonner";
 import { getOrderStatusMeta } from "../../constants/orderStatusMeta";
@@ -38,8 +40,8 @@ import {
   updateOrderStatus,
   deleteOrderDoc,
   markBillWhatsappSent,
-  computeOrderPricing,
 } from "../../services/ordersFirestore";
+import { repriceFromCatalog } from "../../utils/orderPricing";
 import { getWhatsappSendStatus } from "../../utils/whatsappSendStatus";
 import { getOrderSlot } from "../../utils/packingAccent";
 import { formatStreetLine } from "../../utils/formatAddress";
@@ -155,6 +157,7 @@ export default function AdminOrderCard({ order, delay = 0, index = 0 }) {
   const [sendingBillMessage, setSendingBillMessage] = useState(false);
   const [sendingBillFile, setSendingBillFile] = useState(false);
   const [sendingInvoiceFile, setSendingInvoiceFile] = useState(false);
+  const [priceChoiceBusy, setPriceChoiceBusy] = useState(false);
 
   const { products } = useProducts();
   // Same fallback as the customer-facing OrderCard — older orders don't
@@ -179,40 +182,19 @@ export default function AdminOrderCard({ order, delay = 0, index = 0 }) {
   // logic no longer applies — CONFIRMED (and later) orders always render
   // straight from `order`, untouched.
   const isAwaitingPayment = order.status === "AWAITING_ADMIN_CONFIRMATION";
-  const pricedOrder = useMemo(() => {
-    const rawItems = order.cartItems || [];
+  // Admin's explicit choice for this order: keep the price the customer was
+  // originally quoted at checkout, instead of today's live catalog price.
+  // Never defaulted on — see the "Use old price" / "Revoke" buttons below.
+  const useOriginalPrice = order.priceOverride === "original";
+  // Always compute what today's price would be, regardless of which one is
+  // currently in effect — needed both to detect that a price actually
+  // changed and to offer the old-vs-new toggle.
+  const liveRepricedOrder = useMemo(() => {
     if (!isAwaitingPayment) return order;
-    const pricingInputs = rawItems.map((item) => {
-      const liveProduct = productsById[item.productId];
-      return {
-        product: liveProduct
-          ? { id: liveProduct.id, mrp: liveProduct.mrp, sale: liveProduct.sale }
-          // Product no longer in the catalog (e.g. deleted) — keep whatever
-          // was billed originally rather than losing the line item.
-          : { id: item.productId, mrp: item.mrp ?? item.unitPrice, sale: item.unitPrice },
-        qty: item.quantity,
-      };
-    });
-    const pricing = computeOrderPricing(pricingInputs);
-    return {
-      ...order,
-      // computeOrderPricing only knows product id/mrp/sale/qty — merge the
-      // repriced numbers back onto the original item objects so display
-      // fields (name, image, category, nameTa...) aren't lost.
-      cartItems: rawItems.map((item, i) => ({
-        ...item,
-        unitPrice: pricing.cartItems[i].unitPrice,
-        mrp: pricing.cartItems[i].mrp,
-        lineTotal: pricing.cartItems[i].lineTotal,
-      })),
-      subtotal: pricing.subtotal,
-      discount: pricing.discount,
-      packingCharges: pricing.packingCharges,
-      deliveryCharges: pricing.deliveryCharges,
-      grandTotal: pricing.grandTotal,
-      totalSavings: pricing.totalSavings,
-    };
+    return repriceFromCatalog(order, productsById);
   }, [order, isAwaitingPayment, productsById]);
+  const pricedOrder = useOriginalPrice ? order : liveRepricedOrder;
+  const hasPriceChange = isAwaitingPayment && liveRepricedOrder.grandTotal !== order.grandTotal;
   const items = pricedOrder.cartItems || [];
   const statusMeta = getOrderStatusMeta(order.status);
   const paymentMeta = PAYMENT_META[order.paymentStatus] || PAYMENT_META.PENDING;
@@ -271,6 +253,38 @@ export default function AdminOrderCard({ order, delay = 0, index = 0 }) {
       toast.error("Couldn't update the order. Please try again.");
     } finally {
       setBusy(false);
+    }
+  };
+
+  // "Use old price" — pins this order's estimate to the price the customer
+  // was originally quoted, overriding the automatic reprice-to-today's-
+  // price behaviour above. "Revoke" flips it back to today's price. Either
+  // way this only ever affects an order still AWAITING_ADMIN_CONFIRMATION —
+  // once payment is confirmed, whichever total was showing gets locked in
+  // for good and this toggle no longer applies.
+  const useOldPrice = async () => {
+    setPriceChoiceBusy(true);
+    try {
+      await updateOrderStatus(db, order.id, { priceOverride: "original" });
+      toast.success("Estimate will use the original price");
+    } catch (err) {
+      console.error("Failed to switch to the old price", err);
+      toast.error("Couldn't switch to the old price. Please try again.");
+    } finally {
+      setPriceChoiceBusy(false);
+    }
+  };
+
+  const revokeToNewPrice = async () => {
+    setPriceChoiceBusy(true);
+    try {
+      await updateOrderStatus(db, order.id, { priceOverride: "live" });
+      toast.success("Estimate will use today's price");
+    } catch (err) {
+      console.error("Failed to revoke to today's price", err);
+      toast.error("Couldn't switch to today's price. Please try again.");
+    } finally {
+      setPriceChoiceBusy(false);
     }
   };
 
@@ -753,6 +767,32 @@ export default function AdminOrderCard({ order, delay = 0, index = 0 }) {
               </button>
             )}
 
+            {/* Quick download — visible on the card front without expanding.
+                Label/target switches the moment an invoice exists: before
+                payment this downloads the Estimate Bill, after payment
+                (invoiceId set) it downloads the Invoice instead. */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (order.invoiceId) {
+                  handleDownloadInvoice();
+                } else {
+                  handleDownloadBill();
+                }
+              }}
+              disabled={order.invoiceId ? downloadingInvoice : downloadingBill}
+              title={order.invoiceId ? "Download Invoice" : "Download Estimate Bill"}
+              className="btn-3d-outline flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-[10.5px] font-bold text-gold disabled:opacity-50"
+            >
+              {(order.invoiceId ? downloadingInvoice : downloadingBill) ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : (
+                <Download size={12} />
+              )}
+              {order.invoiceId ? "Invoice" : "Estimate Bill"}
+            </button>
+
             <div className="ml-auto flex shrink-0 items-center gap-1.5">
               {order.invoiceId ? (
                 <QuickWhatsappButton
@@ -953,9 +993,42 @@ export default function AdminOrderCard({ order, delay = 0, index = 0 }) {
                       ₹{(pricedOrder.grandTotal ?? 0).toLocaleString("en-IN")}
                     </span>
                   </div>
-                  {isAwaitingPayment && pricedOrder.grandTotal !== order.grandTotal && (
-                    <div className="mt-1 flex items-center gap-1 text-[9.5px] font-semibold text-gold">
-                      Updated to today's prices (was ₹{(order.grandTotal ?? 0).toLocaleString("en-IN")})
+                  {hasPriceChange && (
+                    <div className="mt-1 flex flex-col gap-1.5 border-t border-dashed border-white/10 pt-1.5">
+                      <div className="text-[9.5px] font-semibold text-gold">
+                        {useOriginalPrice
+                          ? `Using original price (today's price is ₹${(liveRepricedOrder.grandTotal ?? 0).toLocaleString("en-IN")})`
+                          : `Updated to today's prices (was ₹${(order.grandTotal ?? 0).toLocaleString("en-IN")})`}
+                      </div>
+                      {useOriginalPrice ? (
+                        <button
+                          type="button"
+                          onClick={revokeToNewPrice}
+                          disabled={priceChoiceBusy}
+                          className="btn-3d-outline flex w-fit items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-gold disabled:opacity-50"
+                        >
+                          {priceChoiceBusy ? (
+                            <Loader2 size={11} className="animate-spin" />
+                          ) : (
+                            <RotateCcw size={11} />
+                          )}
+                          Revoke — use today's price
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={useOldPrice}
+                          disabled={priceChoiceBusy}
+                          className="btn-3d-outline flex w-fit items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-gold disabled:opacity-50"
+                        >
+                          {priceChoiceBusy ? (
+                            <Loader2 size={11} className="animate-spin" />
+                          ) : (
+                            <History size={11} />
+                          )}
+                          Use old price
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>

@@ -11,10 +11,11 @@ import { updateUserProfile } from '../../services/usersFirestore';
 
 /**
  * Edit modal for a customer profile captured via the storefront's "who's
- * shopping?" sheet (users/{mobile}). Only the name is editable — mobile is
- * the document id, and orders/invoices reference the customer by that same
- * mobile number, so changing it here isn't offered to avoid breaking those
- * lookups.
+ * shopping?" sheet (users/{mobile}), plus their delivery address — the same
+ * `address` field the customer's own "My Profile" page reads and writes, so
+ * an edit from either side stays in sync. Mobile is the document id and
+ * orders/invoices reference the customer by that same number, so changing
+ * it here isn't offered to avoid breaking those lookups.
  */
 export default function UserFormModal({ open, user, onClose }) {
   const [submitting, setSubmitting] = useState(false);
@@ -31,15 +32,50 @@ export default function UserFormModal({ open, user, onClose }) {
 
   useEffect(() => {
     if (!open) return;
-    reset({ name: user?.name || '' });
+    const address = user?.address;
+    reset({
+      name: user?.name || '',
+      houseNumber: address?.houseNumber || '',
+      street: address?.street || '',
+      area: address?.area || '',
+      city: address?.city || '',
+      district: address?.district || '',
+      state: address?.state || '',
+      pincode: address?.pincode || '',
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, user]);
 
-  const onSubmit = async ({ name }) => {
+  const onSubmit = async (values) => {
     if (!user) return;
     setSubmitting(true);
     try {
-      await updateUserProfile(db, user.id, { name });
+      const hasAnyAddressField = [
+        values.houseNumber,
+        values.street,
+        values.area,
+        values.city,
+        values.district,
+        values.state,
+        values.pincode,
+      ].some(Boolean);
+
+      await updateUserProfile(db, user.id, {
+        name: values.name,
+        ...(hasAnyAddressField
+          ? {
+              address: {
+                houseNumber: values.houseNumber.trim(),
+                street: values.street.trim(),
+                area: values.area.trim(),
+                city: values.city.trim(),
+                district: values.district.trim(),
+                state: values.state.trim(),
+                pincode: values.pincode.trim(),
+              },
+            }
+          : {}),
+      });
       toast.success('User updated');
       onClose();
     } catch (err) {
@@ -66,7 +102,7 @@ export default function UserFormModal({ open, user, onClose }) {
             exit={{ opacity: 0, scale: 0.96, y: 12 }}
             transition={{ duration: 0.2 }}
             onClick={(e) => e.stopPropagation()}
-            className="surface-3d w-full max-w-sm rounded-2xl p-5"
+            className="surface-3d max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-2xl p-5"
           >
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-[15px] font-extrabold text-gradient-gold">Edit User</h2>
@@ -80,6 +116,35 @@ export default function UserFormModal({ open, user, onClose }) {
 
               <div className="rounded-xl bg-black/20 px-3.5 py-2.5 text-[11px] font-semibold text-muted">
                 Mobile: {user?.mobile} <span className="text-[10px] font-medium">(can't be changed here)</span>
+              </div>
+
+              <div className="mt-1 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+
+              <p className="text-[11px] font-bold tracking-wide text-[#cfc7bd]">Delivery Address</p>
+
+              <div className="grid grid-cols-2 gap-3">
+                <FormField label="Door / House No." placeholder="e.g. 12-A" registration={register('houseNumber')} error={errors.houseNumber} />
+                <FormField label="Street" placeholder="e.g. Gandhi Street" registration={register('street')} error={errors.street} />
+              </div>
+
+              <FormField label="Area / Locality" placeholder="e.g. Anna Nagar" registration={register('area')} error={errors.area} />
+
+              <div className="grid grid-cols-2 gap-3">
+                <FormField label="Village / Town / City" placeholder="e.g. Sivakasi" registration={register('city')} error={errors.city} />
+                <FormField label="District" placeholder="e.g. Virudhunagar" registration={register('district')} error={errors.district} />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <FormField label="State" placeholder="e.g. Tamil Nadu" registration={register('state')} error={errors.state} />
+                <FormField
+                  label="PIN Code"
+                  type="tel"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="626123"
+                  registration={register('pincode')}
+                  error={errors.pincode}
+                />
               </div>
 
               <div className="mt-1 flex gap-2.5">

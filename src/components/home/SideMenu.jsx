@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { X, Home, LayoutGrid, Truck, ClipboardList, ShoppingCart, MessageCircleMore, PhoneCall } from 'lucide-react';
+import { X, Home, LayoutGrid, Truck, ClipboardList, ShoppingCart, UserRound, MessageCircleMore, PhoneCall } from 'lucide-react';
 import absLogo from '../../assets/abs-logo.png';
 
 const NAV_LINKS = [
@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { key: 'categories', label: 'Shop by Category', icon: LayoutGrid },
   { key: 'track-order', label: 'Track Order', icon: Truck },
   { key: 'orders', label: 'My Orders', icon: ClipboardList },
+  { key: 'profile', label: 'My Profile', icon: UserRound },
   { key: 'cart', label: 'Cart', icon: ShoppingCart },
 ];
 

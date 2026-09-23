@@ -31,6 +31,8 @@ export default function PackingClusterCard({
   onToggleMerge,
   getPackedCount,
   onStartPacking,
+  onQuickMarkPacked,
+  quickMarkingKey,
   delay = 0,
   index = 0,
 }) {
@@ -136,6 +138,8 @@ export default function PackingClusterCard({
             showSlotLabel={isMultiOrder && !merged}
             packedCount={getPackedCount(job)}
             onStartPacking={() => onStartPacking(job)}
+            onQuickMarkPacked={onQuickMarkPacked ? () => onQuickMarkPacked(job) : undefined}
+            quickMarking={quickMarkingKey === job.jobKey}
           />
         ))}
       </div>

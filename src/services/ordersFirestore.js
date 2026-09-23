@@ -14,6 +14,8 @@ import {
   query,
   where,
   orderBy,
+  limit,
+  getDocs,
   onSnapshot,
   writeBatch,
 } from "firebase/firestore";
@@ -135,6 +137,26 @@ export function subscribeOrdersByMobile(db, mobile, onChange, onError) {
       onError?.(err);
     },
   );
+}
+
+/**
+ * One-time fetch of the delivery address from this mobile's most recent
+ * order — used to prefill the "My Profile" edit page the first time a
+ * customer opens it (before they've ever saved a standalone profile
+ * address), since their most reliable existing address is whatever they
+ * last typed in at checkout. Returns null if they have no orders yet.
+ */
+export async function getLatestOrderAddress(db, mobile) {
+  if (!db || !mobile) return null;
+  const q = query(
+    collection(db, "orders"),
+    where("customer.mobile", "==", mobile.trim()),
+    orderBy("createdAt", "desc"),
+    limit(1),
+  );
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return null;
+  return snapshot.docs[0].data().address ?? null;
 }
 
 /**
@@ -301,6 +323,42 @@ export async function markOrdersDelivered(db, orderDocIds) {
       status: "DELIVERED",
       updatedAt: serverTimestamp(),
     });
+  });
+  await batch.commit();
+}
+
+/**
+ * Marks one or more order docs as OUT_FOR_DELIVERY in a single atomic
+ * batch — the Delivery screen's "Mark Out for Delivery" action, the step
+ * between Packed and Delivered (see AdminDelivery.jsx). Delivered still
+ * means "handed off to the transport office", not "in the customer's
+ * hands" — this step just records that the parcel has physically left
+ * for dispatch.
+ */
+export async function markOrdersOutForDelivery(db, orderDocIds) {
+  if (!orderDocIds?.length) return;
+  const batch = writeBatch(db);
+  orderDocIds.forEach((id) => {
+    batch.update(doc(db, "orders", id), {
+      status: "OUT_FOR_DELIVERY",
+      updatedAt: serverTimestamp(),
+    });
+  });
+  await batch.commit();
+}
+
+/**
+ * Generic batch status patch — same shape as markOrdersPacked/
+ * markOrdersDelivered/markOrdersOutForDelivery but for any patch instead of
+ * a single hardcoded status. Used by the dedicated Payment Confirmation /
+ * Packing / Delivery screens' "revoke" actions to undo an accidental
+ * advance across a whole customer cluster (multiple order docs) at once.
+ */
+export async function updateOrdersStatus(db, orderDocIds, patch) {
+  if (!orderDocIds?.length) return;
+  const batch = writeBatch(db);
+  orderDocIds.forEach((id) => {
+    batch.update(doc(db, "orders", id), { ...patch, updatedAt: serverTimestamp() });
   });
   await batch.commit();
 }

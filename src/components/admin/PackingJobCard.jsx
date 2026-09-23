@@ -1,11 +1,16 @@
-import { PackageOpen, Layers, Box } from "lucide-react";
+import { PackageOpen, PackageCheck, Layers, Box, Loader2 } from "lucide-react";
 import { getOrderSlot } from "../../utils/packingAccent";
 
 /**
  * One "packing job" — either a single confirmed order, or an explicitly
  * merged set of a customer's orders (see PackingClusterCard's Merge
  * toggle). Deliberately dumb/reusable: it just renders whatever `job.items`
- * it's given and a Start Packing button.
+ * it's given, a Start Packing button, and a quick Mark Packed shortcut.
+ *
+ * The shortcut exists for when packing already happened off-app — e.g. a
+ * printed packing list was used on the floor — and the admin just needs to
+ * sync the app's status afterwards without re-ticking every item in the
+ * checklist modal.
  *
  * `slotIndex` + `showSlotLabel` only matter when a customer has more than
  * one unmerged order stacked in the same cluster — without them, two
@@ -13,7 +18,15 @@ import { getOrderSlot } from "../../utils/packingAccent";
  * own tint, left edge, and "Order N" tag so the two boxes read as
  * separate at a glance, not just distinguishable by reading the order ID.
  */
-export default function PackingJobCard({ job, packedCount, onStartPacking, slotIndex = 0, showSlotLabel = false }) {
+export default function PackingJobCard({
+  job,
+  packedCount,
+  onStartPacking,
+  onQuickMarkPacked,
+  quickMarking = false,
+  slotIndex = 0,
+  showSlotLabel = false,
+}) {
   const items = job.items || [];
   const totalItems = items.length;
   const fullyPacked = totalItems > 0 && packedCount === totalItems;
@@ -86,13 +99,26 @@ export default function PackingJobCard({ job, packedCount, onStartPacking, slotI
         </div>
       </div>
 
-      <button
-        onClick={onStartPacking}
-        className="btn-3d flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[11px] font-extrabold text-black"
-      >
-        <PackageOpen size={13} />
-        {packedCount > 0 ? "Continue Packing" : "Start Packing"}
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onStartPacking}
+          className="btn-3d flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-[11px] font-extrabold text-black"
+        >
+          <PackageOpen size={13} />
+          {packedCount > 0 ? "Continue Packing" : "Start Packing"}
+        </button>
+        {onQuickMarkPacked && (
+          <button
+            onClick={onQuickMarkPacked}
+            disabled={quickMarking}
+            title="Already packed manually — mark packed without the checklist"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#8fe3a0]/45 bg-[#8fe3a0]/10 py-2.5 text-[11px] font-extrabold text-[#8fe3a0] disabled:opacity-60"
+          >
+            {quickMarking ? <Loader2 size={13} className="animate-spin" /> : <PackageCheck size={13} />}
+            Mark Packed
+          </button>
+        )}
+      </div>
     </div>
   );
 }

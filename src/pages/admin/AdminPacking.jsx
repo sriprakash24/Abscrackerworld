@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { PackageSearch } from "lucide-react";
+import { PackageSearch, PackageOpen, PackageCheck } from "lucide-react";
 import { useAdminAuth } from "../../contexts/AdminAuthContext";
 import { useAdminData } from "../../contexts/AdminDataContext";
 import AdminOrdersHeader from "../../components/admin/AdminOrdersHeader";
@@ -12,19 +12,48 @@ import PackingInvoiceDateFilter from "../../components/admin/PackingInvoiceDateF
 import PackingStatsStrip from "../../components/admin/PackingStatsStrip";
 import PackingClusterCard from "../../components/admin/PackingClusterCard";
 import PackingChecklistModal from "../../components/admin/PackingChecklistModal";
+import DeliveryClusterCard from "../../components/admin/DeliveryClusterCard";
+import ConfirmDeleteDialog from "../../components/admin/ConfirmDeleteDialog";
 import { db } from "../../firebase/config";
-import { markOrdersPacked } from "../../services/ordersFirestore";
+import { markOrdersPacked, updateOrderStatus, updateOrdersStatus } from "../../services/ordersFirestore";
 import {
   savePackingProgress,
   setPackingMergeToggle,
   packingKeyForMobile,
 } from "../../services/packingFirestore";
+import { PREVIOUS_ACTION_BY_STATUS } from "../../constants/orderActions";
 import {
   getConfirmedDate,
   confirmedDateMillis,
   formatConfirmedDate,
   toDateInputValue,
 } from "../../utils/orderDates";
+
+/** Same grouping shape as AdminDelivery's clusters, minus the merge/checklist
+ * machinery — just enough to show already-packed orders per customer with a
+ * one-tap revoke, in case one was packed by mistake. */
+function buildSimpleClusters(orders) {
+  const byMobile = new Map();
+  for (const order of orders) {
+    const mobile = order.customer?.mobile || order.id;
+    if (!byMobile.has(mobile)) byMobile.set(mobile, []);
+    byMobile.get(mobile).push(order);
+  }
+  const clusters = [];
+  for (const [mobile, groupOrders] of byMobile.entries()) {
+    const sorted = [...groupOrders].sort((a, b) => confirmedDateMillis(a) - confirmedDateMillis(b));
+    const earliest = sorted[0];
+    clusters.push({
+      mobile,
+      customerName: earliest.customer?.name || "Unnamed customer",
+      earliestConfirmedLabel: formatConfirmedDate(earliest),
+      earliestConfirmedMillis: confirmedDateMillis(earliest),
+      address: earliest.address || null,
+      orders: sorted,
+    });
+  }
+  return clusters.sort((a, b) => a.earliestConfirmedMillis - b.earliestConfirmedMillis);
+}
 
 /** Sums quantity for the same product across one or more orders' cartItems. */
 function mergeCartItems(orders) {
@@ -140,6 +169,7 @@ export default function AdminPacking() {
     packingProgress,
   } = useAdminData();
 
+  const [tab, setTab] = useState("CONFIRMED");
   const [search, setSearch] = useState("");
   const [dateFilter, setDateFilter] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
@@ -148,6 +178,62 @@ export default function AdminPacking() {
   const [saving, setSaving] = useState(false);
   const [marking, setMarking] = useState(false);
   const [togglingMobile, setTogglingMobile] = useState(null);
+  const [revokingKey, setRevokingKey] = useState(null);
+  const [confirmingQuickJob, setConfirmingQuickJob] = useState(null);
+  const [quickMarkingKey, setQuickMarkingKey] = useState(null);
+
+  const packedOrders = useMemo(() => orders.filter((o) => o.status === "PACKED"), [orders]);
+  // Same search/invoice-date/location controls as the "Ready to Pack" tab,
+  // just applied to the already-packed set instead — one filter bar for
+  // both tabs, not two things to keep in sync.
+  const filteredPackedOrders = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    const invoiceDateSet = new Set(invoiceDateFilter);
+    return packedOrders.filter((order) => {
+      if (invoiceDateSet.size) {
+        const confirmed = getConfirmedDate(order);
+        if (!confirmed || !invoiceDateSet.has(toDateInputValue(confirmed))) return false;
+      }
+      if (locationFilter) {
+        const label = (order.address?.district || order.address?.city || "").trim();
+        if (label.toLowerCase() !== locationFilter.toLowerCase()) return false;
+      }
+      if (!term) return true;
+      const haystack = [order.orderId, order.id, order.customer?.name, order.customer?.mobile]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(term);
+    });
+  }, [packedOrders, search, invoiceDateFilter, locationFilter]);
+  const packedClusters = useMemo(() => buildSimpleClusters(filteredPackedOrders), [filteredPackedOrders]);
+  const packedRevokeAction = PREVIOUS_ACTION_BY_STATUS.PACKED;
+
+  const handleRevokePacked = async (order) => {
+    setRevokingKey(`order:${order.id}`);
+    try {
+      await updateOrderStatus(db, order.id, packedRevokeAction.patch);
+      toast.success("Order reverted to Confirmed");
+    } catch (err) {
+      console.error("Failed to revoke packed order", err);
+      toast.error("Couldn't revert the order. Please try again.");
+    } finally {
+      setRevokingKey(null);
+    }
+  };
+
+  const handleRevokePackedAll = async (cluster) => {
+    setRevokingKey(`cluster:${cluster.mobile}`);
+    try {
+      await updateOrdersStatus(db, cluster.orders.map((o) => o.id), packedRevokeAction.patch);
+      toast.success(`${cluster.orders.length} orders reverted to Confirmed`);
+    } catch (err) {
+      console.error("Failed to revoke packed orders", err);
+      toast.error("Couldn't revert the orders. Please try again.");
+    } finally {
+      setRevokingKey(null);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -342,6 +428,36 @@ export default function AdminPacking() {
     }
   };
 
+  // Shortcut for when packing already happened off-app (e.g. worked from a
+  // printed list) — skips the checklist modal entirely and marks every item
+  // packed in one tap, straight from the card. Still asks for confirmation
+  // first since, unlike the checklist, there's no per-item review here.
+  const handleQuickMarkPacked = async () => {
+    const job = confirmingQuickJob;
+    if (!job) return;
+    setQuickMarkingKey(job.jobKey);
+    try {
+      const allKeys = job.items.map((item) => item.key);
+      await savePackingProgress(db, job.mobile, {
+        merged: job.merged,
+        orderId: job.orderIds[0],
+        packedKeys: allKeys,
+      });
+      await markOrdersPacked(db, job.orderIds);
+      toast.success(
+        job.orderIds.length > 1
+          ? `${job.orderIds.length} orders moved to Packed`
+          : "Order moved to Packed",
+      );
+    } catch (err) {
+      console.error("Failed to mark order(s) as packed", err);
+      toast.error("Couldn't update the order. Please try again.");
+    } finally {
+      setQuickMarkingKey(null);
+      setConfirmingQuickJob(null);
+    }
+  };
+
   return (
     <div className="min-h-screen w-full bg-[#050505] pb-28 text-white">
       <AdminOrdersHeader
@@ -369,6 +485,41 @@ export default function AdminPacking() {
           </div>
         </div>
 
+        <div className="surface-3d flex items-center gap-1 rounded-xl p-1">
+          <button
+            onClick={() => setTab("CONFIRMED")}
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-[11.5px] font-bold transition-colors ${
+              tab === "CONFIRMED" ? "bg-gradient-to-b from-orange to-gold text-black" : "text-muted"
+            }`}
+          >
+            <PackageOpen size={13} />
+            Ready to Pack
+            <span
+              className={`rounded-full px-1.5 text-[9.5px] font-extrabold ${
+                tab === "CONFIRMED" ? "bg-black/20 text-black" : "bg-white/10 text-muted"
+              }`}
+            >
+              {confirmedOrders.length}
+            </span>
+          </button>
+          <button
+            onClick={() => setTab("PACKED")}
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-[11.5px] font-bold transition-colors ${
+              tab === "PACKED" ? "bg-gradient-to-b from-orange to-gold text-black" : "text-muted"
+            }`}
+          >
+            <PackageCheck size={13} />
+            Packed
+            <span
+              className={`rounded-full px-1.5 text-[9.5px] font-extrabold ${
+                tab === "PACKED" ? "bg-black/20 text-black" : "bg-white/10 text-muted"
+              }`}
+            >
+              {packedOrders.length}
+            </span>
+          </button>
+        </div>
+
         <PackingSearchFilterBar
           search={search}
           onSearchChange={setSearch}
@@ -387,63 +538,97 @@ export default function AdminPacking() {
           />
         </div>
 
-        <div className="flex flex-col gap-3">
-          {loading ? (
-            <>
-              <AdminOrderCardSkeleton />
-              <AdminOrderCardSkeleton />
-            </>
-          ) : ordersError ? (
-            <div className="surface-3d rounded-2xl px-4 py-6 text-center text-[12px] text-muted">
-              Couldn't load orders right now. Please check your connection and
-              try again.
-            </div>
-          ) : clusters.length === 0 ? (
-            <div className="surface-3d flex flex-col items-center gap-2 rounded-2xl px-4 py-10 text-center">
-              <PackageSearch size={22} className="text-muted" />
-              <div className="text-[12px] font-bold text-[#f2ece2]">
-                {isFiltered ? "No matching orders" : "Nothing to pack right now"}
+        {tab === "CONFIRMED" ? (
+          <div className="flex flex-col gap-3">
+            {loading ? (
+              <>
+                <AdminOrderCardSkeleton />
+                <AdminOrderCardSkeleton />
+              </>
+            ) : ordersError ? (
+              <div className="surface-3d rounded-2xl px-4 py-6 text-center text-[12px] text-muted">
+                Couldn't load orders right now. Please check your connection and
+                try again.
               </div>
-              <div className="text-[10.5px] text-muted">
-                {isFiltered
-                  ? "Try a different search term, date, invoice date, or location."
-                  : "Confirmed orders will show up here as soon as payment is confirmed."}
+            ) : clusters.length === 0 ? (
+              <div className="surface-3d flex flex-col items-center gap-2 rounded-2xl px-4 py-10 text-center">
+                <PackageSearch size={22} className="text-muted" />
+                <div className="text-[12px] font-bold text-[#f2ece2]">
+                  {isFiltered ? "No matching orders" : "Nothing to pack right now"}
+                </div>
+                <div className="text-[10.5px] text-muted">
+                  {isFiltered
+                    ? "Try a different search term, date, invoice date, or location."
+                    : "Confirmed orders will show up here as soon as payment is confirmed."}
+                </div>
+                {isFiltered && (
+                  <button
+                    onClick={() => {
+                      setSearch("");
+                      setDateFilter("");
+                      setLocationFilter("");
+                      setInvoiceDateFilter([]);
+                    }}
+                    className="btn-3d-outline mt-1 rounded-xl px-4 py-2 text-[11px] font-bold text-gold"
+                  >
+                    Clear filters
+                  </button>
+                )}
               </div>
-              {isFiltered && (
-                <button
-                  onClick={() => {
-                    setSearch("");
-                    setDateFilter("");
-                    setLocationFilter("");
-                    setInvoiceDateFilter([]);
-                  }}
-                  className="btn-3d-outline mt-1 rounded-xl px-4 py-2 text-[11px] font-bold text-gold"
-                >
-                  Clear filters
-                </button>
-              )}
-            </div>
-          ) : (
-            clusters.map((cluster, i) => (
-              <PackingClusterCard
-                key={cluster.mobile}
-                cluster={cluster}
-                index={i}
-                merged={cluster.merged}
-                togglingMerge={togglingMobile === cluster.mobile}
-                onToggleMerge={() => handleToggleMerge(cluster)}
-                getPackedCount={(job) =>
-                  getSavedPackedKeys(
-                    packingProgress[packingKeyForMobile(job.mobile)],
-                    job,
-                  ).length
-                }
-                onStartPacking={(job) => setActiveJobKey(job.jobKey)}
-                delay={Math.min(i, 8) * 0.04}
-              />
-            ))
-          )}
-        </div>
+            ) : (
+              clusters.map((cluster, i) => (
+                <PackingClusterCard
+                  key={cluster.mobile}
+                  cluster={cluster}
+                  index={i}
+                  merged={cluster.merged}
+                  togglingMerge={togglingMobile === cluster.mobile}
+                  onToggleMerge={() => handleToggleMerge(cluster)}
+                  getPackedCount={(job) =>
+                    getSavedPackedKeys(
+                      packingProgress[packingKeyForMobile(job.mobile)],
+                      job,
+                    ).length
+                  }
+                  onStartPacking={(job) => setActiveJobKey(job.jobKey)}
+                  onQuickMarkPacked={(job) => setConfirmingQuickJob(job)}
+                  quickMarkingKey={quickMarkingKey}
+                  delay={Math.min(i, 8) * 0.04}
+                />
+              ))
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {loading ? (
+              <>
+                <AdminOrderCardSkeleton />
+                <AdminOrderCardSkeleton />
+              </>
+            ) : packedClusters.length === 0 ? (
+              <div className="surface-3d flex flex-col items-center gap-2 rounded-2xl px-4 py-10 text-center">
+                <PackageCheck size={22} className="text-muted" />
+                <div className="text-[12px] font-bold text-[#f2ece2]">Nothing packed yet</div>
+                <div className="text-[10.5px] text-muted">
+                  Orders you mark packed will show up here — in case one needs a revoke.
+                </div>
+              </div>
+            ) : (
+              packedClusters.map((cluster, i) => (
+                <DeliveryClusterCard
+                  key={cluster.mobile}
+                  cluster={cluster}
+                  index={i}
+                  delay={Math.min(i, 8) * 0.04}
+                  revokeLabel={packedRevokeAction?.label}
+                  revokingKey={revokingKey}
+                  onRevoke={handleRevokePacked}
+                  onRevokeAll={handleRevokePackedAll}
+                />
+              ))
+            )}
+          </div>
+        )}
       </div>
 
       <PackingChecklistModal
@@ -455,6 +640,19 @@ export default function AdminPacking() {
         onSaveProgress={handleSaveProgress}
         onMarkPacked={handleMarkPacked}
         onClose={() => setActiveJobKey(null)}
+      />
+
+      <ConfirmDeleteDialog
+        open={!!confirmingQuickJob}
+        title="Mark packed without the checklist?"
+        description={`This marks ${
+          confirmingQuickJob?.merged ? "the merged box" : confirmingQuickJob?.orderLabels?.[0] || "this order"
+        } as fully packed and moves it straight to Packed — use this when packing was already done manually, e.g. from a printed list.`}
+        busy={!!quickMarkingKey}
+        confirmLabel="Yes, Mark Packed"
+        tone="success"
+        onConfirm={handleQuickMarkPacked}
+        onCancel={() => setConfirmingQuickJob(null)}
       />
     </div>
   );

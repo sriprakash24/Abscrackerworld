@@ -3,6 +3,7 @@ import { db } from '../firebase/config';
 import { subscribeAllOrders } from '../services/ordersFirestore';
 import { subscribeAllUsers } from '../services/usersFirestore';
 import { subscribeAllPackingProgress } from '../services/packingFirestore';
+import { subscribeAllOrderMerges } from '../services/orderMergeFirestore';
 
 const AdminDataContext = createContext(null);
 
@@ -34,6 +35,12 @@ export function AdminDataProvider({ children }) {
   // See src/services/packingFirestore.js for the shape/reasoning.
   const [packingProgress, setPackingProgress] = useState({});
   const [packingProgressLoading, setPackingProgressLoading] = useState(true);
+
+  // Keyed by sanitized mobile number — { [mobileKey]: { merged, updatedAt } }.
+  // Drives the Order Management "merge into one estimate bill" feature —
+  // see src/services/orderMergeFirestore.js.
+  const [orderMergeProgress, setOrderMergeProgress] = useState({});
+  const [orderMergeProgressLoading, setOrderMergeProgressLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = subscribeAllOrders(
@@ -81,6 +88,20 @@ export function AdminDataProvider({ children }) {
     return () => unsubscribe?.();
   }, []);
 
+  useEffect(() => {
+    const unsubscribe = subscribeAllOrderMerges(
+      db,
+      (fetched) => {
+        setOrderMergeProgress(fetched);
+        setOrderMergeProgressLoading(false);
+      },
+      () => {
+        setOrderMergeProgressLoading(false);
+      }
+    );
+    return () => unsubscribe?.();
+  }, []);
+
   const value = useMemo(
     () => ({
       orders,
@@ -91,6 +112,8 @@ export function AdminDataProvider({ children }) {
       usersError,
       packingProgress,
       packingProgressLoading,
+      orderMergeProgress,
+      orderMergeProgressLoading,
     }),
     [
       orders,
@@ -101,6 +124,8 @@ export function AdminDataProvider({ children }) {
       usersError,
       packingProgress,
       packingProgressLoading,
+      orderMergeProgress,
+      orderMergeProgressLoading,
     ]
   );
 

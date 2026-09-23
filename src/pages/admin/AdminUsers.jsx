@@ -28,11 +28,12 @@ export default function AdminUsers() {
   const { user, logout } = useAdminAuth();
   const navigate = useNavigate();
 
-  // Users don't store an address themselves (no auth, just name + mobile
-  // from the "who's shopping?" sheet) — so it's derived below from each
-  // customer's most recent order/checkout address instead. Both orders and
-  // users come from the shared AdminDataProvider (mounted once for the
-  // whole admin session) rather than a subscription local to this page.
+  // Users now carry their own saved address (users/{mobile}.address, set via
+  // the storefront's "My Profile" page or edited below) — statsByMobile just
+  // adds the order count and a fallback address for customers who haven't
+  // saved a profile address yet. Both orders and users come from the shared
+  // AdminDataProvider (mounted once for the whole admin session) rather than
+  // a subscription local to this page.
   const { users, usersLoading: loading, orders } = useAdminData();
   const [search, setSearch] = useState('');
   const [editingUser, setEditingUser] = useState(null);
@@ -40,17 +41,23 @@ export default function AdminUsers() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
+  // Prefer each customer's own saved profile address (users/{mobile}.address
+  // — kept current by their "My Profile" page and by admin edits here) over
+  // whatever address happened to be on their most recent order, since the
+  // profile is the one place meant to always reflect their latest address.
+  // Order history's own address stays untouched — it's a snapshot of what
+  // was used for that specific order, not something we rewrite in hindsight.
   const statsByMobile = useMemo(() => {
     const map = new Map();
     for (const order of orders) {
       const mobile = order.customer?.mobile;
       if (!mobile) continue;
-      const existing = map.get(mobile) || { orderCount: 0, latestAddress: '', latestCreatedAt: null };
+      const existing = map.get(mobile) || { orderCount: 0, latestOrderAddress: '', latestCreatedAt: null };
       existing.orderCount += 1;
       const createdAt = order.createdAt?.toDate ? order.createdAt.toDate() : order.createdAt ? new Date(order.createdAt) : null;
       if (!existing.latestCreatedAt || (createdAt && createdAt > existing.latestCreatedAt)) {
         existing.latestCreatedAt = createdAt;
-        existing.latestAddress = formatAddress(order.address);
+        existing.latestOrderAddress = formatAddress(order.address);
       }
       map.set(mobile, existing);
     }
@@ -148,6 +155,11 @@ export default function AdminUsers() {
 }
 
 function UserRow({ user, stats, onEdit, onDelete }) {
+  // The saved profile address (kept current by "My Profile" + admin edits)
+  // wins; only fall back to the last order's address for customers who
+  // haven't saved a profile address yet.
+  const displayAddress = formatAddress(user.address) || stats?.latestOrderAddress;
+
   return (
     <div className="surface-3d flex items-start gap-3 rounded-2xl p-3.5">
       <span className="orb-3d flex h-11 w-11 shrink-0 items-center justify-center !rounded-full text-[13px] font-extrabold text-orange">
@@ -169,10 +181,10 @@ function UserRow({ user, stats, onEdit, onDelete }) {
           {stats?.orderCount ? `${stats.orderCount} order${stats.orderCount === 1 ? '' : 's'}` : 'No orders yet'}
         </div>
 
-        {stats?.latestAddress && (
+        {displayAddress && (
           <div className="mt-1 flex items-start gap-1.5 text-[10.5px] leading-relaxed text-[#cfc7bd]">
             <MapPin size={11} className="mt-0.5 shrink-0 text-orange" />
-            <span className="line-clamp-2">{stats.latestAddress}</span>
+            <span className="line-clamp-2">{displayAddress}</span>
           </div>
         )}
       </div>

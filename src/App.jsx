@@ -8,6 +8,7 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import OrderHistory from "./pages/OrderHistory";
 import TrackOrder from "./pages/TrackOrder";
+import Profile from "./pages/Profile";
 import AmbientBackground from "./components/ui/AmbientBackground";
 import GlobalFestiveFX from "./components/ui/GlobalFestiveFX";
 import CustomerDetailsSheet from "./components/customer/CustomerDetailsSheet";
@@ -20,6 +21,7 @@ import AdminRoute from "./components/admin/AdminRoute";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminOverview from "./pages/admin/AdminOverview";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminPaymentConfirmation from "./pages/admin/AdminPaymentConfirmation";
 import AdminPacking from "./pages/admin/AdminPacking";
 import AdminDelivery from "./pages/admin/AdminDelivery";
 import AdminProductInsights from "./pages/admin/AdminProductInsights";
@@ -72,6 +74,7 @@ function CustomerApp() {
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/orders" element={<OrderHistory />} />
                 <Route path="/track-order" element={<TrackOrder />} />
+                <Route path="/profile" element={<Profile />} />
               </Routes>
             </div>
           )}
@@ -107,6 +110,14 @@ function AdminApp() {
               element={
                 <AdminRoute>
                   <AdminDashboard />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="payment-confirmation"
+              element={
+                <AdminRoute>
+                  <AdminPaymentConfirmation />
                 </AdminRoute>
               }
             />

@@ -10,6 +10,7 @@ import { useCartPricing } from '../hooks/useCartPricing';
 import { checkoutSchema, checkoutDefaultValues } from '../schemas/checkoutSchema';
 import { db } from '../firebase/config';
 import { submitOrder } from '../services/ordersFirestore';
+import { getUserProfile, saveUserAddress } from '../services/usersFirestore';
 
 import CheckoutHeader from '../components/checkout/CheckoutHeader';
 import CustomerForm from '../components/checkout/CustomerForm';
@@ -49,6 +50,8 @@ export default function Checkout() {
     register,
     handleSubmit,
     formState: { errors },
+    reset,
+    getValues,
   } = useForm({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
@@ -58,6 +61,41 @@ export default function Checkout() {
     },
     mode: 'onTouched',
   });
+
+  // Prefill the address fields from the customer's saved profile
+  // (users/{mobile}.address — the same one "My Profile" edits), so returning
+  // customers don't have to retype an address they've already given us.
+  // Only fills fields still empty, so it never clobbers anything already
+  // typed while this was loading.
+  useEffect(() => {
+    if (!customer?.mobile) return undefined;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const profile = await getUserProfile(db, customer.mobile);
+        if (cancelled || !profile?.address) return;
+        const current = getValues();
+        reset({
+          ...current,
+          houseNumber: current.houseNumber || profile.address.houseNumber || '',
+          street: current.street || profile.address.street || '',
+          area: current.area || profile.address.area || '',
+          city: current.city || profile.address.city || '',
+          district: current.district || profile.address.district || '',
+          state: current.state || profile.address.state || '',
+          pincode: current.pincode || profile.address.pincode || '',
+        });
+      } catch (err) {
+        console.error('Failed to prefill address from profile', err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customer?.mobile]);
 
   // Guard: nothing to check out with an empty cart (and no order just placed).
   useEffect(() => {
@@ -75,6 +113,23 @@ export default function Checkout() {
         const { orderId } = await submitOrder(db, { formValues: values, pricing });
         setSubmittedOrder({ orderId, grandTotal: pricing.grandTotal });
         clearCart();
+
+        // Keep the saved profile address in sync with whatever they just
+        // used here — best-effort, never blocks the success screen — so
+        // "My Profile" and the admin Users page reflect their latest
+        // address even if they never open "My Profile" directly.
+        saveUserAddress(db, values.mobile.trim(), {
+          name: values.fullName,
+          address: {
+            houseNumber: values.houseNumber.trim(),
+            street: values.street.trim(),
+            area: values.area.trim(),
+            city: values.city.trim(),
+            district: values.district.trim(),
+            state: values.state.trim(),
+            pincode: values.pincode.trim(),
+          },
+        }).catch((err) => console.error('Failed to sync profile address', err));
       } catch (err) {
         console.error('Order submission failed', err);
         toast.error("Couldn't place your order. Please check your connection and try again.");

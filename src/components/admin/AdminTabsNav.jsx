@@ -16,6 +16,7 @@ import {
   FileText,
   Users,
   BarChart3,
+  CircleDollarSign,
 } from 'lucide-react';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { FINAL_STATUSES } from '../../constants/orderActions';
@@ -23,24 +24,43 @@ import { cn } from '../../utils/cn';
 import absLogo from '../../assets/abs-logo.png';
 
 // The long tail of admin screens, reached via the "More" sheet instead of
-// cluttering the 5-slot bottom bar. Order here is the order they render in.
-const MORE_LINKS = [
-  { to: '/admin/product-insights', label: 'Product Insights', icon: BarChart3 },
-  { to: '/admin/products', label: 'Products', icon: PackageSearch },
-  { to: '/admin/price-update', label: 'Price Update', icon: BadgePercent },
-  { to: '/admin/order-limits', label: 'Order Limits', icon: Gauge },
-  { to: '/admin/inventory', label: 'Inventory', icon: Boxes },
-  { to: '/admin/categories', label: 'Categories', icon: LayoutGrid },
-  { to: '/admin/invoices', label: 'Invoices', icon: Receipt },
-  { to: '/admin/estimates', label: 'Estimate Bill', icon: FileText },
-  { to: '/admin/users', label: 'Users', icon: Users },
+// cluttering the main bar. Grouped by what they're actually used for, and
+// each given its own distinct color, so a specific tool reads as a specific
+// colored tile at a glance instead of "one of seven identical gray boxes" —
+// the admin's own complaint about the old flat single-color grid.
+const MORE_GROUPS = [
+  {
+    title: 'Catalog & Pricing',
+    links: [
+      { to: '/admin/products', label: 'Products', icon: PackageSearch, color: '#4FC3F7' },
+      { to: '/admin/price-update', label: 'Price Update', icon: BadgePercent, color: '#FFB74D' },
+      { to: '/admin/inventory', label: 'Inventory', icon: Boxes, color: '#66BB6A' },
+      { to: '/admin/categories', label: 'Categories', icon: LayoutGrid, color: '#F06292' },
+      { to: '/admin/order-limits', label: 'Order Limits', icon: Gauge, color: '#4DB6AC' },
+    ],
+  },
+  {
+    title: 'Business Docs',
+    links: [
+      { to: '/admin/invoices', label: 'Invoices', icon: Receipt, color: '#FFA726' },
+      { to: '/admin/estimates', label: 'Estimate Bill', icon: FileText, color: '#7986CB' },
+      { to: '/admin/product-insights', label: 'Product Insights', icon: BarChart3, color: '#BA68C8' },
+    ],
+  },
+  {
+    title: 'People',
+    links: [{ to: '/admin/users', label: 'Users', icon: Users, color: '#EF5350' }],
+  },
 ];
+
+const MORE_LINKS = MORE_GROUPS.flatMap((g) => g.links);
 
 // Route -> tab key, so the highlight reflects where the admin actually is,
 // not just which tab was last tapped from this mounted copy of the nav.
 function tabForPath(pathname) {
   if (pathname === '/admin' || pathname === '/admin/') return 'overview';
   if (pathname.startsWith('/admin/orders')) return 'orders';
+  if (pathname.startsWith('/admin/payment-confirmation')) return 'payment';
   if (pathname.startsWith('/admin/packing')) return 'packing';
   if (pathname.startsWith('/admin/delivery')) return 'deliver';
   if (MORE_LINKS.some((l) => pathname.startsWith(l.to))) return 'more';
@@ -48,11 +68,12 @@ function tabForPath(pathname) {
 }
 
 /**
- * Fixed bottom nav for every /admin/* screen — replaces the old scrollable
- * top tab strip. Mirrors the shape of the customer-facing BottomNav (see
- * components/home/BottomNav.jsx): two tabs, a raised center logo emblem
- * (-> Overview), two more tabs, with the long tail of admin pages tucked
- * behind "More" as a slide-up sheet instead of an endless scrollable row.
+ * Fixed bottom nav for every /admin/* screen. Six slots around the raised
+ * center emblem: Orders (the full, everything-in-one-place order list —
+ * unchanged), Payment, Packing, [Overview], Deliver, More. Payment sits
+ * here rather than only inside "More" because — like Packing/Deliver — the
+ * admin taps it dozens of times a day; burying a daily-use screen behind a
+ * sheet just to keep the bar symmetrical isn't worth the extra tap.
  *
  * Kept as the same component name/import path (AdminTabsNav) so every
  * existing admin page that renders <AdminTabsNav /> picks this up for free.
@@ -65,14 +86,16 @@ export default function AdminTabsNav() {
 
   const active = tabForPath(location.pathname);
   const pendingOrders = orders.filter((o) => !FINAL_STATUSES.includes(o.status)).length;
+  const awaitingPayment = orders.filter((o) => o.status === 'AWAITING_ADMIN_CONFIRMATION').length;
 
   return (
     <>
       <div
-        className="panel-3d fixed bottom-3 left-1/2 z-40 flex w-[94%] max-w-[440px] -translate-x-1/2 items-center justify-between rounded-[24px] bg-[#0c0906] px-3 py-2"
+        className="panel-3d fixed bottom-3 left-1/2 z-40 flex w-[96%] max-w-[460px] -translate-x-1/2 items-center justify-between rounded-[24px] bg-[#0c0906] px-2 py-2"
         style={{ boxShadow: '0 10px 30px -10px rgba(0,0,0,.75), 0 0 0 1px rgba(255,154,0,.12)' }}
       >
         <NavItem icon={ClipboardList} label="Orders" active={active === 'orders'} onClick={() => navigate('/admin/orders')} badge={pendingOrders} />
+        <NavItem icon={CircleDollarSign} label="Payment" active={active === 'payment'} onClick={() => navigate('/admin/payment-confirmation')} badge={awaitingPayment} />
         <NavItem icon={PackageOpen} label="Packing" active={active === 'packing'} onClick={() => navigate('/admin/packing')} />
 
         {/* Raised center emblem — same idea as the customer nav's home button */}
@@ -112,12 +135,12 @@ function NavItem({ icon: Icon, label, active, onClick, badge }) {
     <button
       onClick={onClick}
       className={cn(
-        'flex flex-col items-center gap-1 px-2 py-1 text-[9px] font-bold tracking-wide text-muted transition-colors',
+        'flex flex-col items-center gap-1 px-1.5 py-1 text-[8.5px] font-bold tracking-wide text-muted transition-colors',
         active && 'text-orange'
       )}
     >
       <span className="relative">
-        <Icon size={19} strokeWidth={2.2} />
+        <Icon size={18} strokeWidth={2.2} />
         {!!badge && (
           <span
             className="absolute -right-2 -top-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full px-[3px] text-[8.5px] font-extrabold text-white"
@@ -132,7 +155,12 @@ function NavItem({ icon: Icon, label, active, onClick, badge }) {
   );
 }
 
-/** Slide-up sheet listing every admin page that doesn't fit on the main bar. */
+/**
+ * Slide-up sheet listing every admin page that doesn't fit on the main bar
+ * — grouped under a small category header and colored per-tool (see
+ * MORE_GROUPS above) so a specific screen is easy to spot by color/position
+ * instead of scanning seven identical gray boxes one by one.
+ */
 function MoreSheet({ open, onClose }) {
   return (
     <AnimatePresence>
@@ -152,37 +180,58 @@ function MoreSheet({ open, onClose }) {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', stiffness: 380, damping: 34 }}
-            className="fixed inset-x-0 bottom-0 z-[60] mx-auto max-w-[520px] rounded-t-[28px] border-t border-orange/25 bg-[#0c0906] px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3 sm:px-6"
+            className="fixed inset-x-0 bottom-0 z-[60] mx-auto max-h-[80vh] max-w-[520px] overflow-y-auto rounded-t-[28px] border-t border-orange/25 bg-[#0c0906] px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3 sm:px-6"
             style={{ boxShadow: '0 -14px 40px -12px rgba(0,0,0,.8)' }}
           >
-            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/15" />
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-[13.5px] font-extrabold tracking-wide text-gradient-gold">More Tools</h2>
-              <button
-                onClick={onClose}
-                aria-label="Close"
-                className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-muted hover:text-orange"
-              >
-                <X size={15} />
-              </button>
+            <div className="sticky top-0 z-10 -mx-4 bg-[#0c0906] px-4 pb-3 sm:-mx-6 sm:px-6">
+              <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/15" />
+              <div className="flex items-center justify-between">
+                <h2 className="text-[13.5px] font-extrabold tracking-wide text-gradient-gold">More Tools</h2>
+                <button
+                  onClick={onClose}
+                  aria-label="Close"
+                  className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-muted hover:text-orange"
+                >
+                  <X size={15} />
+                </button>
+              </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2.5 pb-2 sm:grid-cols-4">
-              {MORE_LINKS.map(({ to, label, icon: Icon }) => (
-                <NavLink
-                  key={to}
-                  to={to}
-                  onClick={onClose}
-                  className={({ isActive }) =>
-                    cn(
-                      'surface-3d flex flex-col items-center gap-1.5 rounded-2xl px-2 py-3.5 text-center text-[10px] font-bold leading-tight transition-colors',
-                      isActive ? 'text-orange ring-1 ring-orange/50' : 'text-muted hover:text-[#f2ece2]'
-                    )
-                  }
-                >
-                  <Icon size={18} />
-                  {label}
-                </NavLink>
+            <div className="flex flex-col gap-4 pb-2">
+              {MORE_GROUPS.map((group) => (
+                <div key={group.title}>
+                  <p className="mb-2 px-0.5 text-[10px] font-extrabold uppercase tracking-[1.5px] text-muted">
+                    {group.title}
+                  </p>
+                  <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4">
+                    {group.links.map(({ to, label, icon: Icon, color }) => (
+                      <NavLink
+                        key={to}
+                        to={to}
+                        onClick={onClose}
+                        className={({ isActive }) =>
+                          cn(
+                            'flex flex-col items-center gap-1.5 rounded-2xl border px-2 py-3.5 text-center text-[10px] font-bold leading-tight transition-transform active:scale-95',
+                            isActive ? 'text-[#f2ece2]' : 'text-muted hover:text-[#f2ece2]'
+                          )
+                        }
+                        style={({ isActive }) => ({
+                          borderColor: isActive ? `${color}90` : `${color}30`,
+                          background: `linear-gradient(160deg, ${color}22, ${color}08)`,
+                          boxShadow: isActive ? `0 0 0 1px ${color}50, 0 6px 16px -8px ${color}80` : 'none',
+                        })}
+                      >
+                        <span
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+                          style={{ background: `${color}2a`, color }}
+                        >
+                          <Icon size={16} />
+                        </span>
+                        {label}
+                      </NavLink>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </motion.div>
