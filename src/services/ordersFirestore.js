@@ -20,6 +20,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { reserveSequentialId } from "../utils/sequentialId";
+import { formatFullAddress } from "../utils/formatAddress";
 
 /**
  * Generates the order id, e.g. "ABSO20260801108" — ABSO + today's date +
@@ -157,6 +158,51 @@ export async function getLatestOrderAddress(db, mobile) {
   const snapshot = await getDocs(q);
   if (snapshot.empty) return null;
   return snapshot.docs[0].data().address ?? null;
+}
+
+/**
+ * Pushes a corrected address onto every one of this customer's orders —
+ * and onto the `customer.address` of any invoice already generated from
+ * them (see createInvoiceForOrder / createInvoiceForMergedOrders in
+ * invoicesFirestore.js) — called right after the address is edited on
+ * either "My Profile" (customer) or the admin Users page (see
+ * usersFirestore.js's saveUserAddress / updateUserProfile).
+ *
+ * There's no GST/accounting requirement here to keep an already-issued
+ * invoice's address as a locked historical record, so this deliberately
+ * covers every order for this mobile regardless of status, not just
+ * still-pending ones — an address fix should show up everywhere,
+ * including on invoices already printed/downloaded before the correction.
+ * A merged invoice (one invoice shared by several child orders) is only
+ * patched once even though several of its child orders point at it.
+ */
+export async function syncAddressToOrders(db, mobile, address) {
+  if (!db || !mobile || !address) return;
+  const q = query(
+    collection(db, "orders"),
+    where("customer.mobile", "==", mobile.trim()),
+  );
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return;
+
+  const batch = writeBatch(db);
+  const formattedAddress = formatFullAddress(address);
+  const syncedInvoiceIds = new Set();
+
+  snapshot.docs.forEach((d) => {
+    batch.update(d.ref, { address, updatedAt: serverTimestamp() });
+
+    const invoiceId = d.data().invoiceId;
+    if (invoiceId && !syncedInvoiceIds.has(invoiceId)) {
+      syncedInvoiceIds.add(invoiceId);
+      batch.update(doc(db, "invoices", invoiceId), {
+        "customer.address": formattedAddress,
+        updatedAt: serverTimestamp(),
+      });
+    }
+  });
+
+  await batch.commit();
 }
 
 /**

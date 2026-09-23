@@ -28,6 +28,7 @@ import {
   deleteDoc,
   getDoc,
   serverTimestamp,
+  Timestamp,
   collection,
   query,
   orderBy,
@@ -36,6 +37,7 @@ import {
 } from 'firebase/firestore';
 import { DEFAULT_PACKAGE_PERCENT, INVOICE_SOURCE } from '../constants/invoiceConstants';
 import { reserveSequentialId } from '../utils/sequentialId';
+import { formatFullAddress } from '../utils/formatAddress';
 
 /** Atomically reserves and returns the next invoice number, e.g. "ABSI20260801108". */
 function reserveNextInvoiceNumber(db) {
@@ -78,8 +80,15 @@ function orderToInvoiceItems(order) {
  * called right when admin confirms payment. Idempotent: if the order
  * already has `invoiceId`, that invoice is fetched and returned instead of
  * creating a duplicate.
+ *
+ * `opts.confirmedDate`, when passed (a plain JS Date), is used as the
+ * invoice's printed `date` field instead of "now" — this is how the admin
+ * payment-confirmation screen lets a payment be backdated. Untouched by
+ * default: omit it and this behaves exactly as before (today's date via
+ * serverTimestamp). The invoice number itself always reflects the real
+ * calendar date it was generated on — that sequencing is left alone.
  */
-export async function createInvoiceForOrder(db, order) {
+export async function createInvoiceForOrder(db, order, opts = {}) {
   if (order.invoiceId) {
     const existing = await getInvoice(db, order.invoiceId);
     if (existing) return existing;
@@ -91,18 +100,22 @@ export async function createInvoiceForOrder(db, order) {
 
   const invoiceNo = await reserveNextInvoiceNumber(db);
 
+  const { confirmedDate } = opts;
+  const invoiceDate =
+    confirmedDate instanceof Date && !Number.isNaN(confirmedDate.getTime())
+      ? Timestamp.fromDate(confirmedDate)
+      : serverTimestamp();
+
   const payload = {
     invoiceNo,
     source: INVOICE_SOURCE.ORDER,
     orderId: order.orderId || order.id,
     orderDocId: order.id,
-    date: serverTimestamp(),
+    date: invoiceDate,
     customer: {
       name: order.customer?.name || '',
       mobile: order.customer?.mobile || '',
-      address: [order.address?.houseNumber, order.address?.street, order.address?.area, order.address?.city, order.address?.district, order.address?.state, order.address?.pincode]
-        .filter(Boolean)
-        .join(', '),
+      address: formatFullAddress(order.address),
     },
     items,
     packagePercent,
@@ -127,6 +140,88 @@ export async function createInvoiceForOrder(db, order) {
     invoiceNo,
     updatedAt: serverTimestamp(),
   });
+
+  return { id: ref.id, ...payload };
+}
+
+/**
+ * Same idea as createInvoiceForOrder, but for several same-customer orders
+ * that were merged into one estimate bill (see MergedEstimateCard) and are
+ * now being paid for and confirmed together as a single payment. Combines
+ * every child order's line items into ONE invoice — the same combined shape
+ * the merged estimate bill already shows/downloads — instead of one invoice
+ * per order. Every child order doc is patched with the same invoiceId /
+ * invoiceNo, so each still shows up correctly wherever a single order's
+ * invoice is looked up (Order History, Track Order, admin Orders page),
+ * all pointing at the one shared invoice.
+ *
+ * Idempotent the same way createInvoiceForOrder is: if the first child
+ * order already carries an invoiceId, that invoice is returned as-is
+ * instead of creating a duplicate.
+ *
+ * `opts.confirmedDate` works exactly like it does on createInvoiceForOrder
+ * — optional backdate for the invoice's printed date.
+ */
+export async function createInvoiceForMergedOrders(db, childOrders, opts = {}) {
+  const first = childOrders[0];
+  if (first?.invoiceId) {
+    const existing = await getInvoice(db, first.invoiceId);
+    if (existing) return existing;
+  }
+
+  const items = childOrders.flatMap((order) => orderToInvoiceItems(order));
+  const packagePercent = DEFAULT_PACKAGE_PERCENT;
+  const { subtotal, packageAmount, grandTotal } = computeInvoiceTotals({ items, packagePercent });
+
+  const invoiceNo = await reserveNextInvoiceNumber(db);
+
+  const { confirmedDate } = opts;
+  const invoiceDate =
+    confirmedDate instanceof Date && !Number.isNaN(confirmedDate.getTime())
+      ? Timestamp.fromDate(confirmedDate)
+      : serverTimestamp();
+
+  const orderDocIds = childOrders.map((o) => o.id);
+
+  const payload = {
+    invoiceNo,
+    source: INVOICE_SOURCE.ORDER,
+    orderId: childOrders.map((o) => o.orderId || o.id).join(' + '),
+    // Several orders feed this invoice, so there's no single order doc to
+    // write edits back to — leave orderDocId null (same as a manual
+    // invoice) and keep the full list on orderDocIds for reference.
+    orderDocId: null,
+    orderDocIds,
+    date: invoiceDate,
+    customer: {
+      name: first.customer?.name || '',
+      mobile: first.customer?.mobile || '',
+      address: formatFullAddress(first.address),
+    },
+    items,
+    packagePercent,
+    subtotal,
+    packageAmount,
+    grandTotal,
+    cartDiscountAmount: childOrders.reduce((sum, o) => sum + (o.discount || 0), 0),
+    paymentMode: 'OTHER',
+    transactionRef: '',
+    notes: '',
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+
+  const ref = await addDoc(collection(db, 'invoices'), payload);
+
+  const batch = writeBatch(db);
+  childOrders.forEach((order) => {
+    batch.update(doc(db, 'orders', order.id), {
+      invoiceId: ref.id,
+      invoiceNo,
+      updatedAt: serverTimestamp(),
+    });
+  });
+  await batch.commit();
 
   return { id: ref.id, ...payload };
 }

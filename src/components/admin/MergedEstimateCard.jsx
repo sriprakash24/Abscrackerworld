@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, memo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Layers,
@@ -9,15 +9,24 @@ import {
   Paperclip,
   Loader2,
   Ungroup,
+  CircleDollarSign,
 } from "lucide-react";
 import { toast } from "sonner";
 import { db } from "../../firebase/config";
 import { setOrderMergeToggle } from "../../services/orderMergeFirestore";
+import { setPackingMergeToggle } from "../../services/packingFirestore";
+import { updateOrderStatus } from "../../services/ordersFirestore";
+import { createInvoiceForMergedOrders } from "../../services/invoicesFirestore";
+import { generateInvoicePdf } from "../../utils/generateInvoicePdf";
 import { useProducts } from "../../contexts/ProductsContext";
 import { getEffectivePricedOrder } from "../../utils/orderPricing";
+import { toDateInputValue } from "../../utils/orderDates";
 import { generateBillPdf } from "../../utils/generateBillPdf";
 import { sendBillMessage, sendBillFile } from "../../utils/shareBillWhatsapp";
+import { openWhatsappChat } from "../../utils/whatsappChat";
 import BillPreviewModal from "./BillPreviewModal";
+import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
+import PaymentDateCalendar from "./PaymentDateCalendar";
 import AdminOrderCard from "./AdminOrderCard";
 
 /** Combines several same-customer orders into one synthetic order-shaped
@@ -47,19 +56,21 @@ function buildMergedEstimate(childOrders, productsById) {
   };
 }
 
-export default function MergedEstimateCard({ mobile, orders, delay = 0 }) {
+// See AdminOrderCard.jsx's memo() note — same reasoning applies here.
+function MergedEstimateCard({ mobile, orders, delay = 0 }) {
   const [expanded, setExpanded] = useState(false);
   const [unmerging, setUnmerging] = useState(false);
   const [previewBill, setPreviewBill] = useState(null);
   const [downloading, setDownloading] = useState(false);
   const [sendingMessage, setSendingMessage] = useState(false);
   const [sendingFile, setSendingFile] = useState(false);
+  const [confirmingPayment, setConfirmingPayment] = useState(false);
+  const [confirmBusy, setConfirmBusy] = useState(false);
+  const [confirmDate, setConfirmDate] = useState(() => toDateInputValue(new Date()));
 
-  const { products } = useProducts();
-  const productsById = useMemo(
-    () => Object.fromEntries(products.map((p) => [p.id, p])),
-    [products],
-  );
+  // Pre-built and shared by ProductsContext — see its comment for why this
+  // used to be rebuilt locally here (and in AdminOrderCard) on every mount.
+  const { productsById } = useProducts();
 
   const mergedOrder = useMemo(
     () => buildMergedEstimate(orders, productsById),
@@ -79,6 +90,96 @@ export default function MergedEstimateCard({ mobile, orders, delay = 0 }) {
       toast.error("Couldn't unmerge. Please try again.");
     } finally {
       setUnmerging(false);
+    }
+  };
+
+  // Single payment for the whole merged group: confirms every child order
+  // at once (each locked in at its own effective price, same as a normal
+  // single-order confirm) and generates ONE combined invoice for the
+  // group — the same combined line-items the merged estimate bill already
+  // shows — instead of one invoice per order.
+  const handleConfirmAll = async () => {
+    setConfirmBusy(true);
+    try {
+      const [y, m, d] = confirmDate.split("-").map(Number);
+      const selectedDate = y && m && d ? new Date(y, m - 1, d, 12, 0, 0) : new Date();
+
+      const pricedChildren = orders.map((o) => getEffectivePricedOrder(o, productsById));
+
+      await Promise.all(
+        pricedChildren.map((priced, i) =>
+          updateOrderStatus(db, orders[i].id, {
+            status: "CONFIRMED",
+            paymentStatus: "RECEIVED",
+            cartItems: priced.cartItems,
+            subtotal: priced.subtotal,
+            discount: priced.discount,
+            packingCharges: priced.packingCharges,
+            deliveryCharges: priced.deliveryCharges,
+            grandTotal: priced.grandTotal,
+            totalSavings: priced.totalSavings,
+            paymentConfirmedAt: selectedDate,
+          }),
+        ),
+      );
+
+      const confirmedChildren = pricedChildren.map((priced, i) => ({
+        ...orders[i],
+        ...priced,
+        status: "CONFIRMED",
+        paymentStatus: "RECEIVED",
+        paymentConfirmedAt: selectedDate,
+      }));
+
+      // Carry the merge decision straight into Packing so the admin never
+      // has to re-merge the same customer's orders by hand there — this
+      // group was already merged here in Order Management, so it should
+      // land in Packing already merged too. Best-effort: a failure here
+      // shouldn't undo or block the payment confirmation that already
+      // succeeded above; Packing simply falls back to its own manual
+      // toggle for this customer if this write doesn't go through.
+      try {
+        await setPackingMergeToggle(db, mobile, true);
+      } catch (packingMergeErr) {
+        console.error("Failed to carry merge into Packing", packingMergeErr);
+      }
+
+      try {
+        const invoice = await createInvoiceForMergedOrders(db, confirmedChildren, {
+          confirmedDate: selectedDate,
+        });
+        toast.success(`Payment confirmed for all ${orders.length} orders — one combined invoice generated`);
+
+        let autoDownload = false;
+        try {
+          autoDownload = localStorage.getItem("ams_auto_download_invoice") === "1";
+        } catch {
+          // localStorage unavailable — just skip auto-download.
+        }
+        if (autoDownload && invoice) {
+          try {
+            generateInvoicePdf(invoice);
+          } catch (downloadErr) {
+            console.error("Auto-download of merged invoice failed", downloadErr);
+            toast.error("Invoice generated, but auto-download failed.");
+          }
+          // Same customer for every order in the group — one WhatsApp chat
+          // to open, no prefilled text, so admin can attach the invoice
+          // that just downloaded.
+          openWhatsappChat(first.customer?.mobile);
+        }
+      } catch (invoiceErr) {
+        console.error("Payments confirmed but merged invoice generation failed", invoiceErr);
+        toast.error(
+          "Payments confirmed, but invoice generation failed — retry from the Orders page.",
+        );
+      }
+    } catch (err) {
+      console.error("Failed to confirm merged payment", err);
+      toast.error("Couldn't confirm payment. Please try again.");
+    } finally {
+      setConfirmBusy(false);
+      setConfirmingPayment(false);
     }
   };
 
@@ -191,6 +292,21 @@ export default function MergedEstimateCard({ mobile, orders, delay = 0 }) {
             </div>
           </div>
 
+          {/* Single payment for the whole merged group */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setConfirmDate(toDateInputValue(new Date()));
+              setConfirmingPayment(true);
+            }}
+            disabled={confirmBusy}
+            className="btn-3d flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[11.5px] font-extrabold text-black disabled:opacity-60"
+          >
+            {confirmBusy ? <Loader2 size={14} className="animate-spin" /> : <CircleDollarSign size={14} />}
+            Confirm Payment for All {orders.length} Orders
+          </button>
+
           {/* Single estimate bill for the whole merged group */}
           <div className="flex flex-col gap-2 rounded-xl bg-black/20 px-3 py-2.5">
             <div className="text-[10px] font-bold text-muted">Merged Estimate Bill</div>
@@ -261,6 +377,24 @@ export default function MergedEstimateCard({ mobile, orders, delay = 0 }) {
       </motion.div>
 
       <BillPreviewModal open={!!previewBill} order={previewBill} onClose={() => setPreviewBill(null)} />
+
+      <ConfirmDeleteDialog
+        open={confirmingPayment}
+        title="Confirm payment for all merged orders?"
+        description={`Mark all ${orders.length} orders for ${first.customer?.name || "this customer"} as paid and move them to Confirmed. One combined invoice will be generated for the merged total, dated as below.`}
+        busy={confirmBusy}
+        confirmLabel="Yes, Confirm Payment"
+        tone="success"
+        onConfirm={handleConfirmAll}
+        onCancel={() => setConfirmingPayment(false)}
+      >
+        <label className="flex flex-col gap-1.5">
+          <span className="text-[10.5px] font-bold text-muted">Payment / Invoice Date</span>
+          <PaymentDateCalendar value={confirmDate} onChange={setConfirmDate} disabled={confirmBusy} />
+        </label>
+      </ConfirmDeleteDialog>
     </>
   );
 }
+
+export default memo(MergedEstimateCard);

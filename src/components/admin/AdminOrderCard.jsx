@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, memo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import "react-lazy-load-image-component/src/effects/opacity.css";
@@ -53,9 +53,13 @@ import { generateInvoicePdf } from "../../utils/generateInvoicePdf";
 import { generateBillPdf } from "../../utils/generateBillPdf";
 import { sendBillMessage, sendBillFile } from "../../utils/shareBillWhatsapp";
 import { sendInvoiceFile } from "../../utils/shareInvoiceWhatsapp";
+import { openWhatsappChat } from "../../utils/whatsappChat";
+import { toDateInputValue } from "../../utils/orderDates";
+import { useAutoDownloadInvoiceSetting } from "../../hooks/useAutoDownloadInvoiceSetting";
 import InvoicePreviewModal from "./InvoicePreviewModal";
 import BillPreviewModal from "./BillPreviewModal";
 import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
+import PaymentDateCalendar from "./PaymentDateCalendar";
 import { useProducts } from "../../contexts/ProductsContext";
 
 const ACTION_ICONS = {
@@ -137,7 +141,17 @@ const PAYMENT_META = {
   },
 };
 
-export default function AdminOrderCard({ order, delay = 0, index = 0 }) {
+// Wrapped in React.memo — this card is expensive (1200+ lines, framer-motion,
+// several hooks) and the Order Management list can hold hundreds of them.
+// Without memoization, every keystroke in the search box (or any other
+// AdminDashboard state change) re-renders every visible card even though
+// `order` itself hasn't changed, which is what caused the typing lag —
+// see AdminDashboard.jsx's useDeferredValue comment for the other half of
+// that fix. `order` keeps a stable reference between re-renders as long as
+// the underlying Firestore doc hasn't changed (subscribeAllOrders only
+// produces a new array/object when the snapshot actually differs), so a
+// shallow prop comparison here is safe and cheap.
+function AdminOrderCard({ order, delay = 0, index = 0 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [confirmingPayment, setConfirmingPayment] = useState(false);
@@ -158,18 +172,18 @@ export default function AdminOrderCard({ order, delay = 0, index = 0 }) {
   const [sendingBillFile, setSendingBillFile] = useState(false);
   const [sendingInvoiceFile, setSendingInvoiceFile] = useState(false);
   const [priceChoiceBusy, setPriceChoiceBusy] = useState(false);
+  // Same "auto-download invoice + open WhatsApp on Confirm Payment" setting
+  // as the Payment Confirmation page — shared localStorage key, so toggling
+  // it there also applies here. Defaults to today, same as the old
+  // hard-coded behaviour — admin can backdate before confirming.
+  const [autoDownloadInvoice] = useAutoDownloadInvoiceSetting();
+  const [confirmDate, setConfirmDate] = useState(() => toDateInputValue(new Date()));
 
-  const { products } = useProducts();
   // Same fallback as the customer-facing OrderCard — older orders don't
   // have item.nameTa snapshotted yet, so match against the live catalog.
-  const nameTaById = useMemo(
-    () => Object.fromEntries(products.map((p) => [p.id, p.nameTa])),
-    [products],
-  );
-  const productsById = useMemo(
-    () => Object.fromEntries(products.map((p) => [p.id, p])),
-    [products],
-  );
+  // Both maps come pre-built from ProductsContext (shared across every
+  // order card) instead of each card rebuilding them itself.
+  const { productsById, nameTaById } = useProducts();
 
   // Orders sitting in AWAITING_ADMIN_CONFIRMATION haven't been paid for yet,
   // so if a product's price changes after the order was placed (e.g. a
@@ -295,6 +309,13 @@ export default function AdminOrderCard({ order, delay = 0, index = 0 }) {
     if (nextAction.patch.status === "CONFIRMED") {
       setBusy(true);
       try {
+        // confirmDate is a "YYYY-MM-DD" from the calendar picker — build it
+        // as a local-noon Date so it can't roll back a day in timezones
+        // behind UTC when it's later serialized/parsed. Same convention as
+        // the Payment Confirmation page's PaymentOrderCard.
+        const [y, m, d] = confirmDate.split("-").map(Number);
+        const selectedDate = y && m && d ? new Date(y, m - 1, d, 12, 0, 0) : new Date();
+
         // Lock in today's pricing as the permanent record. For an order
         // that was AWAITING_ADMIN_CONFIRMATION, pricedOrder already carries
         // any restock/price-update repricing — write it now so the order
@@ -310,12 +331,32 @@ export default function AdminOrderCard({ order, delay = 0, index = 0 }) {
               deliveryCharges: pricedOrder.deliveryCharges,
               grandTotal: pricedOrder.grandTotal,
               totalSavings: pricedOrder.totalSavings,
+              // Explicit override so admin/packing screens (and the invoice
+              // itself) reflect the date chosen here, not the day this
+              // button was actually tapped.
+              paymentConfirmedAt: selectedDate,
             }
-          : nextAction.patch;
+          : { ...nextAction.patch, paymentConfirmedAt: selectedDate };
         await updateOrderStatus(db, order.id, confirmPatch);
         try {
-          await createInvoiceForOrder(db, { ...order, ...confirmPatch });
+          const invoice = await createInvoiceForOrder(
+            db,
+            { ...order, ...confirmPatch },
+            { confirmedDate: selectedDate },
+          );
           toast.success("Payment confirmed — invoice generated");
+          if (autoDownloadInvoice && invoice) {
+            try {
+              generateInvoicePdf(invoice);
+            } catch (downloadErr) {
+              console.error("Auto-download of invoice failed", downloadErr);
+              toast.error("Invoice generated, but auto-download failed.");
+            }
+            // Straight after the invoice downloads, open the customer's
+            // WhatsApp chat with no prefilled text — admin just attaches
+            // the PDF that was already downloaded.
+            openWhatsappChat(order.customer?.mobile);
+          }
         } catch (invoiceErr) {
           // Status update already succeeded — don't tell the admin payment
           // confirmation failed. Let them retry invoice generation from the
@@ -740,12 +781,13 @@ export default function AdminOrderCard({ order, delay = 0, index = 0 }) {
               quick actions, pinned to the top so Send Message / Share Bill
               (or Share Invoice, once one exists) are reachable without
               expanding the card. */}
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5 gap-y-2">
             {showAdvance && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   if (nextAction.patch.status === "CONFIRMED") {
+                    setConfirmDate(toDateInputValue(new Date()));
                     setConfirmingPayment(true);
                   } else {
                     handleAdvance();
@@ -1224,13 +1266,18 @@ export default function AdminOrderCard({ order, delay = 0, index = 0 }) {
       <ConfirmDeleteDialog
         open={confirmingPayment}
         title="Confirm payment received?"
-        description={`Mark order ${order.orderId || order.id} as paid and move it to Confirmed. An invoice will be generated automatically.`}
+        description={`Mark order ${order.orderId || order.id} as paid and move it to Confirmed. An invoice will be generated automatically, dated as below.${autoDownloadInvoice ? " It will also download right after, and the customer's WhatsApp chat will open so you can attach it." : ""}`}
         busy={busy}
         confirmLabel="Yes, Confirm Payment"
         tone="success"
         onConfirm={handleConfirmPayment}
         onCancel={() => setConfirmingPayment(false)}
-      />
+      >
+        <label className="flex flex-col gap-1.5">
+          <span className="text-[10.5px] font-bold text-muted">Payment / Invoice Date</span>
+          <PaymentDateCalendar value={confirmDate} onChange={setConfirmDate} disabled={busy} />
+        </label>
+      </ConfirmDeleteDialog>
       <ConfirmDeleteDialog
         open={confirmingCancel}
         title="Cancel this order?"
@@ -1255,3 +1302,5 @@ export default function AdminOrderCard({ order, delay = 0, index = 0 }) {
     </>
   );
 }
+
+export default memo(AdminOrderCard);

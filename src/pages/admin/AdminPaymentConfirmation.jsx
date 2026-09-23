@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { CircleDollarSign, Undo2 } from "lucide-react";
+import { CircleDollarSign, Download, Undo2 } from "lucide-react";
 import { useAdminAuth } from "../../contexts/AdminAuthContext";
 import { useAdminData } from "../../contexts/AdminDataContext";
 import AdminOrdersHeader from "../../components/admin/AdminOrdersHeader";
@@ -10,7 +10,12 @@ import AdminOrderSearchBar from "../../components/admin/AdminOrderSearchBar";
 import AdminOrderCardSkeleton from "../../components/admin/AdminOrderCardSkeleton";
 import OrderDateFilter from "../../components/admin/OrderDateFilter";
 import PaymentOrderCard from "../../components/admin/PaymentOrderCard";
+import MergedEstimateCard from "../../components/admin/MergedEstimateCard";
+import MergedConfirmedCard from "../../components/admin/MergedConfirmedCard";
 import { getConfirmedDate, confirmedDateMillis, toDateInputValue } from "../../utils/orderDates";
+import { orderMergeKeyForMobile } from "../../services/orderMergeFirestore";
+import { buildAwaitingMergeGroups, buildConfirmedInvoiceGroups } from "../../utils/orderMergeGroups";
+import { useAutoDownloadInvoiceSetting } from "../../hooks/useAutoDownloadInvoiceSetting";
 
 // Two tabs on one page instead of two separate routes: the whole reason
 // admin asked for "revoke" here is to fix a payment approved by mistake —
@@ -24,11 +29,18 @@ const TABS = [
 export default function AdminPaymentConfirmation() {
   const { user, logout } = useAdminAuth();
   const navigate = useNavigate();
-  const { orders, ordersLoading: loading, ordersError } = useAdminData();
+  const { orders, ordersLoading: loading, ordersError, orderMergeProgress } = useAdminData();
 
   const [tab, setTab] = useState("AWAITING_ADMIN_CONFIRMATION");
   const [search, setSearch] = useState("");
   const [dateFilter, setDateFilter] = useState([]);
+
+  // Opt-in setting: when on, every "Confirm Payment" also triggers an
+  // immediate invoice download and opens the customer's WhatsApp chat; when
+  // off (default — matches the previous behaviour), confirming only
+  // confirms. Shared (same localStorage key) with the Order Management
+  // page's "Confirm Payment" action, so this one toggle governs both.
+  const [autoDownloadInvoice, setAutoDownloadInvoice] = useAutoDownloadInvoiceSetting();
 
   const handleLogout = async () => {
     try {
@@ -107,6 +119,27 @@ export default function AdminPaymentConfirmation() {
 
   const isFiltered = !!search || dateFilter.length > 0;
 
+  // Same clustering the Order Management page uses, so a customer whose
+  // orders were merged there shows up merged here too — "Confirm Payment"
+  // then confirms and invoices the whole group at once instead of one
+  // order (and one invoice) at a time. Only clusters the admin actually
+  // merged (orderMergeProgress) render as one card; anything left un-merged
+  // still shows as separate order cards, same as before. On the Confirmed
+  // tab there's no separate merge flag to check — orders that already share
+  // one invoice (from a merged "Confirm Payment for All") are the group.
+  const displayGroups = useMemo(() => {
+    if (tab === "AWAITING_ADMIN_CONFIRMATION") {
+      return buildAwaitingMergeGroups(filteredOrders).flatMap((group) => {
+        if (group.type === "single") return [group];
+        const merged = !!orderMergeProgress[orderMergeKeyForMobile(group.mobile)]?.merged;
+        if (merged) return [group];
+        // Not merged — fall back to one card per order, same as un-grouped.
+        return group.orders.map((order) => ({ type: "single", order }));
+      });
+    }
+    return buildConfirmedInvoiceGroups(filteredOrders);
+  }, [tab, filteredOrders, orderMergeProgress]);
+
   return (
     <div className="min-h-screen w-full bg-[#050505] pb-28 text-white">
       <AdminOrdersHeader email={user?.email} orderCount={orders.length} onLogout={handleLogout} />
@@ -119,6 +152,36 @@ export default function AdminPaymentConfirmation() {
             Confirm payment as soon as it lands — or revoke one approved by mistake, right here.
           </p>
         </div>
+
+        {/* Auto-download toggle — off by default (old behaviour unchanged).
+            When on, every "Confirm Payment" (here and on Order Management)
+            downloads the invoice PDF and opens the customer's WhatsApp chat
+            right away, no extra tap needed. */}
+        <button
+          type="button"
+          onClick={() => setAutoDownloadInvoice((v) => !v)}
+          className={`surface-3d flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left transition-colors ${
+            autoDownloadInvoice ? "border-gold/40" : ""
+          }`}
+        >
+          <span className="flex items-center gap-2">
+            <Download size={14} className={autoDownloadInvoice ? "text-gold" : "text-muted"} />
+            <span className="text-[11.5px] font-bold text-[#f2ece2]">
+              Auto-download invoice &amp; open WhatsApp on Confirm Payment
+            </span>
+          </span>
+          <span
+            className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
+              autoDownloadInvoice ? "bg-gradient-to-r from-orange to-gold" : "bg-white/10"
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                autoDownloadInvoice ? "translate-x-4" : "translate-x-0.5"
+              }`}
+            />
+          </span>
+        </button>
 
         {/* Segmented tab — same pill shape used elsewhere in admin, just two options. */}
         <div className="surface-3d flex items-center gap-1 rounded-xl p-1">
@@ -189,9 +252,37 @@ export default function AdminPaymentConfirmation() {
               )}
             </div>
           ) : (
-            filteredOrders.map((order, i) => (
-              <PaymentOrderCard key={order.id} order={order} index={i} delay={Math.min(i, 8) * 0.04} />
-            ))
+            displayGroups.map((group, i) => {
+              const delay = Math.min(i, 8) * 0.04;
+              if (group.type === "single") {
+                return (
+                  <PaymentOrderCard
+                    key={group.order.id}
+                    order={group.order}
+                    index={i}
+                    delay={delay}
+                    autoDownloadInvoice={autoDownloadInvoice}
+                  />
+                );
+              }
+              if (tab === "AWAITING_ADMIN_CONFIRMATION") {
+                return (
+                  <MergedEstimateCard
+                    key={`cluster:${group.mobile}`}
+                    mobile={group.mobile}
+                    orders={group.orders}
+                    delay={delay}
+                  />
+                );
+              }
+              return (
+                <MergedConfirmedCard
+                  key={`invoice:${group.invoiceId}`}
+                  orders={group.orders}
+                  delay={delay}
+                />
+              );
+            })
           )}
         </div>
       </div>

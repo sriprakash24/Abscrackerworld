@@ -20,37 +20,7 @@ import AdminOrdersEmpty from '../../components/admin/AdminOrdersEmpty';
 import MergedEstimateCard from '../../components/admin/MergedEstimateCard';
 import { getWhatsappSendStatus } from '../../utils/whatsappSendStatus';
 import { getConfirmedDate, toDateInputValue } from '../../utils/orderDates';
-
-/**
- * Groups orders for display: any two-or-more AWAITING_ADMIN_CONFIRMATION
- * orders sharing a mobile number become a "cluster" (candidate for merging
- * into a single estimate bill — see MergedEstimateCard). Everything else,
- * including a lone AWAITING order or any order past that stage, renders as
- * its own single card, exactly as before. Order of the incoming list
- * (newest first) is preserved — a cluster is placed where its first/newest
- * member would have appeared.
- */
-function buildOrderGroups(list) {
-  const seen = new Set();
-  const groups = [];
-  for (const order of list) {
-    if (seen.has(order.id)) continue;
-    const mobile = order.customer?.mobile;
-    if (order.status === 'AWAITING_ADMIN_CONFIRMATION' && mobile) {
-      const siblings = list.filter(
-        (o) => !seen.has(o.id) && o.status === 'AWAITING_ADMIN_CONFIRMATION' && o.customer?.mobile === mobile,
-      );
-      if (siblings.length > 1) {
-        siblings.forEach((o) => seen.add(o.id));
-        groups.push({ type: 'cluster', mobile, orders: siblings });
-        continue;
-      }
-    }
-    seen.add(order.id);
-    groups.push({ type: 'single', order });
-  }
-  return groups;
-}
+import { buildAwaitingMergeGroups } from '../../utils/orderMergeGroups';
 
 /** Small banner offering to combine a not-yet-merged cluster's estimate
  * bills into one — sits above that cluster's individual order cards. */
@@ -188,7 +158,7 @@ export default function AdminDashboard() {
     });
   }, [orders, statusFilter, whatsappFilter, dateFilter, deferredSearch]);
 
-  const orderGroups = useMemo(() => buildOrderGroups(filteredOrders), [filteredOrders]);
+  const orderGroups = useMemo(() => buildAwaitingMergeGroups(filteredOrders), [filteredOrders]);
 
   const isFiltered =
     statusFilter !== 'ALL' || whatsappFilter !== 'ALL' || dateFilter.length > 0 || search.trim().length > 0;

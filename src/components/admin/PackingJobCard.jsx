@@ -1,5 +1,6 @@
-import { PackageOpen, PackageCheck, Layers, Box, Loader2 } from "lucide-react";
+import { PackageOpen, PackageCheck, Layers, Box, Loader2, Download } from "lucide-react";
 import { getOrderSlot } from "../../utils/packingAccent";
+import { downloadPackingListPdf } from "../../utils/generatePackingListPdf";
 
 /**
  * One "packing job" — either a single confirmed order, or an explicitly
@@ -81,6 +82,17 @@ export default function PackingJobCard({
           >
             {packedCount}/{totalItems} packed
           </span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              downloadPackingListPdf(job);
+            }}
+            title="Download packing list (items & quantity only)"
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-muted hover:text-[#f2ece2]"
+          >
+            <Download size={11} />
+          </button>
         </div>
       </div>
 

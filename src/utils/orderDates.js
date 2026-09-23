@@ -22,6 +22,16 @@ const INVOICE_NO_PATTERN = /^ABSI(\d{4})(\d{2})(\d{2})/;
  * `createdAt` for orders that somehow have neither.
  */
 export function getConfirmedDate(order) {
+  // Admin can override the confirmation date when confirming payment (e.g.
+  // approving today for a payment that actually landed a couple of days
+  // ago). When that override is present it wins over everything else,
+  // including the date baked into the invoice number.
+  const override = order?.paymentConfirmedAt;
+  if (override) {
+    const overrideDate = override?.toDate ? override.toDate() : new Date(override);
+    if (!Number.isNaN(overrideDate.getTime())) return overrideDate;
+  }
+
   const match = INVOICE_NO_PATTERN.exec(order?.invoiceNo || "");
   if (match) {
     const [, y, m, d] = match;

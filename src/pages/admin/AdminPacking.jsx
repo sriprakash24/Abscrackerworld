@@ -22,6 +22,7 @@ import {
   packingKeyForMobile,
 } from "../../services/packingFirestore";
 import { PREVIOUS_ACTION_BY_STATUS } from "../../constants/orderActions";
+import { mergeCartItems } from "../../utils/mergeCartItems";
 import {
   getConfirmedDate,
   confirmedDateMillis,
@@ -53,27 +54,6 @@ function buildSimpleClusters(orders) {
     });
   }
   return clusters.sort((a, b) => a.earliestConfirmedMillis - b.earliestConfirmedMillis);
-}
-
-/** Sums quantity for the same product across one or more orders' cartItems. */
-function mergeCartItems(orders) {
-  const itemMap = new Map();
-  for (const order of orders) {
-    for (const item of order.cartItems || []) {
-      const key = item.productId || item.name;
-      if (!itemMap.has(key)) {
-        itemMap.set(key, {
-          key,
-          name: item.name,
-          nameTa: item.nameTa,
-          image: item.image,
-          quantity: 0,
-        });
-      }
-      itemMap.get(key).quantity += item.quantity || 0;
-    }
-  }
-  return Array.from(itemMap.values());
 }
 
 function buildOrderJob(mobile, order) {

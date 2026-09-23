@@ -7,6 +7,7 @@
 // cart activity can now mirror to users/{mobile}/cart/{productId}.
 
 import { doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { syncAddressToOrders } from './ordersFirestore';
 
 /**
  * Creates/updates the customer profile doc. Keeps the original `createdAt`
@@ -66,6 +67,18 @@ export async function updateUserProfile(db, mobile, { name, address }) {
   const patch = { name: name.trim(), updatedAt: serverTimestamp() };
   if (address) patch.address = address;
   await updateDoc(doc(db, 'users', mobile), patch);
+
+  // Carry the corrected address onto every one of this customer's orders,
+  // and onto any invoice already generated from them — see
+  // syncAddressToOrders. Best-effort: the profile save above has already
+  // succeeded either way, so a failure here is logged, not thrown.
+  if (address) {
+    try {
+      await syncAddressToOrders(db, mobile, address);
+    } catch (err) {
+      console.error('Profile address saved, but syncing it to orders/invoices failed', err);
+    }
+  }
 }
 
 /**
@@ -102,6 +115,17 @@ export async function saveUserAddress(db, mobile, { name, address }) {
     },
     { merge: true }
   );
+
+  // Same reasoning as updateUserProfile above — a customer fixing their own
+  // address on "My Profile" should also fix it on every order of theirs,
+  // past or present, and on any invoice already generated from them.
+  if (address) {
+    try {
+      await syncAddressToOrders(db, mobile, address);
+    } catch (err) {
+      console.error('Profile address saved, but syncing it to orders/invoices failed', err);
+    }
+  }
 }
 
 /** Permanently deletes a customer profile doc — admin-only. Doesn't touch that customer's past orders/invoices. */

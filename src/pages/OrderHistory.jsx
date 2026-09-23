@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase/config';
 import { useCustomerStore } from '../store/useCustomerStore';
 import { useCustomerGateStore } from '../store/useCustomerGateStore';
 import { subscribeOrdersByMobile } from '../services/ordersFirestore';
+import { buildConfirmedInvoiceGroups } from '../utils/orderMergeGroups';
 import OrdersHeader from '../components/orders/OrdersHeader';
 import OrderCard from '../components/orders/OrderCard';
+import MergedOrderCard from '../components/orders/MergedOrderCard';
 import OrderCardSkeleton from '../components/orders/OrderCardSkeleton';
 import EmptyOrders from '../components/orders/EmptyOrders';
 import EmberParticles from '../components/ui/EmberParticles';
@@ -46,6 +48,12 @@ export default function OrderHistory() {
 
   const handleIdentify = () => requestDetails();
 
+  // Any 2+ of the customer's own orders that admin billed together (they
+  // share one invoiceId — see MergedEstimateCard on the admin side) show as
+  // one card here too, matching the single combined invoice/estimate they
+  // were actually billed. Anything not merged renders exactly as before.
+  const displayGroups = useMemo(() => buildConfirmedInvoiceGroups(orders), [orders]);
+
   return (
     <div className="relative min-h-screen w-full pb-28">
       <FestiveBackdrop />
@@ -69,7 +77,13 @@ export default function OrderHistory() {
         ) : orders.length === 0 ? (
           <EmptyOrders onShopNow={() => navigate('/')} />
         ) : (
-          orders.map((order, i) => <OrderCard key={order.id} order={order} delay={i * 0.05} />)
+          displayGroups.map((group, i) =>
+            group.type === 'single' ? (
+              <OrderCard key={group.order.id} order={group.order} delay={i * 0.05} />
+            ) : (
+              <MergedOrderCard key={`invoice:${group.invoiceId}`} orders={group.orders} delay={i * 0.05} />
+            ),
+          )
         )}
       </div>
 

@@ -61,9 +61,28 @@ export function ProductsProvider({ children, includeHidden = false }) {
 
   const categories = useMemo(() => groupByCategory(visibleProducts, categoryOrder), [visibleProducts, categoryOrder]);
 
+  // `id -> product` / `id -> nameTa` lookup maps, built once here and shared
+  // by every consumer via context. Several admin screens (AdminOrderCard,
+  // MergedEstimateCard — anywhere an order's cartItems get repriced or
+  // matched against the live catalog) used to rebuild these same two maps
+  // themselves with their own useMemo. That's harmless once mounted (each
+  // component's own useMemo caches it), but on the Order Management page,
+  // which can render hundreds of order cards at once, it meant hundreds of
+  // redundant O(products) passes happening simultaneously on first paint —
+  // a real contributor to that page's slow initial load. Computing it once
+  // here means every card just reads the same object instead of rebuilding it.
+  const productsById = useMemo(
+    () => Object.fromEntries(visibleProducts.map((p) => [p.id, p])),
+    [visibleProducts]
+  );
+  const nameTaById = useMemo(
+    () => Object.fromEntries(visibleProducts.map((p) => [p.id, p.nameTa])),
+    [visibleProducts]
+  );
+
   const value = useMemo(
-    () => ({ products: visibleProducts, categories, loading, error }),
-    [visibleProducts, categories, loading, error]
+    () => ({ products: visibleProducts, categories, productsById, nameTaById, loading, error }),
+    [visibleProducts, categories, productsById, nameTaById, loading, error]
   );
 
   return <ProductsContext.Provider value={value}>{children}</ProductsContext.Provider>;

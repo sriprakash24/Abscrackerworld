@@ -12,13 +12,15 @@ import { toast } from "sonner";
 import { getClusterAccent } from "../../utils/packingAccent";
 import { formatStreetLine } from "../../utils/formatAddress";
 import { openWhatsappChat } from "../../utils/whatsappChat";
-import { formatConfirmedDate } from "../../utils/orderDates";
+import { formatConfirmedDate, toDateInputValue } from "../../utils/orderDates";
 import { PREVIOUS_ACTION_BY_STATUS } from "../../constants/orderActions";
 import { db } from "../../firebase/config";
 import { updateOrderStatus, computeOrderPricing } from "../../services/ordersFirestore";
 import { createInvoiceForOrder } from "../../services/invoicesFirestore";
+import { generateInvoicePdf } from "../../utils/generateInvoicePdf";
 import { useProducts } from "../../contexts/ProductsContext";
 import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
+import PaymentDateCalendar from "./PaymentDateCalendar";
 
 /**
  * One order, one job: confirm a payment or revoke one that was confirmed
@@ -27,11 +29,14 @@ import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
  * Orders page. This card exists purely so "did the money come in?" is a
  * fast yes/no screen on its own, not buried inside a 6-status list.
  */
-export default function PaymentOrderCard({ order, index = 0, delay = 0 }) {
+export default function PaymentOrderCard({ order, index = 0, delay = 0, autoDownloadInvoice = false }) {
   const [open, setOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [revoking, setRevoking] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Defaults to today, same as the old hard-coded behaviour — admin can
+  // change it before confirming to backdate a payment that landed earlier.
+  const [confirmDate, setConfirmDate] = useState(() => toDateInputValue(new Date()));
 
   const { products } = useProducts();
   const productsById = useMemo(
@@ -82,6 +87,13 @@ export default function PaymentOrderCard({ order, index = 0, delay = 0 }) {
   const handleConfirm = async () => {
     setBusy(true);
     try {
+      // confirmDate is a "YYYY-MM-DD" from the date input — build it as a
+      // local-noon Date so it can't roll back a day in timezones behind
+      // UTC when it's later serialized/parsed.
+      const [y, m, d] = confirmDate.split("-").map(Number);
+      const selectedDate =
+        y && m && d ? new Date(y, m - 1, d, 12, 0, 0) : new Date();
+
       const confirmPatch = {
         status: "CONFIRMED",
         paymentStatus: "RECEIVED",
@@ -92,11 +104,31 @@ export default function PaymentOrderCard({ order, index = 0, delay = 0 }) {
         deliveryCharges: pricedOrder.deliveryCharges,
         grandTotal: pricedOrder.grandTotal,
         totalSavings: pricedOrder.totalSavings,
+        // Explicit override so admin/packing screens (and the invoice
+        // itself) reflect the date chosen here, not the day this button
+        // was actually tapped.
+        paymentConfirmedAt: selectedDate,
       };
       await updateOrderStatus(db, order.id, confirmPatch);
       try {
-        await createInvoiceForOrder(db, { ...order, ...confirmPatch });
+        const invoice = await createInvoiceForOrder(
+          db,
+          { ...order, ...confirmPatch },
+          { confirmedDate: selectedDate },
+        );
         toast.success("Payment confirmed — invoice generated");
+        if (autoDownloadInvoice && invoice) {
+          try {
+            generateInvoicePdf(invoice);
+          } catch (downloadErr) {
+            console.error("Auto-download of invoice failed", downloadErr);
+            toast.error("Invoice generated, but auto-download failed.");
+          }
+          // Straight after the invoice downloads, open the customer's
+          // WhatsApp chat with no prefilled text — admin just attaches the
+          // PDF that was already downloaded, no need to hunt for the chat.
+          openWhatsappChat(order.customer?.mobile);
+        }
       } catch (invoiceErr) {
         console.error("Payment confirmed but invoice generation failed", invoiceErr);
         toast.error(
@@ -225,7 +257,10 @@ export default function PaymentOrderCard({ order, index = 0, delay = 0 }) {
       <div className="relative z-[1] pl-1.5">
         {isAwaiting ? (
           <button
-            onClick={() => setConfirming(true)}
+            onClick={() => {
+              setConfirmDate(toDateInputValue(new Date()));
+              setConfirming(true);
+            }}
             disabled={busy}
             className="btn-3d flex w-full items-center justify-center gap-1.5 rounded-xl py-2.5 text-[11.5px] font-extrabold text-black disabled:opacity-60"
           >
@@ -249,13 +284,18 @@ export default function PaymentOrderCard({ order, index = 0, delay = 0 }) {
       <ConfirmDeleteDialog
         open={confirming}
         title="Confirm payment received?"
-        description={`Mark order ${order.orderId || order.id} as paid and move it to Confirmed. An invoice will be generated automatically.`}
+        description={`Mark order ${order.orderId || order.id} as paid and move it to Confirmed. An invoice will be generated automatically, dated as below.${autoDownloadInvoice ? " It will also download right after, and the customer's WhatsApp chat will open so you can attach it." : ""}`}
         busy={busy}
         confirmLabel="Yes, Confirm Payment"
         tone="success"
         onConfirm={handleConfirm}
         onCancel={() => setConfirming(false)}
-      />
+      >
+        <label className="flex flex-col gap-1.5">
+          <span className="text-[10.5px] font-bold text-muted">Payment / Invoice Date</span>
+          <PaymentDateCalendar value={confirmDate} onChange={setConfirmDate} disabled={busy} />
+        </label>
+      </ConfirmDeleteDialog>
       {revokeAction && (
         <ConfirmDeleteDialog
           open={revoking}

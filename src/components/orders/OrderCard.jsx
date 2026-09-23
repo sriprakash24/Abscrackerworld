@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/opacity.css';
-import { ChevronDown, Copy, MapPin, MessageCircleMore, Download, Loader2, Pencil, Receipt } from 'lucide-react';
+import { ChevronDown, Copy, MapPin, MessageCircleMore, Download, Loader2, Pencil, Receipt, PackageSearch } from 'lucide-react';
 import { toast } from 'sonner';
 import { getOrderStatusMeta, normalizeOrderStage, isOrderStageComplete } from '../../constants/orderStatusMeta';
 import OrderStatusStepper from '../checkout/OrderStatusStepper';
@@ -11,6 +11,7 @@ import { db } from '../../firebase/config';
 import { getInvoice } from '../../services/invoicesFirestore';
 import { generateInvoicePdf } from '../../utils/generateInvoicePdf';
 import { generateBillPdf } from '../../utils/generateBillPdf';
+import { downloadPackingListPdf } from '../../utils/generatePackingListPdf';
 import { useProducts } from '../../contexts/ProductsContext';
 import { useCartStore } from '../../store/useCartStore';
 
@@ -24,6 +25,7 @@ export default function OrderCard({ order, delay = 0 }) {
   const [open, setOpen] = useState(false);
   const [downloadingInvoice, setDownloadingInvoice] = useState(false);
   const [downloadingBill, setDownloadingBill] = useState(false);
+  const [downloadingPackingList, setDownloadingPackingList] = useState(false);
   const navigate = useNavigate();
   const startEditOrder = useCartStore((s) => s.startEditOrder);
   const { products } = useProducts();
@@ -77,6 +79,28 @@ export default function OrderCard({ order, delay = 0 }) {
       toast.error("Couldn't download the estimate bill. Please try again.");
     } finally {
       setDownloadingBill(false);
+    }
+  };
+
+  // Same bare item+quantity list admin packs from — for reference only, so
+  // the customer can see exactly what's being packed for their order.
+  const handleDownloadPackingList = () => {
+    if (downloadingPackingList) return;
+    setDownloadingPackingList(true);
+    try {
+      downloadPackingListPdf({
+        merged: false,
+        mobile: order.customer?.mobile,
+        customerName: order.customer?.name,
+        orderLabels: [order.orderId || order.id],
+        confirmedDateLabel: formatOrderDate(order.paymentConfirmedAt || order.createdAt),
+        items: items.map((item) => ({ name: item.name, quantity: item.quantity })),
+      });
+    } catch (err) {
+      console.error('Failed to build packing list', err);
+      toast.error("Couldn't generate the packing list. Please try again.");
+    } finally {
+      setDownloadingPackingList(false);
     }
   };
 
@@ -197,16 +221,27 @@ export default function OrderCard({ order, delay = 0 }) {
           </button>
         ) : (
           !isCancelled && (
-            <button
-              type="button"
-              onClick={handleDownloadInvoice}
-              disabled={!order.invoiceId || downloadingInvoice}
-              style={{ borderColor: 'rgba(143, 227, 160, 0.55)' }}
-              className="btn-3d-outline flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[11.5px] font-extrabold text-[#8fe3a0] disabled:opacity-50"
-            >
-              {downloadingInvoice ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
-              Download Invoice
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={handleDownloadPackingList}
+                disabled={downloadingPackingList}
+                className="btn-3d-outline flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[11px] font-bold text-gold disabled:opacity-50"
+              >
+                {downloadingPackingList ? <Loader2 size={13} className="animate-spin" /> : <PackageSearch size={13} />}
+                Packing List (Items &amp; Qty)
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadInvoice}
+                disabled={!order.invoiceId || downloadingInvoice}
+                style={{ borderColor: 'rgba(143, 227, 160, 0.55)' }}
+                className="btn-3d-outline flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[11.5px] font-extrabold text-[#8fe3a0] disabled:opacity-50"
+              >
+                {downloadingInvoice ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
+                Download Invoice
+              </button>
+            </>
           )
         )}
       </div>

@@ -27,6 +27,7 @@ export default function ConfirmDeleteDialog({
   onCancel,
   confirmLabel = 'Delete',
   tone = 'danger',
+  children,
 }) {
   const toneStyle = TONE_STYLES[tone] || TONE_STYLES.danger;
   return (
@@ -53,7 +54,10 @@ export default function ConfirmDeleteDialog({
               </span>
               <h3 className="text-[14px] font-extrabold text-[#f2ece2]">{title}</h3>
             </div>
-            <p className="mb-5 text-[12px] font-medium leading-relaxed text-muted">{description}</p>
+            <p className={`text-[12px] font-medium leading-relaxed text-muted ${children ? 'mb-3' : 'mb-5'}`}>
+              {description}
+            </p>
+            {children && <div className="mb-5">{children}</div>}
             <div className="flex gap-2.5">
               <button
                 onClick={onCancel}
