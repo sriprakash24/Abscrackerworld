@@ -1,37 +1,48 @@
-import { useDeferredValue, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-import { ListChecks, CheckSquare, Square, PackageCheck, Truck, CheckCheck, X } from 'lucide-react';
-import { useAdminAuth } from '../../contexts/AdminAuthContext';
-import { useAdminData } from '../../contexts/AdminDataContext';
-import { ADMIN_STATUS_FILTERS, canAdvance } from '../../constants/orderActions';
-import { getOrderStatusMeta } from '../../constants/orderStatusMeta';
-import { db } from '../../firebase/config';
-import { orderMergeKeyForMobile, setOrderMergeSelection } from '../../services/orderMergeFirestore';
+import { useDeferredValue, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import {
+  ListChecks,
+  CheckSquare,
+  Square,
+  PackageCheck,
+  Truck,
+  CheckCheck,
+  X,
+} from "lucide-react";
+import { useAdminAuth } from "../../contexts/AdminAuthContext";
+import { useAdminData } from "../../contexts/AdminDataContext";
+import { ADMIN_STATUS_FILTERS, canAdvance } from "../../constants/orderActions";
+import { getOrderStatusMeta } from "../../constants/orderStatusMeta";
+import { db } from "../../firebase/config";
+import {
+  orderMergeKeyForMobile,
+  setOrderMergeSelection,
+} from "../../services/orderMergeFirestore";
 import {
   markOrdersPacked,
   markOrdersOutForDelivery,
   markOrdersDelivered,
-} from '../../services/ordersFirestore';
-import AdminOrdersHeader from '../../components/admin/AdminOrdersHeader';
-import AdminTabsNav from '../../components/admin/AdminTabsNav';
-import AdminStatsStrip from '../../components/admin/AdminStatsStrip';
-import OrderStatusFilterTabs from '../../components/admin/OrderStatusFilterTabs';
-import WhatsappStatusFilter from '../../components/admin/WhatsappStatusFilter';
-import EditedOrdersFilter from '../../components/admin/EditedOrdersFilter';
-import OrderDateFilter from '../../components/admin/OrderDateFilter';
-import AdminOrderSearchBar from '../../components/admin/AdminOrderSearchBar';
-import AdminOrderCard from '../../components/admin/AdminOrderCard';
-import AdminOrderCardSkeleton from '../../components/admin/AdminOrderCardSkeleton';
-import AdminOrdersEmpty from '../../components/admin/AdminOrdersEmpty';
-import MergedEstimateCard from '../../components/admin/MergedEstimateCard';
-import MergedConfirmedCard from '../../components/admin/MergedConfirmedCard';
-import MergeSelectionBanner from '../../components/admin/MergeSelectionBanner';
-import ConfirmDeleteDialog from '../../components/admin/ConfirmDeleteDialog';
-import { getWhatsappSendStatus } from '../../utils/whatsappSendStatus';
-import { getOrderEditStatus } from '../../utils/orderEditStatus';
-import { getConfirmedDate, toDateInputValue } from '../../utils/orderDates';
-import { buildOrderManagementGroups } from '../../utils/orderMergeGroups';
+} from "../../services/ordersFirestore";
+import AdminOrdersHeader from "../../components/admin/AdminOrdersHeader";
+import AdminTabsNav from "../../components/admin/AdminTabsNav";
+import AdminStatsStrip from "../../components/admin/AdminStatsStrip";
+import OrderStatusFilterTabs from "../../components/admin/OrderStatusFilterTabs";
+import WhatsappStatusFilter from "../../components/admin/WhatsappStatusFilter";
+import EditedOrdersFilter from "../../components/admin/EditedOrdersFilter";
+import OrderDateFilter from "../../components/admin/OrderDateFilter";
+import AdminOrderSearchBar from "../../components/admin/AdminOrderSearchBar";
+import AdminOrderCard from "../../components/admin/AdminOrderCard";
+import AdminOrderCardSkeleton from "../../components/admin/AdminOrderCardSkeleton";
+import AdminOrdersEmpty from "../../components/admin/AdminOrdersEmpty";
+import MergedEstimateCard from "../../components/admin/MergedEstimateCard";
+import MergedConfirmedCard from "../../components/admin/MergedConfirmedCard";
+import MergeSelectionBanner from "../../components/admin/MergeSelectionBanner";
+import ConfirmDeleteDialog from "../../components/admin/ConfirmDeleteDialog";
+import { getWhatsappSendStatus } from "../../utils/whatsappSendStatus";
+import { getOrderEditStatus } from "../../utils/orderEditStatus";
+import { getConfirmedDate, toDateInputValue } from "../../utils/orderDates";
+import { buildOrderManagementGroups } from "../../utils/orderMergeGroups";
 
 // Bulk status update only ever applies past payment — Confirmed / Packed /
 // Out for Delivery orders can be batch-advanced since it's just a fulfilment
@@ -39,26 +50,48 @@ import { buildOrderManagementGroups } from '../../utils/orderMergeGroups';
 // is manual (bank transfer / UPI, checked one at a time), so "Confirm
 // Payment" always stays a per-order action — never offered here.
 function isBulkEligible(order) {
-  return order.status !== 'AWAITING_ADMIN_CONFIRMATION' && canAdvance(order.status);
+  return (
+    order.status !== "AWAITING_ADMIN_CONFIRMATION" && canAdvance(order.status)
+  );
 }
 
 const BULK_TARGETS = [
-  { status: 'PACKED', label: 'Mark Packed', icon: PackageCheck, run: markOrdersPacked },
-  { status: 'OUT_FOR_DELIVERY', label: 'Out for Delivery', icon: Truck, run: markOrdersOutForDelivery },
-  { status: 'DELIVERED', label: 'Mark Delivered', icon: CheckCheck, run: markOrdersDelivered },
+  {
+    status: "PACKED",
+    label: "Mark Packed",
+    icon: PackageCheck,
+    run: markOrdersPacked,
+  },
+  {
+    status: "OUT_FOR_DELIVERY",
+    label: "Out for Delivery",
+    icon: Truck,
+    run: markOrdersOutForDelivery,
+  },
+  {
+    status: "DELIVERED",
+    label: "Mark Delivered",
+    icon: CheckCheck,
+    run: markOrdersDelivered,
+  },
 ];
 
 export default function AdminDashboard() {
   const { user, logout } = useAdminAuth();
   const navigate = useNavigate();
 
-  const { orders, ordersLoading: loading, ordersError, orderMergeProgress } = useAdminData();
+  const {
+    orders,
+    ordersLoading: loading,
+    ordersError,
+    orderMergeProgress,
+  } = useAdminData();
   const errored = !!ordersError;
-  const [statusFilter, setStatusFilter] = useState('ALL');
-  const [whatsappFilter, setWhatsappFilter] = useState('ALL');
-  const [editedFilter, setEditedFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [whatsappFilter, setWhatsappFilter] = useState("ALL");
+  const [editedFilter, setEditedFilter] = useState("ALL");
   const [dateFilter, setDateFilter] = useState([]);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [mergingMobile, setMergingMobile] = useState(null);
 
   // Bulk fulfilment-status update — see isBulkEligible/BULK_TARGETS above.
@@ -89,10 +122,12 @@ export default function AdminDashboard() {
     setBulkBusy(true);
     try {
       await confirmingBulkTarget.run(db, Array.from(selectedIds));
-      toast.success(`${selectedIds.size} order${selectedIds.size > 1 ? 's' : ''} marked as "${confirmingBulkTarget.label.replace('Mark ', '')}"`);
+      toast.success(
+        `${selectedIds.size} order${selectedIds.size > 1 ? "s" : ""} marked as "${confirmingBulkTarget.label.replace("Mark ", "")}"`,
+      );
       setSelectedIds(new Set());
     } catch (err) {
-      console.error('Bulk status update failed', err);
+      console.error("Bulk status update failed", err);
       toast.error("Couldn't update those orders. Please try again.");
     } finally {
       setBulkBusy(false);
@@ -105,10 +140,12 @@ export default function AdminDashboard() {
     try {
       await setOrderMergeSelection(db, mobile, orderIds);
       toast.success(
-        orderIds.length > 1 ? `Merged ${orderIds.length} orders into one estimate bill` : 'Merged into one estimate bill',
+        orderIds.length > 1
+          ? `Merged ${orderIds.length} orders into one estimate bill`
+          : "Merged into one estimate bill",
       );
     } catch (err) {
-      console.error('Failed to merge orders', err);
+      console.error("Failed to merge orders", err);
       toast.error("Couldn't merge those orders. Please try again.");
     } finally {
       setMergingMobile(null);
@@ -122,17 +159,17 @@ export default function AdminDashboard() {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/admin/login', { replace: true });
+      navigate("/admin/login", { replace: true });
     } catch (err) {
-      console.error('Logout failed', err);
-      toast.error('Could not sign out. Please try again.');
+      console.error("Logout failed", err);
+      toast.error("Could not sign out. Please try again.");
     }
   };
 
   const counts = useMemo(() => {
     const c = { ALL: orders.length };
     for (const status of ADMIN_STATUS_FILTERS) {
-      if (status === 'ALL') continue;
+      if (status === "ALL") continue;
       c[status] = orders.filter((o) => o.status === status).length;
     }
     return c;
@@ -145,8 +182,8 @@ export default function AdminDashboard() {
     const c = { ALL: orders.length, SENT: 0, PENDING: 0 };
     for (const order of orders) {
       const status = getWhatsappSendStatus(order);
-      if (status === 'SENT') c.SENT += 1;
-      else if (status === 'PENDING') c.PENDING += 1;
+      if (status === "SENT") c.SENT += 1;
+      else if (status === "PENDING") c.PENDING += 1;
     }
     return c;
   }, [orders]);
@@ -155,7 +192,7 @@ export default function AdminDashboard() {
   const editedCounts = useMemo(() => {
     const c = { ALL: orders.length, EDITED: 0 };
     for (const order of orders) {
-      if (getOrderEditStatus(order) === 'EDITED') c.EDITED += 1;
+      if (getOrderEditStatus(order) === "EDITED") c.EDITED += 1;
     }
     return c;
   }, [orders]);
@@ -168,13 +205,23 @@ export default function AdminDashboard() {
     const term = deferredSearch.trim().toLowerCase();
     const counts_ = new Map();
     for (const order of orders) {
-      if (statusFilter !== 'ALL' && order.status !== statusFilter) continue;
-      if (whatsappFilter !== 'ALL' && getWhatsappSendStatus(order) !== whatsappFilter) continue;
-      if (editedFilter !== 'ALL' && getOrderEditStatus(order) !== editedFilter) continue;
+      if (statusFilter !== "ALL" && order.status !== statusFilter) continue;
+      if (
+        whatsappFilter !== "ALL" &&
+        getWhatsappSendStatus(order) !== whatsappFilter
+      )
+        continue;
+      if (editedFilter !== "ALL" && getOrderEditStatus(order) !== editedFilter)
+        continue;
       if (term) {
-        const haystack = [order.orderId, order.id, order.customer?.name, order.customer?.mobile]
+        const haystack = [
+          order.orderId,
+          order.id,
+          order.customer?.name,
+          order.customer?.mobile,
+        ]
           .filter(Boolean)
-          .join(' ')
+          .join(" ")
           .toLowerCase();
         if (!haystack.includes(term)) continue;
       }
@@ -186,11 +233,11 @@ export default function AdminDashboard() {
     return Array.from(counts_.entries())
       .sort((a, b) => (a[0] < b[0] ? 1 : -1))
       .map(([value, count]) => {
-        const [y, m, d] = value.split('-').map(Number);
-        const label = new Date(y, m - 1, d).toLocaleDateString('en-IN', {
-          day: 'numeric',
-          month: 'short',
-          year: 'numeric',
+        const [y, m, d] = value.split("-").map(Number);
+        const label = new Date(y, m - 1, d).toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
         });
         return { value, label, count };
       });
@@ -200,34 +247,59 @@ export default function AdminDashboard() {
     const term = deferredSearch.trim().toLowerCase();
     const dateSet = new Set(dateFilter);
     return orders.filter((order) => {
-      if (statusFilter !== 'ALL' && order.status !== statusFilter) return false;
-      if (whatsappFilter !== 'ALL' && getWhatsappSendStatus(order) !== whatsappFilter) return false;
-      if (editedFilter !== 'ALL' && getOrderEditStatus(order) !== editedFilter) return false;
+      if (statusFilter !== "ALL" && order.status !== statusFilter) return false;
+      if (
+        whatsappFilter !== "ALL" &&
+        getWhatsappSendStatus(order) !== whatsappFilter
+      )
+        return false;
+      if (editedFilter !== "ALL" && getOrderEditStatus(order) !== editedFilter)
+        return false;
       if (dateSet.size) {
         const confirmed = getConfirmedDate(order);
-        if (!confirmed || !dateSet.has(toDateInputValue(confirmed))) return false;
+        if (!confirmed || !dateSet.has(toDateInputValue(confirmed)))
+          return false;
       }
       if (!term) return true;
-      const haystack = [order.orderId, order.id, order.customer?.name, order.customer?.mobile]
+      const haystack = [
+        order.orderId,
+        order.id,
+        order.customer?.name,
+        order.customer?.mobile,
+      ]
         .filter(Boolean)
-        .join(' ')
+        .join(" ")
         .toLowerCase();
       return haystack.includes(term);
     });
-  }, [orders, statusFilter, whatsappFilter, editedFilter, dateFilter, deferredSearch]);
+  }, [
+    orders,
+    statusFilter,
+    whatsappFilter,
+    editedFilter,
+    dateFilter,
+    deferredSearch,
+  ]);
 
-  const orderGroups = useMemo(() => buildOrderManagementGroups(filteredOrders), [filteredOrders]);
+  const orderGroups = useMemo(
+    () => buildOrderManagementGroups(filteredOrders),
+    [filteredOrders],
+  );
 
   const isFiltered =
-    statusFilter !== 'ALL' ||
-    whatsappFilter !== 'ALL' ||
-    editedFilter !== 'ALL' ||
+    statusFilter !== "ALL" ||
+    whatsappFilter !== "ALL" ||
+    editedFilter !== "ALL" ||
     dateFilter.length > 0 ||
     search.trim().length > 0;
 
   return (
     <div className="min-h-screen w-full bg-[#050505] pb-28 text-white">
-      <AdminOrdersHeader email={user?.email} orderCount={orders.length} onLogout={handleLogout} />
+      <AdminOrdersHeader
+        email={user?.email}
+        orderCount={orders.length}
+        onLogout={handleLogout}
+      />
       <AdminTabsNav />
 
       <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-5 sm:px-6">
@@ -245,11 +317,13 @@ export default function AdminDashboard() {
               onClick={toggleBulkMode}
               title="Select several orders and mark them Packed / Out for Delivery / Delivered together"
               className={`flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-2.5 text-[10.5px] font-bold transition-colors ${
-                bulkMode ? 'border-orange/50 bg-orange/15 text-orange' : 'border-white/10 bg-white/5 text-muted hover:text-[#f2ece2]'
+                bulkMode
+                  ? "border-orange/50 bg-orange/15 text-orange"
+                  : "border-white/10 bg-white/5 text-muted hover:text-[#f2ece2]"
               }`}
             >
               <ListChecks size={14} />
-              {bulkMode ? 'Cancel' : 'Bulk Update'}
+              {bulkMode ? "Cancel" : "Bulk Update"}
             </button>
           </div>
 
@@ -283,12 +357,28 @@ export default function AdminDashboard() {
           )}
         </div>
 
-        <OrderStatusFilterTabs activeStatus={statusFilter} onChange={setStatusFilter} counts={counts} />
+        <OrderStatusFilterTabs
+          activeStatus={statusFilter}
+          onChange={setStatusFilter}
+          counts={counts}
+        />
 
         <div className="flex flex-wrap items-center gap-2">
-          <WhatsappStatusFilter active={whatsappFilter} onChange={setWhatsappFilter} counts={whatsappCounts} />
-          <EditedOrdersFilter active={editedFilter} onChange={setEditedFilter} counts={editedCounts} />
-          <OrderDateFilter options={dateOptions} selected={dateFilter} onChange={setDateFilter} />
+          <WhatsappStatusFilter
+            active={whatsappFilter}
+            onChange={setWhatsappFilter}
+            counts={whatsappCounts}
+          />
+          <EditedOrdersFilter
+            active={editedFilter}
+            onChange={setEditedFilter}
+            counts={editedCounts}
+          />
+          <OrderDateFilter
+            options={dateOptions}
+            selected={dateFilter}
+            onChange={setDateFilter}
+          />
         </div>
 
         <div className="flex flex-col gap-3">
@@ -300,42 +390,59 @@ export default function AdminDashboard() {
             </>
           ) : errored ? (
             <div className="surface-3d rounded-2xl px-4 py-6 text-center text-[12px] text-muted">
-              Couldn't load orders right now. Please check your connection and try again.
+              Couldn't load orders right now. Please check your connection and
+              try again.
             </div>
           ) : filteredOrders.length === 0 ? (
             <AdminOrdersEmpty
               filtered={isFiltered}
               onClearFilters={() => {
-                setStatusFilter('ALL');
-                setWhatsappFilter('ALL');
-                setEditedFilter('ALL');
+                setStatusFilter("ALL");
+                setWhatsappFilter("ALL");
+                setEditedFilter("ALL");
                 setDateFilter([]);
-                setSearch('');
+                setSearch("");
               }}
             />
           ) : (
             orderGroups.map((group, i) => {
               const delay = Math.min(i, 8) * 0.04;
 
-              if (group.type === 'single') {
+              if (group.type === "single") {
                 const eligible = bulkMode && isBulkEligible(group.order);
-                const card = <AdminOrderCard order={group.order} delay={delay} index={i} />;
+                const card = (
+                  <AdminOrderCard order={group.order} delay={delay} index={i} />
+                );
                 if (!bulkMode) return <div key={group.order.id}>{card}</div>;
                 return (
-                  <BulkSelectRow key={group.order.id} eligible={eligible} selected={selectedIds.has(group.order.id)} onToggle={() => toggleSelected([group.order.id])}>
+                  <BulkSelectRow
+                    key={group.order.id}
+                    eligible={eligible}
+                    selected={selectedIds.has(group.order.id)}
+                    onToggle={() => toggleSelected([group.order.id])}
+                  >
                     {card}
                   </BulkSelectRow>
                 );
               }
 
-              if (group.type === 'confirmedCluster') {
+              if (group.type === "confirmedCluster") {
                 const ids = group.orders.map((o) => o.id);
                 const eligible = bulkMode && isBulkEligible(group.orders[0]);
-                const allSelected = ids.length > 0 && ids.every((id) => selectedIds.has(id));
-                const card = <MergedConfirmedCard orders={group.orders} delay={delay} />;
-                if (!bulkMode) return <div key={`invoice:${group.invoiceId}`}>{card}</div>;
+                const allSelected =
+                  ids.length > 0 && ids.every((id) => selectedIds.has(id));
+                const card = (
+                  <MergedConfirmedCard orders={group.orders} delay={delay} />
+                );
+                if (!bulkMode)
+                  return <div key={`invoice:${group.invoiceId}`}>{card}</div>;
                 return (
-                  <BulkSelectRow key={`invoice:${group.invoiceId}`} eligible={eligible} selected={allSelected} onToggle={() => toggleSelected(ids)}>
+                  <BulkSelectRow
+                    key={`invoice:${group.invoiceId}`}
+                    eligible={eligible}
+                    selected={allSelected}
+                    onToggle={() => toggleSelected(ids)}
+                  >
                     {card}
                   </BulkSelectRow>
                 );
@@ -346,15 +453,25 @@ export default function AdminDashboard() {
               // setOrderMergeSelection) decides which of these are actually
               // combined; anything not selected still renders as its own
               // separate AdminOrderCard right alongside.
-              const mergeDoc = orderMergeProgress[orderMergeKeyForMobile(group.mobile)];
-              const selectedIds = mergeDoc?.merged ? mergeDoc.orderIds || [] : [];
-              const selectedOrders = group.orders.filter((o) => selectedIds.includes(o.id));
-              const unselectedOrders = group.orders.filter((o) => !selectedIds.includes(o.id));
+              const mergeDoc =
+                orderMergeProgress[orderMergeKeyForMobile(group.mobile)];
+              const mergedOrderIds = mergeDoc?.merged
+                ? mergeDoc.orderIds || []
+                : [];
+              const selectedOrders = group.orders.filter((o) =>
+                mergedOrderIds.includes(o.id),
+              );
+              const unselectedOrders = group.orders.filter(
+                (o) => !mergedOrderIds.includes(o.id),
+              );
               const isMerged = selectedOrders.length > 1;
 
               if (isMerged) {
                 return (
-                  <div key={`cluster:${group.mobile}`} className="flex flex-col gap-3">
+                  <div
+                    key={`cluster:${group.mobile}`}
+                    className="flex flex-col gap-3"
+                  >
                     <MergedEstimateCard
                       mobile={group.mobile}
                       orders={selectedOrders}
@@ -362,14 +479,22 @@ export default function AdminDashboard() {
                       delay={delay}
                     />
                     {unselectedOrders.map((order, j) => (
-                      <AdminOrderCard key={order.id} order={order} delay={delay} index={i + j} />
+                      <AdminOrderCard
+                        key={order.id}
+                        order={order}
+                        delay={delay}
+                        index={i + j}
+                      />
                     ))}
                   </div>
                 );
               }
 
               return (
-                <div key={`cluster:${group.mobile}`} className="flex flex-col gap-3">
+                <div
+                  key={`cluster:${group.mobile}`}
+                  className="flex flex-col gap-3"
+                >
                   <MergeSelectionBanner
                     mobile={group.mobile}
                     orders={group.orders}
@@ -377,7 +502,12 @@ export default function AdminDashboard() {
                     onMerge={(orderIds) => handleMerge(group.mobile, orderIds)}
                   />
                   {group.orders.map((order, j) => (
-                    <AdminOrderCard key={order.id} order={order} delay={delay} index={i + j} />
+                    <AdminOrderCard
+                      key={order.id}
+                      order={order}
+                      delay={delay}
+                      index={i + j}
+                    />
                   ))}
                 </div>
               );
@@ -388,14 +518,18 @@ export default function AdminDashboard() {
 
       <ConfirmDeleteDialog
         open={!!confirmingBulkTarget}
-        title={confirmingBulkTarget ? `${confirmingBulkTarget.label} for ${selectedIds.size} orders?` : ''}
+        title={
+          confirmingBulkTarget
+            ? `${confirmingBulkTarget.label} for ${selectedIds.size} orders?`
+            : ""
+        }
         description={
           confirmingBulkTarget
-            ? `${selectedIds.size} selected order${selectedIds.size > 1 ? 's' : ''} will be updated to "${getOrderStatusMeta(confirmingBulkTarget.status).label}" — regardless of their current stage. Use this once you've already packed/dispatched/delivered them physically.`
-            : ''
+            ? `${selectedIds.size} selected order${selectedIds.size > 1 ? "s" : ""} will be updated to "${getOrderStatusMeta(confirmingBulkTarget.status).label}" — regardless of their current stage. Use this once you've already packed/dispatched/delivered them physically.`
+            : ""
         }
         busy={bulkBusy}
-        confirmLabel={confirmingBulkTarget?.label || 'Update'}
+        confirmLabel={confirmingBulkTarget?.label || "Update"}
         tone="success"
         onConfirm={handleConfirmBulkUpdate}
         onCancel={() => setConfirmingBulkTarget(null)}
@@ -418,7 +552,9 @@ function BulkSelectRow({ eligible, selected, onToggle, children }) {
           <button
             type="button"
             onClick={onToggle}
-            className={selected ? 'text-orange' : 'text-muted hover:text-[#f2ece2]'}
+            className={
+              selected ? "text-orange" : "text-muted hover:text-[#f2ece2]"
+            }
           >
             {selected ? <CheckSquare size={19} /> : <Square size={19} />}
           </button>
