@@ -226,6 +226,81 @@ export async function createInvoiceForMergedOrders(db, childOrders, opts = {}) {
   return { id: ref.id, ...payload };
 }
 
+/**
+ * Folds one or more still-AWAITING orders into an EXISTING confirmed
+ * invoice instead of creating a new one — the "Add order to this invoice"
+ * action on MergedConfirmedCard, for when a customer places another order
+ * after their earlier ones were already merged, paid, and invoiced. Each
+ * new order is confirmed (status/paymentStatus/paymentConfirmedAt) and
+ * pointed at the same invoiceId, and its line items are appended onto the
+ * invoice's own `items` (re-numbered so ids stay unique across the combined
+ * list — purely cosmetic, nothing downstream keys off the old per-order
+ * numbering). Totals are recomputed from the full combined item list, same
+ * formula as everywhere else (computeInvoiceTotals).
+ *
+ * `newOrders` should already be priced (see getEffectivePricedOrder) the
+ * same way MergedEstimateCard/AdminOrderCard price an order right before
+ * confirming it — this only reads pricing fields off what's passed in, it
+ * doesn't reprice anything itself.
+ */
+export async function addOrdersToInvoice(db, invoiceDocId, newOrders, opts = {}) {
+  const invoiceRef = doc(db, 'invoices', invoiceDocId);
+  const invoiceSnap = await getDoc(invoiceRef);
+  if (!invoiceSnap.exists()) {
+    throw new Error('Invoice not found');
+  }
+  const invoice = invoiceSnap.data();
+
+  const { confirmedDate } = opts;
+  const paymentConfirmedAt =
+    confirmedDate instanceof Date && !Number.isNaN(confirmedDate.getTime()) ? confirmedDate : new Date();
+
+  const newItems = newOrders.flatMap((order) => orderToInvoiceItems(order));
+  const items = [...(invoice.items || []), ...newItems].map((item, i) => ({
+    ...item,
+    id: `${i + 1}`,
+  }));
+  const packagePercent = invoice.packagePercent ?? DEFAULT_PACKAGE_PERCENT;
+  const { subtotal, packageAmount, grandTotal } = computeInvoiceTotals({ items, packagePercent });
+
+  const existingOrderDocIds = invoice.orderDocIds || (invoice.orderDocId ? [invoice.orderDocId] : []);
+  const orderDocIds = Array.from(new Set([...existingOrderDocIds, ...newOrders.map((o) => o.id)]));
+  const orderId = [invoice.orderId, ...newOrders.map((o) => o.orderId || o.id)].filter(Boolean).join(' + ');
+
+  const batch = writeBatch(db);
+  batch.update(invoiceRef, {
+    orderId,
+    orderDocId: null,
+    orderDocIds,
+    items,
+    subtotal,
+    packageAmount,
+    grandTotal,
+    cartDiscountAmount: (invoice.cartDiscountAmount || 0) + newOrders.reduce((sum, o) => sum + (o.discount || 0), 0),
+    updatedAt: serverTimestamp(),
+  });
+  newOrders.forEach((order) => {
+    batch.update(doc(db, 'orders', order.id), {
+      status: 'CONFIRMED',
+      paymentStatus: 'RECEIVED',
+      cartItems: order.cartItems,
+      subtotal: order.subtotal,
+      discount: order.discount,
+      packingCharges: order.packingCharges,
+      deliveryCharges: order.deliveryCharges,
+      grandTotal: order.grandTotal,
+      totalSavings: order.totalSavings,
+      paymentConfirmedAt,
+      invoiceId: invoiceDocId,
+      invoiceNo: invoice.invoiceNo,
+      updatedAt: serverTimestamp(),
+    });
+  });
+  await batch.commit();
+
+  return { id: invoiceDocId, ...invoice, orderId, orderDocId: null, orderDocIds, items, subtotal, packageAmount, grandTotal };
+}
+
 /** Creates a standalone invoice from the admin "New Invoice" form (phone-in orders, no website order behind it). */
 export async function createManualInvoice(db, values) {
   const packagePercent = values.packagePercent ?? DEFAULT_PACKAGE_PERCENT;

@@ -10,10 +10,11 @@ import {
   Loader2,
   Ungroup,
   CircleDollarSign,
+  ListChecks,
 } from "lucide-react";
 import { toast } from "sonner";
 import { db } from "../../firebase/config";
-import { setOrderMergeToggle } from "../../services/orderMergeFirestore";
+import { setOrderMergeToggle, setOrderMergeSelection } from "../../services/orderMergeFirestore";
 import { setPackingMergeToggle } from "../../services/packingFirestore";
 import { updateOrderStatus } from "../../services/ordersFirestore";
 import { createInvoiceForMergedOrders } from "../../services/invoicesFirestore";
@@ -27,6 +28,7 @@ import { openWhatsappChat } from "../../utils/whatsappChat";
 import BillPreviewModal from "./BillPreviewModal";
 import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
 import PaymentDateCalendar from "./PaymentDateCalendar";
+import MergeSelectionBanner from "./MergeSelectionBanner";
 import AdminOrderCard from "./AdminOrderCard";
 
 /** Combines several same-customer orders into one synthetic order-shaped
@@ -57,9 +59,11 @@ function buildMergedEstimate(childOrders, productsById) {
 }
 
 // See AdminOrderCard.jsx's memo() note — same reasoning applies here.
-function MergedEstimateCard({ mobile, orders, delay = 0 }) {
+function MergedEstimateCard({ mobile, orders, allSiblings, delay = 0 }) {
   const [expanded, setExpanded] = useState(false);
   const [unmerging, setUnmerging] = useState(false);
+  const [editingSelection, setEditingSelection] = useState(false);
+  const [savingSelection, setSavingSelection] = useState(false);
   const [previewBill, setPreviewBill] = useState(null);
   const [downloading, setDownloading] = useState(false);
   const [sendingMessage, setSendingMessage] = useState(false);
@@ -90,6 +94,26 @@ function MergedEstimateCard({ mobile, orders, delay = 0 }) {
       toast.error("Couldn't unmerge. Please try again.");
     } finally {
       setUnmerging(false);
+    }
+  };
+
+  // Re-opens the same checklist used to create the merge, pre-checked with
+  // the current selection, against the customer's FULL current sibling set
+  // (allSiblings) — so a new order placed after the original merge shows up
+  // here ready to add in, not just the orders picked the first time.
+  const handleSaveSelection = async (orderIds) => {
+    setSavingSelection(true);
+    try {
+      await setOrderMergeSelection(db, mobile, orderIds);
+      toast.success(
+        orderIds.length > 1 ? `Merge updated — ${orderIds.length} orders selected` : "Unmerged — showing separate estimate bills again",
+      );
+      setEditingSelection(false);
+    } catch (err) {
+      console.error("Failed to update merge selection", err);
+      toast.error("Couldn't update the merge. Please try again.");
+    } finally {
+      setSavingSelection(false);
     }
   };
 
@@ -248,17 +272,43 @@ function MergedEstimateCard({ mobile, orders, delay = 0 }) {
               </div>
               <div className="text-[10px] text-muted">{first.customer?.mobile}</div>
             </div>
-            <button
-              type="button"
-              onClick={handleUnmerge}
-              disabled={unmerging}
-              title="Split back into separate estimate bills"
-              className="btn-3d-outline flex items-center gap-1.5 rounded-xl px-3 py-2 text-[10.5px] font-bold text-gold disabled:opacity-50"
-            >
-              {unmerging ? <Loader2 size={12} className="animate-spin" /> : <Ungroup size={12} />}
-              Unmerge
-            </button>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditingSelection((v) => !v);
+                }}
+                title="Change which orders are included in this merge"
+                className="btn-3d-outline flex items-center gap-1.5 rounded-xl px-3 py-2 text-[10.5px] font-bold text-gold"
+              >
+                <ListChecks size={12} />
+                Edit Selection
+              </button>
+              <button
+                type="button"
+                onClick={handleUnmerge}
+                disabled={unmerging}
+                title="Split back into separate estimate bills"
+                className="btn-3d-outline flex items-center gap-1.5 rounded-xl px-3 py-2 text-[10.5px] font-bold text-gold disabled:opacity-50"
+              >
+                {unmerging ? <Loader2 size={12} className="animate-spin" /> : <Ungroup size={12} />}
+                Unmerge
+              </button>
+            </div>
           </div>
+
+          {editingSelection && (
+            <MergeSelectionBanner
+              mobile={mobile}
+              orders={allSiblings || orders}
+              initialSelectedIds={orders.map((o) => o.id)}
+              mode="edit"
+              merging={savingSelection}
+              onMerge={handleSaveSelection}
+              onCancel={() => setEditingSelection(false)}
+            />
+          )}
 
           {/* Parent order chips */}
           <div className="flex flex-wrap gap-1.5">
@@ -367,7 +417,12 @@ function MergedEstimateCard({ mobile, orders, delay = 0 }) {
               >
                 <div className="flex flex-col gap-2.5 pt-1">
                   {orders.map((o, i) => (
-                    <AdminOrderCard key={o.id} order={o} index={i} />
+                    <AdminOrderCard
+                      key={o.id}
+                      order={o}
+                      index={i}
+                      mergedGroupHint="This order is part of a merge — use “Confirm Payment for All” above so it stays on one combined invoice."
+                    />
                   ))}
                 </div>
               </motion.div>

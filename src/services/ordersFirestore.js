@@ -10,17 +10,20 @@ import {
   deleteDoc,
   updateDoc,
   serverTimestamp,
+  increment,
   collection,
   query,
   where,
   orderBy,
   limit,
+  getDoc,
   getDocs,
   onSnapshot,
   writeBatch,
 } from "firebase/firestore";
 import { reserveSequentialId } from "../utils/sequentialId";
 import { formatFullAddress } from "../utils/formatAddress";
+import { computeCartDiff } from "../utils/orderEditDiff";
 
 /**
  * Generates the order id, e.g. "ABSO20260801108" — ABSO + today's date +
@@ -299,11 +302,84 @@ export function computeOrderPricing(items) {
  * OrderCard's "Edit Order" button and EditOrderReviewModal's "Confirm"),
  * so this never touches `status`. Recomputes every pricing field from the
  * new item list so nothing goes stale.
+ *
+ * Also records the edit for the admin Order Management page:
+ *   - `edited` / `editCount` / `lastEditedAt` on the order doc itself, so
+ *     the list can badge + filter "edited" orders with no extra reads.
+ *   - `lastEditDiff` (see computeCartDiff) on the order doc, so the card
+ *     can highlight exactly which line items changed without fetching
+ *     history.
+ *   - a full snapshot (before + after) appended to the
+ *     orders/{orderDocId}/editHistory subcollection, so every past edit —
+ *     not just the latest — stays inspectable (see getOrderEditHistory).
+ * Reads the order doc first (inside the same call, not a transaction —
+ * two customers editing the same order at once isn't a real scenario here)
+ * to capture the "before" snapshot, since it would otherwise be gone the
+ * instant this overwrites it.
  */
 export async function updateOrderItems(db, orderDocId, items) {
   const pricing = computeOrderPricing(items);
   const ref = doc(db, "orders", orderDocId);
-  await updateDoc(ref, { ...pricing, updatedAt: serverTimestamp() });
+
+  const snap = await getDoc(ref);
+  const previous = snap.exists() ? snap.data() : null;
+  const previousItems = previous?.cartItems || [];
+  const diff = computeCartDiff(previousItems, pricing.cartItems);
+
+  const batch = writeBatch(db);
+  const patch = { ...pricing, updatedAt: serverTimestamp() };
+
+  // Only badge this as an "edit" when the item list actually changed —
+  // re-opening Edit Order and confirming with nothing changed shouldn't
+  // light up the Edited filter/badge or add a no-op history entry.
+  if (diff.hasChanges) {
+    patch.edited = true;
+    patch.editCount = increment(1);
+    patch.lastEditedAt = serverTimestamp();
+    patch.lastEditDiff = diff;
+  }
+  batch.update(ref, patch);
+
+  if (diff.hasChanges && previous) {
+    const historyRef = doc(collection(db, "orders", orderDocId, "editHistory"));
+    batch.set(historyRef, {
+      editedAt: serverTimestamp(),
+      previousCartItems: previousItems,
+      previousPricing: {
+        subtotal: previous.subtotal ?? 0,
+        discount: previous.discount ?? 0,
+        packingCharges: previous.packingCharges ?? 0,
+        deliveryCharges: previous.deliveryCharges ?? 0,
+        grandTotal: previous.grandTotal ?? 0,
+      },
+      newCartItems: pricing.cartItems,
+      newPricing: {
+        subtotal: pricing.subtotal,
+        discount: pricing.discount,
+        packingCharges: pricing.packingCharges,
+        deliveryCharges: pricing.deliveryCharges,
+        grandTotal: pricing.grandTotal,
+      },
+      diff,
+    });
+  }
+
+  await batch.commit();
+}
+
+/**
+ * One-time fetch of every past edit for one order, newest first — powers
+ * the "Edit History" view on the admin Order Management card (see
+ * AdminOrderCard's EditHistoryModal). Each entry is a full before/after
+ * snapshot written by updateOrderItems above.
+ */
+export async function getOrderEditHistory(db, orderDocId) {
+  const q = query(
+    collection(db, "orders", orderDocId, "editHistory"),
+    orderBy("editedAt", "desc"),
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
 /**

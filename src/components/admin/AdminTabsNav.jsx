@@ -30,6 +30,10 @@ import absLogo from '../../assets/abs-logo.png';
 // the admin's own complaint about the old flat single-color grid.
 const MORE_GROUPS = [
   {
+    title: 'Fulfillment',
+    links: [{ to: '/admin/packing', label: 'Packing', icon: PackageOpen, color: '#4DB6AC' }],
+  },
+  {
     title: 'Catalog & Pricing',
     links: [
       { to: '/admin/products', label: 'Products', icon: PackageSearch, color: '#4FC3F7' },
@@ -61,19 +65,25 @@ function tabForPath(pathname) {
   if (pathname === '/admin' || pathname === '/admin/') return 'overview';
   if (pathname.startsWith('/admin/orders')) return 'orders';
   if (pathname.startsWith('/admin/payment-confirmation')) return 'payment';
-  if (pathname.startsWith('/admin/packing')) return 'packing';
   if (pathname.startsWith('/admin/delivery')) return 'deliver';
   if (MORE_LINKS.some((l) => pathname.startsWith(l.to))) return 'more';
   return 'overview';
 }
 
 /**
- * Fixed bottom nav for every /admin/* screen. Six slots around the raised
+ * Fixed bottom nav for every /admin/* screen. Five slots around the raised
  * center emblem: Orders (the full, everything-in-one-place order list —
- * unchanged), Payment, Packing, [Overview], Deliver, More. Payment sits
- * here rather than only inside "More" because — like Packing/Deliver — the
- * admin taps it dozens of times a day; burying a daily-use screen behind a
- * sheet just to keep the bar symmetrical isn't worth the extra tap.
+ * unchanged), Payment, [Overview], Deliver, More. Payment sits here rather
+ * than only inside "More" because — like Deliver — the admin taps it dozens
+ * of times a day; burying a daily-use screen behind a sheet just to keep
+ * the bar symmetrical isn't worth the extra tap.
+ *
+ * Packing used to have its own slot here too, but Order Management's bulk
+ * "Mark Packed / Out for Delivery / Delivered" action (see AdminDashboard's
+ * BULK_TARGETS) now covers the everyday case of moving a batch of orders
+ * along, so the dedicated checklist-driven Packing screen moved into "More"
+ * (Fulfillment group) — still there for the rare item-by-item packing pass,
+ * just no longer prominent enough to earn a main-bar slot.
  *
  * Kept as the same component name/import path (AdminTabsNav) so every
  * existing admin page that renders <AdminTabsNav /> picks this up for free.
@@ -96,7 +106,6 @@ export default function AdminTabsNav() {
       >
         <NavItem icon={ClipboardList} label="Orders" active={active === 'orders'} onClick={() => navigate('/admin/orders')} badge={pendingOrders} />
         <NavItem icon={CircleDollarSign} label="Payment" active={active === 'payment'} onClick={() => navigate('/admin/payment-confirmation')} badge={awaitingPayment} />
-        <NavItem icon={PackageOpen} label="Packing" active={active === 'packing'} onClick={() => navigate('/admin/packing')} />
 
         {/* Raised center emblem — same idea as the customer nav's home button */}
         <button

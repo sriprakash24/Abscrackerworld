@@ -1,47 +1,52 @@
 import { useDeferredValue, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Layers2, Loader2 } from 'lucide-react';
+import { ListChecks, CheckSquare, Square, PackageCheck, Truck, CheckCheck, X } from 'lucide-react';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { useAdminData } from '../../contexts/AdminDataContext';
-import { ADMIN_STATUS_FILTERS } from '../../constants/orderActions';
+import { ADMIN_STATUS_FILTERS, canAdvance } from '../../constants/orderActions';
+import { getOrderStatusMeta } from '../../constants/orderStatusMeta';
 import { db } from '../../firebase/config';
-import { orderMergeKeyForMobile, setOrderMergeToggle } from '../../services/orderMergeFirestore';
+import { orderMergeKeyForMobile, setOrderMergeSelection } from '../../services/orderMergeFirestore';
+import {
+  markOrdersPacked,
+  markOrdersOutForDelivery,
+  markOrdersDelivered,
+} from '../../services/ordersFirestore';
 import AdminOrdersHeader from '../../components/admin/AdminOrdersHeader';
 import AdminTabsNav from '../../components/admin/AdminTabsNav';
 import AdminStatsStrip from '../../components/admin/AdminStatsStrip';
 import OrderStatusFilterTabs from '../../components/admin/OrderStatusFilterTabs';
 import WhatsappStatusFilter from '../../components/admin/WhatsappStatusFilter';
+import EditedOrdersFilter from '../../components/admin/EditedOrdersFilter';
 import OrderDateFilter from '../../components/admin/OrderDateFilter';
 import AdminOrderSearchBar from '../../components/admin/AdminOrderSearchBar';
 import AdminOrderCard from '../../components/admin/AdminOrderCard';
 import AdminOrderCardSkeleton from '../../components/admin/AdminOrderCardSkeleton';
 import AdminOrdersEmpty from '../../components/admin/AdminOrdersEmpty';
 import MergedEstimateCard from '../../components/admin/MergedEstimateCard';
+import MergedConfirmedCard from '../../components/admin/MergedConfirmedCard';
+import MergeSelectionBanner from '../../components/admin/MergeSelectionBanner';
+import ConfirmDeleteDialog from '../../components/admin/ConfirmDeleteDialog';
 import { getWhatsappSendStatus } from '../../utils/whatsappSendStatus';
+import { getOrderEditStatus } from '../../utils/orderEditStatus';
 import { getConfirmedDate, toDateInputValue } from '../../utils/orderDates';
-import { buildAwaitingMergeGroups } from '../../utils/orderMergeGroups';
+import { buildOrderManagementGroups } from '../../utils/orderMergeGroups';
 
-/** Small banner offering to combine a not-yet-merged cluster's estimate
- * bills into one — sits above that cluster's individual order cards. */
-function MergeSuggestionBanner({ mobile, count, onMerge, merging }) {
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-dashed border-orange/40 bg-orange/5 px-4 py-3">
-      <div className="flex items-center gap-2 text-[11px] font-bold text-orange">
-        <Layers2 size={14} />
-        {count} orders from this number — combine into one estimate bill?
-      </div>
-      <button
-        onClick={onMerge}
-        disabled={merging}
-        className="flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-b from-[#e35226] to-[#b8391a] px-3.5 py-2 text-[10.5px] font-bold text-white disabled:opacity-50"
-      >
-        {merging ? <Loader2 size={12} className="animate-spin" /> : <Layers2 size={12} />}
-        Merge
-      </button>
-    </div>
-  );
+// Bulk status update only ever applies past payment — Confirmed / Packed /
+// Out for Delivery orders can be batch-advanced since it's just a fulfilment
+// status flip. AWAITING_ADMIN_CONFIRMATION is deliberately excluded: payment
+// is manual (bank transfer / UPI, checked one at a time), so "Confirm
+// Payment" always stays a per-order action — never offered here.
+function isBulkEligible(order) {
+  return order.status !== 'AWAITING_ADMIN_CONFIRMATION' && canAdvance(order.status);
 }
+
+const BULK_TARGETS = [
+  { status: 'PACKED', label: 'Mark Packed', icon: PackageCheck, run: markOrdersPacked },
+  { status: 'OUT_FOR_DELIVERY', label: 'Out for Delivery', icon: Truck, run: markOrdersOutForDelivery },
+  { status: 'DELIVERED', label: 'Mark Delivered', icon: CheckCheck, run: markOrdersDelivered },
+];
 
 export default function AdminDashboard() {
   const { user, logout } = useAdminAuth();
@@ -51,15 +56,57 @@ export default function AdminDashboard() {
   const errored = !!ordersError;
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [whatsappFilter, setWhatsappFilter] = useState('ALL');
+  const [editedFilter, setEditedFilter] = useState('ALL');
   const [dateFilter, setDateFilter] = useState([]);
   const [search, setSearch] = useState('');
   const [mergingMobile, setMergingMobile] = useState(null);
 
-  const handleMerge = async (mobile) => {
+  // Bulk fulfilment-status update — see isBulkEligible/BULK_TARGETS above.
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [confirmingBulkTarget, setConfirmingBulkTarget] = useState(null);
+  const [bulkBusy, setBulkBusy] = useState(false);
+
+  const toggleBulkMode = () => {
+    setBulkMode((v) => !v);
+    setSelectedIds(new Set());
+  };
+
+  // Shared by both a single order's checkbox and a merged group's — a
+  // merged group's orders always move together (one shared invoice), so
+  // passing every id in the group here selects/deselects it as one unit.
+  const toggleSelected = (ids) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      const allSelected = ids.every((id) => next.has(id));
+      ids.forEach((id) => (allSelected ? next.delete(id) : next.add(id)));
+      return next;
+    });
+  };
+
+  const handleConfirmBulkUpdate = async () => {
+    if (!confirmingBulkTarget || selectedIds.size === 0) return;
+    setBulkBusy(true);
+    try {
+      await confirmingBulkTarget.run(db, Array.from(selectedIds));
+      toast.success(`${selectedIds.size} order${selectedIds.size > 1 ? 's' : ''} marked as "${confirmingBulkTarget.label.replace('Mark ', '')}"`);
+      setSelectedIds(new Set());
+    } catch (err) {
+      console.error('Bulk status update failed', err);
+      toast.error("Couldn't update those orders. Please try again.");
+    } finally {
+      setBulkBusy(false);
+      setConfirmingBulkTarget(null);
+    }
+  };
+
+  const handleMerge = async (mobile, orderIds) => {
     setMergingMobile(mobile);
     try {
-      await setOrderMergeToggle(db, mobile, true);
-      toast.success('Merged into one estimate bill');
+      await setOrderMergeSelection(db, mobile, orderIds);
+      toast.success(
+        orderIds.length > 1 ? `Merged ${orderIds.length} orders into one estimate bill` : 'Merged into one estimate bill',
+      );
     } catch (err) {
       console.error('Failed to merge orders', err);
       toast.error("Couldn't merge those orders. Please try again.");
@@ -104,6 +151,15 @@ export default function AdminDashboard() {
     return c;
   }, [orders]);
 
+  // Counts for the Edited-orders filter — same spirit as `whatsappCounts`.
+  const editedCounts = useMemo(() => {
+    const c = { ALL: orders.length, EDITED: 0 };
+    for (const order of orders) {
+      if (getOrderEditStatus(order) === 'EDITED') c.EDITED += 1;
+    }
+    return c;
+  }, [orders]);
+
   // Same calendar-with-counts pattern as the Packing/Delivery pages — how
   // many orders fall on each date, counted after search/status/WhatsApp
   // narrow the set but before the date filter itself, so ticking one date
@@ -114,6 +170,7 @@ export default function AdminDashboard() {
     for (const order of orders) {
       if (statusFilter !== 'ALL' && order.status !== statusFilter) continue;
       if (whatsappFilter !== 'ALL' && getWhatsappSendStatus(order) !== whatsappFilter) continue;
+      if (editedFilter !== 'ALL' && getOrderEditStatus(order) !== editedFilter) continue;
       if (term) {
         const haystack = [order.orderId, order.id, order.customer?.name, order.customer?.mobile]
           .filter(Boolean)
@@ -137,7 +194,7 @@ export default function AdminDashboard() {
         });
         return { value, label, count };
       });
-  }, [orders, deferredSearch, statusFilter, whatsappFilter]);
+  }, [orders, deferredSearch, statusFilter, whatsappFilter, editedFilter]);
 
   const filteredOrders = useMemo(() => {
     const term = deferredSearch.trim().toLowerCase();
@@ -145,6 +202,7 @@ export default function AdminDashboard() {
     return orders.filter((order) => {
       if (statusFilter !== 'ALL' && order.status !== statusFilter) return false;
       if (whatsappFilter !== 'ALL' && getWhatsappSendStatus(order) !== whatsappFilter) return false;
+      if (editedFilter !== 'ALL' && getOrderEditStatus(order) !== editedFilter) return false;
       if (dateSet.size) {
         const confirmed = getConfirmedDate(order);
         if (!confirmed || !dateSet.has(toDateInputValue(confirmed))) return false;
@@ -156,12 +214,16 @@ export default function AdminDashboard() {
         .toLowerCase();
       return haystack.includes(term);
     });
-  }, [orders, statusFilter, whatsappFilter, dateFilter, deferredSearch]);
+  }, [orders, statusFilter, whatsappFilter, editedFilter, dateFilter, deferredSearch]);
 
-  const orderGroups = useMemo(() => buildAwaitingMergeGroups(filteredOrders), [filteredOrders]);
+  const orderGroups = useMemo(() => buildOrderManagementGroups(filteredOrders), [filteredOrders]);
 
   const isFiltered =
-    statusFilter !== 'ALL' || whatsappFilter !== 'ALL' || dateFilter.length > 0 || search.trim().length > 0;
+    statusFilter !== 'ALL' ||
+    whatsappFilter !== 'ALL' ||
+    editedFilter !== 'ALL' ||
+    dateFilter.length > 0 ||
+    search.trim().length > 0;
 
   return (
     <div className="min-h-screen w-full bg-[#050505] pb-28 text-white">
@@ -173,14 +235,59 @@ export default function AdminDashboard() {
 
         {/* Sticky so the admin can always search/filter without scrolling
             back up, even deep into a long order list. */}
-        <div className="sticky top-16 z-20 -mx-4 bg-[#050505]/95 px-4 pb-2 pt-1 backdrop-blur-sm sm:-mx-6 sm:px-6">
-          <AdminOrderSearchBar value={search} onChange={setSearch} />
+        <div className="sticky top-16 z-20 -mx-4 flex flex-col gap-2 bg-[#050505]/95 px-4 pb-2 pt-1 backdrop-blur-sm sm:-mx-6 sm:px-6">
+          <div className="flex items-center gap-2">
+            <div className="flex-1">
+              <AdminOrderSearchBar value={search} onChange={setSearch} />
+            </div>
+            <button
+              type="button"
+              onClick={toggleBulkMode}
+              title="Select several orders and mark them Packed / Out for Delivery / Delivered together"
+              className={`flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-2.5 text-[10.5px] font-bold transition-colors ${
+                bulkMode ? 'border-orange/50 bg-orange/15 text-orange' : 'border-white/10 bg-white/5 text-muted hover:text-[#f2ece2]'
+              }`}
+            >
+              <ListChecks size={14} />
+              {bulkMode ? 'Cancel' : 'Bulk Update'}
+            </button>
+          </div>
+
+          {/* Selection summary + the 3 batch actions — payment confirmation
+              is deliberately not offered here, see isBulkEligible above. */}
+          {bulkMode && selectedIds.size > 0 && (
+            <div className="surface-3d flex flex-wrap items-center gap-2 rounded-xl border border-orange/30 px-3 py-2.5">
+              <span className="mr-1 shrink-0 text-[11px] font-extrabold text-[#f2ece2]">
+                {selectedIds.size} selected
+              </span>
+              {BULK_TARGETS.map((target) => (
+                <button
+                  key={target.status}
+                  type="button"
+                  onClick={() => setConfirmingBulkTarget(target)}
+                  className="btn-3d-outline flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-[10.5px] font-bold text-gold"
+                >
+                  <target.icon size={12} />
+                  {target.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setSelectedIds(new Set())}
+                title="Clear selection"
+                className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted hover:text-[#f2ece2]"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
         </div>
 
         <OrderStatusFilterTabs activeStatus={statusFilter} onChange={setStatusFilter} counts={counts} />
 
         <div className="flex flex-wrap items-center gap-2">
           <WhatsappStatusFilter active={whatsappFilter} onChange={setWhatsappFilter} counts={whatsappCounts} />
+          <EditedOrdersFilter active={editedFilter} onChange={setEditedFilter} counts={editedCounts} />
           <OrderDateFilter options={dateOptions} selected={dateFilter} onChange={setDateFilter} />
         </div>
 
@@ -201,6 +308,7 @@ export default function AdminDashboard() {
               onClearFilters={() => {
                 setStatusFilter('ALL');
                 setWhatsappFilter('ALL');
+                setEditedFilter('ALL');
                 setDateFilter([]);
                 setSearch('');
               }}
@@ -208,29 +316,65 @@ export default function AdminDashboard() {
           ) : (
             orderGroups.map((group, i) => {
               const delay = Math.min(i, 8) * 0.04;
+
               if (group.type === 'single') {
+                const eligible = bulkMode && isBulkEligible(group.order);
+                const card = <AdminOrderCard order={group.order} delay={delay} index={i} />;
+                if (!bulkMode) return <div key={group.order.id}>{card}</div>;
                 return (
-                  <AdminOrderCard key={group.order.id} order={group.order} delay={delay} index={i} />
+                  <BulkSelectRow key={group.order.id} eligible={eligible} selected={selectedIds.has(group.order.id)} onToggle={() => toggleSelected([group.order.id])}>
+                    {card}
+                  </BulkSelectRow>
                 );
               }
-              const merged = !!orderMergeProgress[orderMergeKeyForMobile(group.mobile)]?.merged;
-              if (merged) {
+
+              if (group.type === 'confirmedCluster') {
+                const ids = group.orders.map((o) => o.id);
+                const eligible = bulkMode && isBulkEligible(group.orders[0]);
+                const allSelected = ids.length > 0 && ids.every((id) => selectedIds.has(id));
+                const card = <MergedConfirmedCard orders={group.orders} delay={delay} />;
+                if (!bulkMode) return <div key={`invoice:${group.invoiceId}`}>{card}</div>;
                 return (
-                  <MergedEstimateCard
-                    key={`cluster:${group.mobile}`}
-                    mobile={group.mobile}
-                    orders={group.orders}
-                    delay={delay}
-                  />
+                  <BulkSelectRow key={`invoice:${group.invoiceId}`} eligible={eligible} selected={allSelected} onToggle={() => toggleSelected(ids)}>
+                    {card}
+                  </BulkSelectRow>
                 );
               }
+
+              // awaitingCluster — 2+ still-unconfirmed orders from the same
+              // mobile number. The merge doc's `orderIds` (see
+              // setOrderMergeSelection) decides which of these are actually
+              // combined; anything not selected still renders as its own
+              // separate AdminOrderCard right alongside.
+              const mergeDoc = orderMergeProgress[orderMergeKeyForMobile(group.mobile)];
+              const selectedIds = mergeDoc?.merged ? mergeDoc.orderIds || [] : [];
+              const selectedOrders = group.orders.filter((o) => selectedIds.includes(o.id));
+              const unselectedOrders = group.orders.filter((o) => !selectedIds.includes(o.id));
+              const isMerged = selectedOrders.length > 1;
+
+              if (isMerged) {
+                return (
+                  <div key={`cluster:${group.mobile}`} className="flex flex-col gap-3">
+                    <MergedEstimateCard
+                      mobile={group.mobile}
+                      orders={selectedOrders}
+                      allSiblings={group.orders}
+                      delay={delay}
+                    />
+                    {unselectedOrders.map((order, j) => (
+                      <AdminOrderCard key={order.id} order={order} delay={delay} index={i + j} />
+                    ))}
+                  </div>
+                );
+              }
+
               return (
                 <div key={`cluster:${group.mobile}`} className="flex flex-col gap-3">
-                  <MergeSuggestionBanner
+                  <MergeSelectionBanner
                     mobile={group.mobile}
-                    count={group.orders.length}
-                    onMerge={() => handleMerge(group.mobile)}
+                    orders={group.orders}
                     merging={mergingMobile === group.mobile}
+                    onMerge={(orderIds) => handleMerge(group.mobile, orderIds)}
                   />
                   {group.orders.map((order, j) => (
                     <AdminOrderCard key={order.id} order={order} delay={delay} index={i + j} />
@@ -241,6 +385,46 @@ export default function AdminDashboard() {
           )}
         </div>
       </div>
+
+      <ConfirmDeleteDialog
+        open={!!confirmingBulkTarget}
+        title={confirmingBulkTarget ? `${confirmingBulkTarget.label} for ${selectedIds.size} orders?` : ''}
+        description={
+          confirmingBulkTarget
+            ? `${selectedIds.size} selected order${selectedIds.size > 1 ? 's' : ''} will be updated to "${getOrderStatusMeta(confirmingBulkTarget.status).label}" — regardless of their current stage. Use this once you've already packed/dispatched/delivered them physically.`
+            : ''
+        }
+        busy={bulkBusy}
+        confirmLabel={confirmingBulkTarget?.label || 'Update'}
+        tone="success"
+        onConfirm={handleConfirmBulkUpdate}
+        onCancel={() => setConfirmingBulkTarget(null)}
+      />
+    </div>
+  );
+}
+
+/** Small checkbox column placed to the left of a card while bulk-select
+ * mode is on — keeps the card itself untouched (no overlapping absolute
+ * positioning) so AdminOrderCard/MergedConfirmedCard don't need to know
+ * anything about bulk selection. Ineligible cards (still awaiting payment,
+ * or already in a final state) render with the checkbox slot empty rather
+ * than hidden, so the list doesn't jump around as bulk mode toggles. */
+function BulkSelectRow({ eligible, selected, onToggle, children }) {
+  return (
+    <div className="flex items-start gap-2">
+      <div className="flex h-11 w-6 shrink-0 items-center justify-center">
+        {eligible && (
+          <button
+            type="button"
+            onClick={onToggle}
+            className={selected ? 'text-orange' : 'text-muted hover:text-[#f2ece2]'}
+          >
+            {selected ? <CheckSquare size={19} /> : <Square size={19} />}
+          </button>
+        )}
+      </div>
+      <div className="min-w-0 flex-1">{children}</div>
     </div>
   );
 }

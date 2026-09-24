@@ -26,6 +26,8 @@ import {
   Undo2,
   RotateCcw,
   History,
+  Pencil,
+  Layers2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { getOrderStatusMeta } from "../../constants/orderStatusMeta";
@@ -60,6 +62,7 @@ import InvoicePreviewModal from "./InvoicePreviewModal";
 import BillPreviewModal from "./BillPreviewModal";
 import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
 import PaymentDateCalendar from "./PaymentDateCalendar";
+import EditHistoryModal from "./EditHistoryModal";
 import { useProducts } from "../../contexts/ProductsContext";
 
 const ACTION_ICONS = {
@@ -151,7 +154,7 @@ const PAYMENT_META = {
 // the underlying Firestore doc hasn't changed (subscribeAllOrders only
 // produces a new array/object when the snapshot actually differs), so a
 // shallow prop comparison here is safe and cheap.
-function AdminOrderCard({ order, delay = 0, index = 0 }) {
+function AdminOrderCard({ order, delay = 0, index = 0, mergedGroupHint = null }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [confirmingPayment, setConfirmingPayment] = useState(false);
@@ -172,6 +175,7 @@ function AdminOrderCard({ order, delay = 0, index = 0 }) {
   const [sendingBillFile, setSendingBillFile] = useState(false);
   const [sendingInvoiceFile, setSendingInvoiceFile] = useState(false);
   const [priceChoiceBusy, setPriceChoiceBusy] = useState(false);
+  const [showEditHistory, setShowEditHistory] = useState(false);
   // Same "auto-download invoice + open WhatsApp on Confirm Payment" setting
   // as the Payment Confirmation page — shared localStorage key, so toggling
   // it there also applies here. Defaults to today, same as the old
@@ -210,10 +214,33 @@ function AdminOrderCard({ order, delay = 0, index = 0 }) {
   const pricedOrder = useOriginalPrice ? order : liveRepricedOrder;
   const hasPriceChange = isAwaitingPayment && liveRepricedOrder.grandTotal !== order.grandTotal;
   const items = pricedOrder.cartItems || [];
+  // Product ids touched by the most recent customer edit (added or qty
+  // changed) — see updateOrderItems's `lastEditDiff`. Used to highlight
+  // just those line items below so the admin doesn't have to open Edit
+  // History to spot what changed on a quick glance.
+  const editedProductIds = useMemo(() => {
+    const diff = order.lastEditDiff;
+    if (!diff) return new Set();
+    return new Set([...(diff.added || []), ...(diff.changed || [])].map((i) => i.productId));
+  }, [order.lastEditDiff]);
+  const removedByLastEdit = order.lastEditDiff?.removed || [];
   const statusMeta = getOrderStatusMeta(order.status);
   const paymentMeta = PAYMENT_META[order.paymentStatus] || PAYMENT_META.PENDING;
   const nextAction = NEXT_ACTION_BY_STATUS[order.status];
   const showAdvance = canAdvance(order.status);
+  // A merged card's "Manage N child orders" panel renders each order with
+  // this same full AdminOrderCard — including its own advance button.
+  // Advancing ONE child here individually (confirm payment pre-invoice,
+  // or mark packed/out-for-delivery/delivered post-invoice) would drift
+  // that order out of step with the rest of its merged invoice group —
+  // for a pre-payment confirm this would also silently split it into its
+  // own separate invoice via createInvoiceForOrder. So whenever
+  // `mergedGroupHint` is passed (only from that expanded panel — see
+  // MergedEstimateCard.jsx and MergedConfirmedCard.jsx), ANY advance is
+  // blocked in favor of the parent card's single "for all" action. Every
+  // other action (cancel, edit items, price choice, WhatsApp...) is
+  // untouched.
+  const advanceBlockedByMerge = !!mergedGroupHint && !!nextAction;
   const showCancel = canCancel(order.status);
   const NextIcon = nextAction ? ACTION_ICONS[nextAction.icon] : null;
   // Payment was confirmed (at some point) but no invoice ever landed — e.g.
@@ -676,6 +703,19 @@ function AdminOrderCard({ order, delay = 0, index = 0 }) {
               >
                 {statusMeta.emoji} {statusMeta.label}
               </span>
+              {order.edited && (
+                <button
+                  type="button"
+                  title={`Edited ${order.editCount || 1}× by customer — tap to view history`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowEditHistory(true);
+                  }}
+                  className="flex shrink-0 items-center gap-1 rounded-full border border-[#5AC8FA]/40 bg-[#5AC8FA]/10 px-2 py-0.5 text-[10px] font-bold text-[#5AC8FA]"
+                >
+                  <Pencil size={10} /> Edited
+                </button>
+              )}
               {whatsappStatus !== "NA" && (
                 <span
                   title={
@@ -786,6 +826,10 @@ function AdminOrderCard({ order, delay = 0, index = 0 }) {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (advanceBlockedByMerge) {
+                    toast.error(mergedGroupHint || 'Update this from the merged card above instead.');
+                    return;
+                  }
                   if (nextAction.patch.status === "CONFIRMED") {
                     setConfirmDate(toDateInputValue(new Date()));
                     setConfirmingPayment(true);
@@ -794,18 +838,27 @@ function AdminOrderCard({ order, delay = 0, index = 0 }) {
                   }
                 }}
                 disabled={busy}
+                title={advanceBlockedByMerge ? (mergedGroupHint || 'Update this from the merged card above instead.') : undefined}
                 className={`flex shrink-0 items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 text-[11px] font-extrabold transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
-                  nextAction.patch.status === "CONFIRMED"
-                    ? "bg-gradient-to-b from-[#8fe3a0] to-[#3fae5c] text-black shadow-[0_6px_14px_-8px_rgba(63,174,92,0.6)]"
-                    : "btn-3d text-black"
+                  advanceBlockedByMerge
+                    ? "border border-white/10 bg-white/5 text-muted"
+                    : nextAction.patch.status === "CONFIRMED"
+                      ? "bg-gradient-to-b from-[#8fe3a0] to-[#3fae5c] text-black shadow-[0_6px_14px_-8px_rgba(63,174,92,0.6)]"
+                      : "btn-3d text-black"
                 }`}
               >
                 {busy ? (
                   <Loader2 size={13} className="animate-spin" />
+                ) : advanceBlockedByMerge ? (
+                  <Layers2 size={13} />
                 ) : (
                   NextIcon && <NextIcon size={13} />
                 )}
-                {nextAction.label}
+                {advanceBlockedByMerge
+                  ? nextAction.patch.status === "CONFIRMED"
+                    ? "Confirm via Merge"
+                    : "Update via Merge"
+                  : nextAction.label}
               </button>
             )}
 
@@ -966,10 +1019,14 @@ function AdminOrderCard({ order, delay = 0, index = 0 }) {
 
                 {/* Items */}
                 <div className="flex flex-col divide-y divide-white/[0.06]">
-                  {items.map((item, i) => (
+                  {items.map((item, i) => {
+                    const wasEdited = editedProductIds.has(item.productId);
+                    return (
                     <div
                       key={item.productId || i}
-                      className="flex items-center gap-3 py-2 first:pt-0 last:pb-0"
+                      className={`flex items-center gap-3 py-2 first:pt-0 last:pb-0 ${
+                        wasEdited ? "-mx-2 rounded-lg border border-[#5AC8FA]/30 bg-[#5AC8FA]/[0.06] px-2" : ""
+                      }`}
                     >
                       <div className="orb-3d flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden !rounded-lg">
                         {item.image ? (
@@ -984,8 +1041,9 @@ function AdminOrderCard({ order, delay = 0, index = 0 }) {
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="line-clamp-1 text-[11.5px] font-bold text-[#f2ece2]">
+                        <div className="line-clamp-1 flex items-center gap-1.5 text-[11.5px] font-bold text-[#f2ece2]">
                           {item.name}
+                          {wasEdited && <Pencil size={10} className="shrink-0 text-[#5AC8FA]" />}
                         </div>
                         {(item.nameTa || nameTaById[item.productId]) && (
                           <div className="line-clamp-1 text-[10px] font-semibold text-gold">
@@ -1000,8 +1058,15 @@ function AdminOrderCard({ order, delay = 0, index = 0 }) {
                         ₹{item.lineTotal}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
+
+                {removedByLastEdit.length > 0 && (
+                  <div className="rounded-xl border border-[#e35226]/30 bg-[#e35226]/[0.06] px-3 py-2 text-[10px] text-[#e35226]">
+                    Removed in last edit: {removedByLastEdit.map((i) => `${i.name} × ${i.quantity}`).join(", ")}
+                  </div>
+                )}
 
                 {/* Price breakdown */}
                 <div className="flex flex-col gap-1 rounded-xl bg-black/20 px-3 py-2.5 text-[10.5px] text-[#cfc7bd]">
@@ -1254,6 +1319,11 @@ function AdminOrderCard({ order, delay = 0, index = 0 }) {
         open={!!previewBill}
         order={previewBill}
         onClose={() => setPreviewBill(null)}
+      />
+      <EditHistoryModal
+        open={showEditHistory}
+        orderId={order.orderId || order.id}
+        onClose={() => setShowEditHistory(false)}
       />
       <ConfirmDeleteDialog
         open={confirmingDelete}

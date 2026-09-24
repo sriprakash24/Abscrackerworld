@@ -1,17 +1,19 @@
-import { useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X, Loader2, ShieldCheck, ArrowRight } from "lucide-react";
+import { X, Loader2, ShieldCheck, ArrowRight, Check } from "lucide-react";
 import { toast } from "sonner";
 import {
-  customerSchema,
+  customerSchemaNew,
+  customerSchemaReturning,
   customerDefaultValues,
+  mobileRegex,
 } from "../../schemas/customerSchema";
 import { useCustomerGateStore } from "../../store/useCustomerGateStore";
 import { useCustomerStore } from "../../store/useCustomerStore";
 import { db } from "../../firebase/config";
-import { saveUserProfile } from "../../services/usersFirestore";
+import { saveUserProfile, getUserProfile } from "../../services/usersFirestore";
 import customerGateArt from "../../assets/customer/customer-gate-bg.png";
 
 // Native pixel size of customerGateArt — used only to size the wrapper's
@@ -20,12 +22,23 @@ import customerGateArt from "../../assets/customer/customer-gate-bg.png";
 const ART_W = 1144;
 const ART_H = 1375;
 
+// How long to wait after the visitor stops typing the mobile number before
+// checking Firestore for an existing users/{mobile} profile.
+const LOOKUP_DEBOUNCE_MS = 350;
+
 /**
  * Centered "who's shopping?" gate — fired once, on the very first Add to
  * Cart tap (see useCustomerGateStore). No password, no OTP — just enough
  * to attach a name + mobile number to this visitor's cart/order activity.
  * Closing it cancels the pending add; submitting saves locally + to
  * Firestore, then lets the original Add to Cart action continue.
+ *
+ * Mobile-first "login": once a valid 10-digit mobile number is typed, we
+ * check Firestore for an existing users/{mobile} profile. If one exists,
+ * the Name field drops out entirely — we already know who they are, so
+ * Continue signs them straight back in with the name on file (checkout's
+ * own address prefill then takes it from there for repeat orders). If the
+ * mobile number is new, Name stays mandatory, same as before.
  *
  * The whole card IS the festive family photo-frame artwork (ABS Crackers
  * World branded), with the Name / Mobile / Continue mini-form dropped
@@ -38,25 +51,89 @@ export default function CustomerDetailsSheet() {
   const resolve = useCustomerGateStore((s) => s.resolve);
   const setCustomer = useCustomerStore((s) => s.setCustomer);
   const [submitting, setSubmitting] = useState(false);
+  const [matchedProfile, setMatchedProfile] = useState(null);
+  const [checkingMobile, setCheckingMobile] = useState(false);
 
   const {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm({
-    resolver: zodResolver(customerSchema),
+    resolver: useCallback((values, context, options) => {
+      // Read the live ref (not the closed-over state) so this resolver
+      // always validates against whichever schema currently applies,
+      // even though useForm only captures the resolver function once.
+      const schema = matchedProfileRef.current ? customerSchemaReturning : customerSchemaNew;
+      return zodResolver(schema)(values, context, options);
+    }, []),
     defaultValues: customerDefaultValues,
   });
+
+  // Mirrors matchedProfile into a ref so the resolver above (memoized once
+  // with useCallback) always reads the current value instead of a stale one.
+  const matchedProfileRef = useRef(null);
+  useEffect(() => {
+    matchedProfileRef.current = matchedProfile;
+  }, [matchedProfile]);
+
+  const mobileValue = watch("mobile");
+
+  // Debounced Firestore lookup — as soon as the typed mobile number is a
+  // valid 10-digit India number, check users/{mobile} for an existing
+  // profile so we can skip asking for the name again.
+  useEffect(() => {
+    const mobile = (mobileValue || "").trim();
+    if (!mobileRegex.test(mobile)) {
+      setMatchedProfile(null);
+      setCheckingMobile(false);
+      return undefined;
+    }
+
+    let cancelled = false;
+    setCheckingMobile(true);
+
+    const timer = setTimeout(async () => {
+      try {
+        const profile = await getUserProfile(db, mobile);
+        if (cancelled) return;
+        if (profile?.name) {
+          setMatchedProfile(profile);
+          setValue("name", profile.name, { shouldValidate: false });
+        } else {
+          setMatchedProfile(null);
+        }
+      } catch (err) {
+        console.error("Failed to look up existing customer", err);
+        if (!cancelled) setMatchedProfile(null);
+      } finally {
+        if (!cancelled) setCheckingMobile(false);
+      }
+    }, LOOKUP_DEBOUNCE_MS);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [mobileValue, setValue]);
 
   const handleClose = () => {
     if (submitting) return;
     reset(customerDefaultValues);
+    setMatchedProfile(null);
     cancel();
   };
 
   const onSubmit = async (values) => {
-    const customer = { name: values.name.trim(), mobile: values.mobile.trim() };
+    const mobile = values.mobile.trim();
+    // Returning customer: use the name already on file rather than
+    // whatever (empty) name field state happens to be. New customer: use
+    // what they just typed.
+    const name = (matchedProfile?.name || values.name || "").trim();
+    const customer = { name, mobile };
+
     setSubmitting(true);
     try {
       await saveUserProfile(db, customer);
@@ -67,6 +144,7 @@ export default function CustomerDetailsSheet() {
       setSubmitting(false);
     }
     setCustomer(customer);
+    setMatchedProfile(null);
     reset(customerDefaultValues);
     resolve(customer);
   };
@@ -138,26 +216,37 @@ export default function CustomerDetailsSheet() {
               </div>
 
               <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-[6%]">
-                <label className="block">
-                  <span className="mb-[3px] block text-[9.5px] font-bold tracking-wide text-[#6b4423]">
-                    Name / பெயர்
-                  </span>
-                  <input
-                    {...register("name")}
-                    placeholder="Your name"
-                    autoComplete="name"
-                    className={`w-full rounded-[10px] border bg-white/85 px-2.5 py-[7px] text-[12px] font-bold text-[#3a2410] outline-none placeholder:font-medium placeholder:text-[#a9895f] ${
-                      errors.name
-                        ? "border-[#c23b1f] shadow-[0_0_0_2px_rgba(194,59,31,0.15)]"
-                        : "border-[#c99a5b]/60 focus:border-[#c23b1f]/70"
-                    }`}
-                  />
-                  {errors.name && (
-                    <span className="mt-[2px] block text-[8.5px] font-bold text-[#c23b1f]">
-                      {errors.name.message}
+                {matchedProfile ? (
+                  // Returning customer — mobile matched an existing profile,
+                  // so we skip asking for the name entirely.
+                  <div className="flex items-center justify-center gap-1.5 rounded-[10px] border border-[#c99a5b]/50 bg-white/80 px-2.5 py-[7px] text-center">
+                    <Check size={12} className="shrink-0 text-[#2f7a3a]" />
+                    <span className="text-[11px] font-extrabold text-[#3a2410]">
+                      Welcome back, {matchedProfile.name}!
                     </span>
-                  )}
-                </label>
+                  </div>
+                ) : (
+                  <label className="block">
+                    <span className="mb-[3px] block text-[9.5px] font-bold tracking-wide text-[#6b4423]">
+                      Name / பெயர்
+                    </span>
+                    <input
+                      {...register("name")}
+                      placeholder="Your name"
+                      autoComplete="name"
+                      className={`w-full rounded-[10px] border bg-white/85 px-2.5 py-[7px] text-[12px] font-bold text-[#3a2410] outline-none placeholder:font-medium placeholder:text-[#a9895f] ${
+                        errors.name
+                          ? "border-[#c23b1f] shadow-[0_0_0_2px_rgba(194,59,31,0.15)]"
+                          : "border-[#c99a5b]/60 focus:border-[#c23b1f]/70"
+                      }`}
+                    />
+                    {errors.name && (
+                      <span className="mt-[2px] block text-[8.5px] font-bold text-[#c23b1f]">
+                        {errors.name.message}
+                      </span>
+                    )}
+                  </label>
+                )}
 
                 <label className="block">
                   <span className="mb-[3px] block text-[9.5px] font-bold tracking-wide text-[#6b4423]">
@@ -181,6 +270,9 @@ export default function CustomerDetailsSheet() {
                       autoComplete="tel"
                       className="w-full bg-transparent px-2 py-[7px] text-[12px] font-bold text-[#3a2410] outline-none placeholder:font-medium placeholder:text-[#a9895f]"
                     />
+                    {checkingMobile && (
+                      <Loader2 size={12} className="mr-2 shrink-0 animate-spin text-[#8a5a2b]" />
+                    )}
                   </div>
                   {errors.mobile && (
                     <span className="mt-[2px] block text-[8.5px] font-bold text-[#c23b1f]">
