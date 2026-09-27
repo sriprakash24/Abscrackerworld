@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/opacity.css';
-import { ChevronDown, Copy, MapPin, MessageCircleMore, Download, Loader2, Pencil, Receipt, PackageSearch } from 'lucide-react';
+import { ChevronDown, Copy, MapPin, MessageCircleMore, Download, Loader2, Pencil, Receipt, PackageSearch, TrendingUp, TrendingDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { getOrderStatusMeta, normalizeOrderStage, isOrderStageComplete } from '../../constants/orderStatusMeta';
 import OrderStatusStepper from '../checkout/OrderStatusStepper';
@@ -14,6 +14,7 @@ import { generateBillPdf } from '../../utils/generateBillPdf';
 import { downloadPackingListPdf } from '../../utils/generatePackingListPdf';
 import { useProducts } from '../../contexts/ProductsContext';
 import { useCartStore } from '../../store/useCartStore';
+import { repriceFromCatalog } from '../../utils/orderPricing';
 
 function formatOrderDate(createdAt) {
   const date = createdAt?.toDate ? createdAt.toDate() : createdAt ? new Date(createdAt) : null;
@@ -28,8 +29,40 @@ export default function OrderCard({ order, delay = 0 }) {
   const [downloadingPackingList, setDownloadingPackingList] = useState(false);
   const navigate = useNavigate();
   const startEditOrder = useCartStore((s) => s.startEditOrder);
-  const { products } = useProducts();
-  const items = order.cartItems || [];
+  const { products, productsById } = useProducts();
+  // Same live-repricing rule as the admin dashboard: an order still sitting
+  // in AWAITING_ADMIN_CONFIRMATION hasn't been paid for yet, so if admin
+  // updates a product's price in that window (e.g. a restock), the customer
+  // should see today's price here too — not the stale one from checkout.
+  // Once admin confirms payment (or pins the original price via
+  // priceOverride: "original"), this stops applying and the order renders
+  // exactly as stored, same as before.
+  const isAwaitingPayment = order.status === 'AWAITING_ADMIN_CONFIRMATION';
+  const useOriginalPrice = order.priceOverride === 'original';
+  const liveRepricedOrder = useMemo(() => {
+    if (!isAwaitingPayment) return order;
+    return repriceFromCatalog(order, productsById);
+  }, [order, isAwaitingPayment, productsById]);
+  const pricedOrder = useOriginalPrice ? order : liveRepricedOrder;
+  const hasPriceChange = isAwaitingPayment && liveRepricedOrder.grandTotal !== order.grandTotal;
+  const items = pricedOrder.cartItems || [];
+  // Per-item price deltas (checkout price vs. today's live price), so each
+  // changed line can carry its own "was ₹X" highlight — not just the total.
+  const originalUnitPriceById = useMemo(
+    () => Object.fromEntries((order.cartItems || []).map((i) => [i.productId, i.unitPrice])),
+    [order.cartItems]
+  );
+  const priceChangeByProductId = useMemo(() => {
+    if (!hasPriceChange) return new Map();
+    const map = new Map();
+    for (const item of items) {
+      const wasPrice = originalUnitPriceById[item.productId];
+      if (wasPrice != null && wasPrice !== item.unitPrice) {
+        map.set(item.productId, { from: wasPrice, to: item.unitPrice });
+      }
+    }
+    return map;
+  }, [items, originalUnitPriceById, hasPriceChange]);
   // Older orders were placed before item.nameTa started being snapshotted
   // at checkout (see ordersFirestore.js) — fall back to the live catalog
   // by productId so those orders still show the Tamil name.
@@ -73,7 +106,7 @@ export default function OrderCard({ order, delay = 0 }) {
     if (downloadingBill) return;
     setDownloadingBill(true);
     try {
-      generateBillPdf(order);
+      generateBillPdf(pricedOrder);
     } catch (err) {
       console.error('Failed to download estimate bill', err);
       toast.error("Couldn't download the estimate bill. Please try again.");
@@ -180,9 +213,26 @@ export default function OrderCard({ order, delay = 0 }) {
             <div className="text-[11px] font-semibold text-muted">
               {items.length} {items.length === 1 ? 'item' : 'items'}
             </div>
-            <div className="text-[14px] font-extrabold text-gradient-gold">
-              ₹{(order.grandTotal ?? 0).toLocaleString('en-IN')}
+            <div className="flex items-center gap-1.5">
+              <div className="text-[14px] font-extrabold text-gradient-gold">
+                ₹{(pricedOrder.grandTotal ?? 0).toLocaleString('en-IN')}
+              </div>
+              {hasPriceChange && (
+                <span className="flex shrink-0 items-center gap-0.5 rounded-full border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[9px] font-bold text-gold">
+                  {liveRepricedOrder.grandTotal > order.grandTotal ? (
+                    <TrendingUp size={9} />
+                  ) : (
+                    <TrendingDown size={9} />
+                  )}
+                  Updated
+                </span>
+              )}
             </div>
+            {hasPriceChange && (
+              <div className="text-[9.5px] font-semibold text-muted line-through decoration-gold/50">
+                was ₹{(order.grandTotal ?? 0).toLocaleString('en-IN')}
+              </div>
+            )}
           </div>
 
           <motion.span
@@ -258,8 +308,15 @@ export default function OrderCard({ order, delay = 0 }) {
           >
             <div className="flex flex-col gap-3 border-t border-dashed border-white/10 px-4 pb-4 pt-3.5">
               <div className="flex flex-col divide-y divide-white/[0.06]">
-                {items.map((item, i) => (
-                  <div key={item.productId || i} className="flex items-center gap-3 py-2 first:pt-0 last:pb-0">
+                {items.map((item, i) => {
+                  const priceChange = priceChangeByProductId.get(item.productId);
+                  return (
+                  <div
+                    key={item.productId || i}
+                    className={`flex items-center gap-3 py-2 first:pt-0 last:pb-0 ${
+                      priceChange ? '-mx-2 rounded-lg border border-gold/30 bg-gold/[0.06] px-2' : ''
+                    }`}
+                  >
                     <div className="orb-3d orb-cream flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden !rounded-lg">
                       {item.image ? (
                         <LazyLoadImage src={item.image} alt={item.name} effect="opacity" className="h-full w-full object-contain" />
@@ -268,7 +325,16 @@ export default function OrderCard({ order, delay = 0 }) {
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="line-clamp-1 text-[11.5px] font-bold text-[#f2ece2]">{item.name}</div>
+                      <div className="line-clamp-1 flex items-center gap-1.5 text-[11.5px] font-bold text-[#f2ece2]">
+                        {item.name}
+                        {priceChange && (
+                          priceChange.to > priceChange.from ? (
+                            <TrendingUp size={10} className="shrink-0 text-gold" />
+                          ) : (
+                            <TrendingDown size={10} className="shrink-0 text-gold" />
+                          )
+                        )}
+                      </div>
                       {(item.nameTa || nameTaById[item.productId]) && (
                         <div className="line-clamp-1 text-[10px] font-semibold text-gold">
                           {item.nameTa || nameTaById[item.productId]}
@@ -276,12 +342,32 @@ export default function OrderCard({ order, delay = 0 }) {
                       )}
                       <div className="mt-0.5 text-[10px] text-muted">
                         Qty {item.quantity} × ₹{item.unitPrice}
+                        {priceChange && (
+                          <span className="ml-1 text-gold line-through decoration-gold/50">
+                            was ₹{priceChange.from}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="shrink-0 text-[12px] font-extrabold text-gold">₹{item.lineTotal}</div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
+
+              {hasPriceChange && (
+                <div className="flex items-start gap-2 rounded-xl border border-gold/30 bg-gold/[0.06] px-3 py-2.5 text-[10.5px] leading-relaxed text-gold">
+                  {liveRepricedOrder.grandTotal > order.grandTotal ? (
+                    <TrendingUp size={13} className="mt-0.5 shrink-0" />
+                  ) : (
+                    <TrendingDown size={13} className="mt-0.5 shrink-0" />
+                  )}
+                  <span>
+                    Some prices have been updated since you placed this order — your total is now ₹
+                    {(pricedOrder.grandTotal ?? 0).toLocaleString('en-IN')} (was ₹{(order.grandTotal ?? 0).toLocaleString('en-IN')}). This won't change once your payment is confirmed.
+                  </span>
+                </div>
+              )}
 
               {order.address && (
                 <div className="flex items-start gap-2 rounded-xl bg-black/20 px-3 py-2.5 text-[10.5px] leading-relaxed text-[#cfc7bd]">
