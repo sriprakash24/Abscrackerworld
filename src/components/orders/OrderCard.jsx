@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/opacity.css';
-import { ChevronDown, Copy, MapPin, MessageCircleMore, Download, Loader2, Pencil, Receipt, PackageSearch, TrendingUp, TrendingDown } from 'lucide-react';
+import { ChevronDown, Copy, MapPin, MessageCircleMore, Download, Loader2, Pencil, Receipt, PackageSearch, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { getOrderStatusMeta, normalizeOrderStage, isOrderStageComplete } from '../../constants/orderStatusMeta';
 import OrderStatusStepper from '../checkout/OrderStatusStepper';
@@ -213,26 +213,9 @@ export default function OrderCard({ order, delay = 0 }) {
             <div className="text-[11px] font-semibold text-muted">
               {items.length} {items.length === 1 ? 'item' : 'items'}
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="text-[14px] font-extrabold text-gradient-gold">
-                ₹{(pricedOrder.grandTotal ?? 0).toLocaleString('en-IN')}
-              </div>
-              {hasPriceChange && (
-                <span className="flex shrink-0 items-center gap-0.5 rounded-full border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[9px] font-bold text-gold">
-                  {liveRepricedOrder.grandTotal > order.grandTotal ? (
-                    <TrendingUp size={9} />
-                  ) : (
-                    <TrendingDown size={9} />
-                  )}
-                  Updated
-                </span>
-              )}
+            <div className="text-[14px] font-extrabold text-gradient-gold">
+              ₹{(pricedOrder.grandTotal ?? 0).toLocaleString('en-IN')}
             </div>
-            {hasPriceChange && (
-              <div className="text-[9.5px] font-semibold text-muted line-through decoration-gold/50">
-                was ₹{(order.grandTotal ?? 0).toLocaleString('en-IN')}
-              </div>
-            )}
           </div>
 
           <motion.span
@@ -325,16 +308,7 @@ export default function OrderCard({ order, delay = 0 }) {
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="line-clamp-1 flex items-center gap-1.5 text-[11.5px] font-bold text-[#f2ece2]">
-                        {item.name}
-                        {priceChange && (
-                          priceChange.to > priceChange.from ? (
-                            <TrendingUp size={10} className="shrink-0 text-gold" />
-                          ) : (
-                            <TrendingDown size={10} className="shrink-0 text-gold" />
-                          )
-                        )}
-                      </div>
+                      <div className="line-clamp-1 text-[11.5px] font-bold text-[#f2ece2]">{item.name}</div>
                       {(item.nameTa || nameTaById[item.productId]) && (
                         <div className="line-clamp-1 text-[10px] font-semibold text-gold">
                           {item.nameTa || nameTaById[item.productId]}
@@ -342,12 +316,10 @@ export default function OrderCard({ order, delay = 0 }) {
                       )}
                       <div className="mt-0.5 text-[10px] text-muted">
                         Qty {item.quantity} × ₹{item.unitPrice}
-                        {priceChange && (
-                          <span className="ml-1 text-gold line-through decoration-gold/50">
-                            was ₹{priceChange.from}
-                          </span>
-                        )}
                       </div>
+                      {priceChange && (
+                        <div className="mt-0.5 text-[9px] font-semibold text-gold">Restocked · price refreshed</div>
+                      )}
                     </div>
                     <div className="shrink-0 text-[12px] font-extrabold text-gold">₹{item.lineTotal}</div>
                   </div>
@@ -357,15 +329,8 @@ export default function OrderCard({ order, delay = 0 }) {
 
               {hasPriceChange && (
                 <div className="flex items-start gap-2 rounded-xl border border-gold/30 bg-gold/[0.06] px-3 py-2.5 text-[10.5px] leading-relaxed text-gold">
-                  {liveRepricedOrder.grandTotal > order.grandTotal ? (
-                    <TrendingUp size={13} className="mt-0.5 shrink-0" />
-                  ) : (
-                    <TrendingDown size={13} className="mt-0.5 shrink-0" />
-                  )}
-                  <span>
-                    Some prices have been updated since you placed this order — your total is now ₹
-                    {(pricedOrder.grandTotal ?? 0).toLocaleString('en-IN')} (was ₹{(order.grandTotal ?? 0).toLocaleString('en-IN')}). This won't change once your payment is confirmed.
-                  </span>
+                  <TrendingUp size={13} className="mt-0.5 shrink-0" />
+                  <span>Some items were restocked, so the highlighted price(s) above have been refreshed.</span>
                 </div>
               )}
 
