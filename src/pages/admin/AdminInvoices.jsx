@@ -1,19 +1,54 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Plus, Search, Pencil, Download, Receipt, Link2, PenSquare, Eye, Trash2, MessageCircleMore, Loader2 } from 'lucide-react';
+import { Plus, Search, Pencil, Download, Receipt, Link2, PenSquare, Eye, Trash2, MessageCircleMore, Loader2, PackageCheck, Truck, CheckCheck, X } from 'lucide-react';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
+import { useAdminData } from '../../contexts/AdminDataContext';
 import AdminSectionHeader from '../../components/admin/AdminSectionHeader';
 import AdminTabsNav from '../../components/admin/AdminTabsNav';
 import InvoiceFormModal from '../../components/admin/InvoiceFormModal';
 import InvoicePreviewModal from '../../components/admin/InvoicePreviewModal';
 import ConfirmDeleteDialog from '../../components/admin/ConfirmDeleteDialog';
+import OrderDateFilter from '../../components/admin/OrderDateFilter';
+import { getOrderStatusMeta } from '../../constants/orderStatusMeta';
+import { markOrdersPacked, markOrdersOutForDelivery, markOrdersDelivered } from '../../services/ordersFirestore';
+import { toDateInputValue } from '../../utils/orderDates';
 import { db } from '../../firebase/config';
 import { subscribeAllInvoices, deleteInvoiceDoc } from '../../services/invoicesFirestore';
 import { generateInvoicePdf } from '../../utils/generateInvoicePdf';
 import { sendInvoiceFile } from '../../utils/shareInvoiceWhatsapp';
 
 const SOURCE_FILTERS = ['ALL', 'ORDER', 'MANUAL'];
+
+// Same three fulfilment steps as the bulk update on Order Management. They
+// write `status` on the order docs, which every admin page and the customer's
+// Order History / Track Order screens already listen to live — so one click
+// here updates everywhere. Payment confirmation is never done in bulk.
+const BULK_TARGETS = [
+  { status: 'PACKED', label: 'Mark Packed', icon: PackageCheck, run: markOrdersPacked },
+  { status: 'OUT_FOR_DELIVERY', label: 'Out for Delivery', icon: Truck, run: markOrdersOutForDelivery },
+  { status: 'DELIVERED', label: 'Mark Delivered', icon: CheckCheck, run: markOrdersDelivered },
+];
+
+function getInvoiceDate(invoice) {
+  const raw = invoice?.date || invoice?.createdAt;
+  if (raw?.toDate) return raw.toDate();
+  if (raw) {
+    const d = new Date(raw);
+    if (!Number.isNaN(d.getTime())) return d;
+  }
+  return null;
+}
+
+/** Order docs behind an invoice (single, merged, or none for manual invoices). */
+function getLinkedOrders(invoice, ordersById, ordersByInvoiceId) {
+  const ids = invoice.orderDocIds?.length ? invoice.orderDocIds : invoice.orderDocId ? [invoice.orderDocId] : [];
+  const fromIds = ids.map((id) => ordersById.get(id)).filter(Boolean);
+  return fromIds.length ? fromIds : ordersByInvoiceId.get(invoice.id) || [];
+}
+
+// Only orders that are past payment and not cancelled can be advanced.
+const isBulkEligible = (order) => order.status !== 'AWAITING_ADMIN_CONFIRMATION' && order.status !== 'CANCELLED';
 
 export default function AdminInvoices() {
   const { user, logout } = useAdminAuth();
@@ -28,6 +63,21 @@ export default function AdminInvoices() {
   const [previewInvoice, setPreviewInvoice] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [dateFilter, setDateFilter] = useState([]);
+  const [confirmingTarget, setConfirmingTarget] = useState(null);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const { orders } = useAdminData();
+
+  const ordersById = useMemo(() => new Map(orders.map((o) => [o.id, o])), [orders]);
+  const ordersByInvoiceId = useMemo(() => {
+    const map = new Map();
+    for (const o of orders) {
+      if (!o.invoiceId) continue;
+      if (!map.has(o.invoiceId)) map.set(o.invoiceId, []);
+      map.get(o.invoiceId).push(o);
+    }
+    return map;
+  }, [orders]);
 
   useEffect(() => {
     const unsubscribe = subscribeAllInvoices(
@@ -51,18 +101,79 @@ export default function AdminInvoices() {
     }
   };
 
+  const matchesSearchAndSource = (inv, term) => {
+    if (sourceFilter !== 'ALL' && inv.source !== sourceFilter) return false;
+    if (!term) return true;
+    return [inv.invoiceNo, inv.orderId, inv.customer?.name, inv.customer?.mobile]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+      .includes(term);
+  };
+
+  // Calendar options: how many invoices fall on each date (before the date filter itself).
+  const dateOptions = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    const counts = new Map();
+    for (const inv of invoices) {
+      if (!matchesSearchAndSource(inv, term)) continue;
+      const d = getInvoiceDate(inv);
+      if (!d) continue;
+      const value = toDateInputValue(d);
+      counts.set(value, (counts.get(value) || 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .sort((a, b) => (a[0] < b[0] ? 1 : -1))
+      .map(([value, count]) => {
+        const [y, m, d] = value.split('-').map(Number);
+        const label = new Date(y, m - 1, d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+        return { value, label, count };
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invoices, search, sourceFilter]);
+
   const filteredInvoices = useMemo(() => {
     const term = search.trim().toLowerCase();
+    const dateSet = new Set(dateFilter);
     return invoices.filter((inv) => {
-      if (sourceFilter !== 'ALL' && inv.source !== sourceFilter) return false;
-      if (!term) return true;
-      return [inv.invoiceNo, inv.orderId, inv.customer?.name, inv.customer?.mobile]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase()
-        .includes(term);
+      if (!matchesSearchAndSource(inv, term)) return false;
+      if (dateSet.size) {
+        const d = getInvoiceDate(inv);
+        if (!d || !dateSet.has(toDateInputValue(d))) return false;
+      }
+      return true;
     });
-  }, [invoices, search, sourceFilter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invoices, search, sourceFilter, dateFilter]);
+
+  // Orders that a bulk button would touch: every eligible order behind the
+  // invoices currently shown (i.e. the selected date(s) + search/source filters).
+  const bulkOrderIds = useMemo(() => {
+    const ids = new Set();
+    for (const inv of filteredInvoices) {
+      for (const o of getLinkedOrders(inv, ordersById, ordersByInvoiceId)) {
+        if (isBulkEligible(o)) ids.add(o.id);
+      }
+    }
+    return Array.from(ids);
+  }, [filteredInvoices, ordersById, ordersByInvoiceId]);
+
+  const handleConfirmBulk = async () => {
+    if (!confirmingTarget || bulkOrderIds.length === 0) return;
+    setBulkBusy(true);
+    try {
+      await confirmingTarget.run(db, bulkOrderIds);
+      toast.success(
+        `${bulkOrderIds.length} order${bulkOrderIds.length > 1 ? 's' : ''} marked as "${getOrderStatusMeta(confirmingTarget.status).label}"`
+      );
+    } catch (err) {
+      console.error('Bulk status update failed', err);
+      toast.error("Couldn't update those orders. Please try again.");
+    } finally {
+      setBulkBusy(false);
+      setConfirmingTarget(null);
+    }
+  };
 
   const openCreateModal = () => {
     setEditingInvoice(null);
@@ -134,6 +245,42 @@ export default function AdminInvoices() {
           ))}
         </div>
 
+        <div className="flex flex-wrap items-center gap-2">
+          <OrderDateFilter options={dateOptions} selected={dateFilter} onChange={setDateFilter} />
+          {dateFilter.length === 0 && (
+            <span className="text-[10.5px] text-muted">Pick a date to update all its invoices' orders in one click.</span>
+          )}
+        </div>
+
+        {dateFilter.length > 0 && (
+          <div className="surface-3d flex flex-wrap items-center gap-2 rounded-xl border border-orange/30 px-3 py-2.5">
+            <span className="mr-1 shrink-0 text-[11px] font-extrabold text-[#f2ece2]">
+              {filteredInvoices.length} invoice{filteredInvoices.length === 1 ? '' : 's'} · {bulkOrderIds.length} order
+              {bulkOrderIds.length === 1 ? '' : 's'}
+            </span>
+            {BULK_TARGETS.map((target) => (
+              <button
+                key={target.status}
+                type="button"
+                disabled={bulkOrderIds.length === 0}
+                onClick={() => setConfirmingTarget(target)}
+                className="btn-3d-outline flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-[10.5px] font-bold text-gold disabled:opacity-50"
+              >
+                <target.icon size={12} />
+                {target.label}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setDateFilter([])}
+              title="Clear date filter"
+              className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted hover:text-[#f2ece2]"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+
         <div className="flex flex-col gap-2.5">
           {loading ? (
             Array.from({ length: 4 }).map((_, i) => <InvoiceRowSkeleton key={i} />)
@@ -146,6 +293,7 @@ export default function AdminInvoices() {
               <InvoiceRow
                 key={invoice.id}
                 invoice={invoice}
+                linkedOrders={getLinkedOrders(invoice, ordersById, ordersByInvoiceId)}
                 onView={() => setPreviewInvoice(invoice)}
                 onEdit={() => openEditModal(invoice)}
                 onDelete={() => setDeleteTarget(invoice)}
@@ -158,6 +306,20 @@ export default function AdminInvoices() {
       <InvoiceFormModal open={modalOpen} invoice={editingInvoice} onClose={() => setModalOpen(false)} />
       <InvoicePreviewModal open={!!previewInvoice} invoice={previewInvoice} onClose={() => setPreviewInvoice(null)} />
       <ConfirmDeleteDialog
+        open={!!confirmingTarget}
+        title={confirmingTarget ? `${confirmingTarget.label} for ${bulkOrderIds.length} order${bulkOrderIds.length === 1 ? '' : 's'}?` : ''}
+        description={
+          confirmingTarget
+            ? `Every order on the ${filteredInvoices.length} invoice${filteredInvoices.length === 1 ? '' : 's'} shown will be set to "${getOrderStatusMeta(confirmingTarget.status).label}" and this updates on all admin and customer pages. Orders still awaiting payment confirmation, cancelled orders and manual invoices are skipped.`
+            : ''
+        }
+        busy={bulkBusy}
+        confirmLabel={confirmingTarget?.label || 'Update'}
+        tone="success"
+        onConfirm={handleConfirmBulk}
+        onCancel={() => setConfirmingTarget(null)}
+      />
+      <ConfirmDeleteDialog
         open={!!deleteTarget}
         title="Delete this invoice?"
         description={`Invoice ${deleteTarget?.invoiceNo || ''} will be permanently removed. This can't be undone.`}
@@ -169,7 +331,7 @@ export default function AdminInvoices() {
   );
 }
 
-function InvoiceRow({ invoice, onView, onEdit, onDelete }) {
+function InvoiceRow({ invoice, linkedOrders = [], onView, onEdit, onDelete }) {
   const [sending, setSending] = useState(false);
 
   const handleShare = async () => {
@@ -209,7 +371,10 @@ function InvoiceRow({ invoice, onView, onEdit, onDelete }) {
         <p className="truncate text-[10.5px] font-semibold text-muted">
           {invoice.customer?.name} · {invoice.customer?.mobile}
         </p>
-        <span className="text-[12px] font-extrabold text-gradient-gold">₹{(invoice.grandTotal ?? 0).toLocaleString('en-IN')}</span>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[12px] font-extrabold text-gradient-gold">₹{(invoice.grandTotal ?? 0).toLocaleString('en-IN')}</span>
+          <StatusBadge orders={linkedOrders} />
+        </div>
       </div>
 
       <div className="flex shrink-0 flex-col gap-1.5">
@@ -241,6 +406,22 @@ function InvoiceRow({ invoice, onView, onEdit, onDelete }) {
         </button>
       </div>
     </div>
+  );
+}
+
+function StatusBadge({ orders }) {
+  if (!orders.length) return null;
+  const statuses = new Set(orders.map((o) => o.status));
+  if (statuses.size > 1) {
+    return (
+      <span className="rounded-full border border-white/15 bg-white/5 px-1.5 py-0.5 text-[9px] font-bold text-muted">Mixed status</span>
+    );
+  }
+  const meta = getOrderStatusMeta(orders[0].status);
+  return (
+    <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${meta.className}`}>
+      {meta.emoji} {meta.label}
+    </span>
   );
 }
 
