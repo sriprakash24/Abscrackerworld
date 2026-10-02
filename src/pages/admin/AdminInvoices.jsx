@@ -12,7 +12,7 @@ import ConfirmDeleteDialog from '../../components/admin/ConfirmDeleteDialog';
 import OrderDateFilter from '../../components/admin/OrderDateFilter';
 import { getOrderStatusMeta } from '../../constants/orderStatusMeta';
 import { markOrdersPacked, markOrdersOutForDelivery, markOrdersDelivered } from '../../services/ordersFirestore';
-import { toDateInputValue } from '../../utils/orderDates';
+import { toDateInputValue, getInvoiceNoDate } from '../../utils/orderDates';
 import { db } from '../../firebase/config';
 import { subscribeAllInvoices, deleteInvoiceDoc } from '../../services/invoicesFirestore';
 import { generateInvoicePdf } from '../../utils/generateInvoicePdf';
@@ -30,7 +30,12 @@ const BULK_TARGETS = [
   { status: 'DELIVERED', label: 'Mark Delivered', icon: CheckCheck, run: markOrdersDelivered },
 ];
 
+// The date in the invoice number (ABSI + YYYYMMDD + seq) is the date the admin
+// treats as the invoice's date, so the date filter / bulk update use it first.
+// Invoices without a parsable number fall back to their stored date.
 function getInvoiceDate(invoice) {
+  const fromNumber = getInvoiceNoDate(invoice?.invoiceNo);
+  if (fromNumber) return fromNumber;
   const raw = invoice?.date || invoice?.createdAt;
   if (raw?.toDate) return raw.toDate();
   if (raw) {
@@ -246,9 +251,16 @@ export default function AdminInvoices() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <OrderDateFilter options={dateOptions} selected={dateFilter} onChange={setDateFilter} />
+          <OrderDateFilter
+            options={dateOptions}
+            selected={dateFilter}
+            onChange={setDateFilter}
+            label="Invoice date"
+            countNoun="invoice"
+            showSelectAll
+          />
           {dateFilter.length === 0 && (
-            <span className="text-[10.5px] text-muted">Pick a date to update all its invoices' orders in one click.</span>
+            <span className="text-[10.5px] text-muted">Pick invoice date(s) — or Select all — to update those invoices' orders in one click.</span>
           )}
         </div>
 
