@@ -42,7 +42,26 @@ import ConfirmDeleteDialog from "../../components/admin/ConfirmDeleteDialog";
 import { getWhatsappSendStatus } from "../../utils/whatsappSendStatus";
 import { getOrderEditStatus } from "../../utils/orderEditStatus";
 import { getConfirmedDate, toDateInputValue } from "../../utils/orderDates";
+import { formatFullAddress } from "../../utils/formatAddress";
 import { buildOrderManagementGroups } from "../../utils/orderMergeGroups";
+
+// Everything the Order Management search box matches against: order id,
+// customer name/mobile, and the delivery address (house/street/area/city/
+// district/state/pincode + landmark), so a customer can be found by locality.
+function orderSearchText(order) {
+  return [
+    order.orderId,
+    order.id,
+    order.customer?.name,
+    order.customer?.mobile,
+    order.customer?.alternateMobile,
+    formatFullAddress(order.address),
+    order.address?.landmark,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
 
 // Bulk status update only ever applies past payment — Confirmed / Packed /
 // Out for Delivery orders can be batch-advanced since it's just a fulfilment
@@ -214,16 +233,7 @@ export default function AdminDashboard() {
       if (editedFilter !== "ALL" && getOrderEditStatus(order) !== editedFilter)
         continue;
       if (term) {
-        const haystack = [
-          order.orderId,
-          order.id,
-          order.customer?.name,
-          order.customer?.mobile,
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-        if (!haystack.includes(term)) continue;
+        if (!orderSearchText(order).includes(term)) continue;
       }
       const confirmed = getConfirmedDate(order);
       if (!confirmed) continue;
@@ -261,16 +271,7 @@ export default function AdminDashboard() {
           return false;
       }
       if (!term) return true;
-      const haystack = [
-        order.orderId,
-        order.id,
-        order.customer?.name,
-        order.customer?.mobile,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-      return haystack.includes(term);
+      return orderSearchText(order).includes(term);
     });
   }, [
     orders,
