@@ -15,6 +15,22 @@
 const INVOICE_NO_PATTERN = /^ABSI(\d{4})(\d{2})(\d{2})/;
 
 /**
+ * Reads the date baked into an invoice number — "ABSI20260913004" ->
+ * 13 Sep 2026 (local midnight). Also tolerates separators ("ABSI-2026-09-13-004").
+ * Returns null when the number has no valid date in it.
+ */
+export function getInvoiceNoDate(invoiceNo) {
+  const match = /^ABS[A-Z]?[\s-]*(\d{4})[\s-]*(\d{2})[\s-]*(\d{2})/i.exec(String(invoiceNo || '').trim());
+  if (!match) return null;
+  const [, y, m, d] = match.map(Number);
+  if (m < 1 || m > 12 || d < 1 || d > 31) return null;
+  const parsed = new Date(y, m - 1, d);
+  // Reject overflow like 31 Feb rolling into March.
+  if (parsed.getMonth() !== m - 1 || parsed.getDate() !== d) return null;
+  return parsed;
+}
+
+/**
  * Returns a Date for when this order's payment was actually confirmed,
  * derived from its invoice number when one exists. Falls back to
  * `updatedAt` (stamped on every status change, including the
