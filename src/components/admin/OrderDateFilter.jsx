@@ -35,7 +35,14 @@ function toDateValue(date) {
  * `options` is an array of { value: "YYYY-MM-DD", label: "10 Sep 2026", count }.
  * `selected` is the array of ticked `value`s.
  */
-export default function OrderDateFilter({ options = [], selected = [], onChange }) {
+export default function OrderDateFilter({
+  options = [],
+  selected = [],
+  onChange,
+  label: baseLabel = "Order date",
+  countNoun = "order",
+  showSelectAll = false,
+}) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
 
@@ -89,10 +96,14 @@ export default function OrderDateFilter({ options = [], selected = [], onChange 
 
   const label =
     selected.length === 0
-      ? "Order date"
+      ? baseLabel
       : selected.length === 1
-        ? "Order date (1)"
-        : `Order dates (${selected.length})`;
+        ? `${baseLabel} (1)`
+        : `${baseLabel.replace(/date$/i, "dates")} (${selected.length})`;
+
+  const plural = (n) => `${countNoun}${n === 1 ? "" : "s"}`;
+  const allSelected = options.length > 0 && options.every((o) => selectedSet.has(o.value));
+  const totalAllCount = options.reduce((sum, o) => sum + o.count, 0);
 
   const grid = buildMonthGrid(viewMonth.getFullYear(), viewMonth.getMonth());
   const monthLabel = viewMonth.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
@@ -139,9 +150,26 @@ export default function OrderDateFilter({ options = [], selected = [], onChange 
       {open && (
         <div className="absolute left-0 top-[calc(100%+6px)] z-20 w-[286px] rounded-xl border border-white/10 bg-[#150007] p-3 shadow-xl">
           {!hasAnyData ? (
-            <div className="px-2 py-6 text-center text-[11px] text-muted">No orders yet.</div>
+            <div className="px-2 py-6 text-center text-[11px] text-muted">No {countNoun}s yet.</div>
           ) : (
             <>
+              {showSelectAll && (
+                <button
+                  type="button"
+                  onClick={() => onChange(allSelected ? [] : options.map((o) => o.value))}
+                  className={`mb-2.5 flex w-full items-center justify-between rounded-lg border px-2.5 py-1.5 text-[11px] font-extrabold transition-colors ${
+                    allSelected
+                      ? "border-orange/50 bg-orange/15 text-orange"
+                      : "border-white/10 bg-white/[0.06] text-[#f2ece2] hover:bg-white/10"
+                  }`}
+                >
+                  <span>{allSelected ? "Clear all dates" : "Select all dates"}</span>
+                  <span className="text-orange">
+                    {options.length} date{options.length === 1 ? "" : "s"} · {totalAllCount} {plural(totalAllCount)}
+                  </span>
+                </button>
+              )}
+
               <div className="mb-2 flex items-center justify-between">
                 <button
                   onClick={() => setViewMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
@@ -206,7 +234,7 @@ export default function OrderDateFilter({ options = [], selected = [], onChange 
 
               {!currentMonthHasData && (
                 <div className="mt-2 text-center text-[10px] text-muted">
-                  No orders in {monthLabel}.
+                  No {countNoun}s in {monthLabel}.
                 </div>
               )}
 
@@ -219,7 +247,7 @@ export default function OrderDateFilter({ options = [], selected = [], onChange 
                         className="flex items-center justify-between rounded-lg bg-white/5 px-2.5 py-1.5 text-[10.5px] font-semibold text-[#f2ece2]"
                       >
                         <span>{s.label}</span>
-                        <span className="text-orange">{s.count} orders</span>
+                        <span className="text-orange">{s.count} {plural(s.count)}</span>
                       </div>
                     ))}
                   </div>
@@ -227,7 +255,7 @@ export default function OrderDateFilter({ options = [], selected = [], onChange 
                     <span>
                       Total ({selectedSummary.length} date{selectedSummary.length > 1 ? "s" : ""})
                     </span>
-                    <span>{totalSelectedCount} orders</span>
+                    <span>{totalSelectedCount} {plural(totalSelectedCount)}</span>
                   </div>
                 </div>
               )}
