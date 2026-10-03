@@ -70,9 +70,13 @@ function buildOrderJob(mobile, order) {
   };
 }
 
-function buildMergedJob(mobile, customerName, orders) {
+function buildMergedJob(mobile, customerName, orders, invoiceId = null) {
   return {
-    jobKey: `merged:${mobile}`,
+    // `invoiceId` is set when these orders were merged into ONE invoice
+    // before payment; the job then saves per-order-style (see
+    // usesMergedStorage) so it can't collide with the customer-wide toggle.
+    jobKey: invoiceId ? `invoice:${invoiceId}` : `merged:${mobile}`,
+    invoiceId,
     merged: true,
     mobile,
     customerName,
@@ -109,9 +113,32 @@ function buildClusters(orders, packingProgress) {
       sorted.length > 1 &&
       !!packingProgress[packingKeyForMobile(mobile)]?.merged;
 
-    const jobs = mergedFlag
-      ? [buildMergedJob(mobile, earliest.customer?.name, sorted)]
-      : sorted.map((order) => buildOrderJob(mobile, order));
+    let jobs;
+    if (mergedFlag) {
+      jobs = [buildMergedJob(mobile, earliest.customer?.name, sorted)];
+    } else {
+      // Orders that share one merged invoice are packed as ONE box with
+      // consolidated item counts (same product summed across orders), not
+      // one checklist per order. Everything else stays a per-order job.
+      const byInvoice = new Map();
+      for (const order of sorted) {
+        if (!order.invoiceId) continue;
+        if (!byInvoice.has(order.invoiceId)) byInvoice.set(order.invoiceId, []);
+        byInvoice.get(order.invoiceId).push(order);
+      }
+      const emitted = new Set();
+      jobs = [];
+      for (const order of sorted) {
+        const group = order.invoiceId ? byInvoice.get(order.invoiceId) : null;
+        if (group && group.length > 1) {
+          if (emitted.has(order.invoiceId)) continue;
+          emitted.add(order.invoiceId);
+          jobs.push(buildMergedJob(mobile, order.customer?.name, group, order.invoiceId));
+        } else {
+          jobs.push(buildOrderJob(mobile, order));
+        }
+      }
+    }
 
     clusters.push({
       mobile,
@@ -130,8 +157,12 @@ function buildClusters(orders, packingProgress) {
   );
 }
 
+// Only the customer-wide Merge toggle uses the shared `packedKeysMerged`
+// slot; an invoice-merged job stores under its first order like a normal one.
+const usesMergedStorage = (job) => job.merged && !job.invoiceId;
+
 function getSavedPackedKeys(progressDoc, job) {
-  const raw = job.merged
+  const raw = usesMergedStorage(job)
     ? progressDoc?.packedKeysMerged
     : progressDoc?.perOrder?.[job.orderIds[0]]?.packedKeys;
   const keys = raw || [];
@@ -371,7 +402,7 @@ export default function AdminPacking() {
     setSaving(true);
     try {
       await savePackingProgress(db, activeJob.mobile, {
-        merged: activeJob.merged,
+        merged: usesMergedStorage(activeJob),
         orderId: activeJob.orderIds[0],
         packedKeys,
       });
@@ -389,7 +420,7 @@ export default function AdminPacking() {
     setMarking(true);
     try {
       await savePackingProgress(db, activeJob.mobile, {
-        merged: activeJob.merged,
+        merged: usesMergedStorage(activeJob),
         orderId: activeJob.orderIds[0],
         packedKeys,
       });
@@ -419,7 +450,7 @@ export default function AdminPacking() {
     try {
       const allKeys = job.items.map((item) => item.key);
       await savePackingProgress(db, job.mobile, {
-        merged: job.merged,
+        merged: usesMergedStorage(job),
         orderId: job.orderIds[0],
         packedKeys: allKeys,
       });
