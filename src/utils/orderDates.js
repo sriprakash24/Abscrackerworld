@@ -1,4 +1,4 @@
-// Manual-payment orders are placed (logged in the DB) on one date but the
+l// Manual-payment orders are placed (logged in the DB) on one date but the
 // customer often only actually pays a few days later, over WhatsApp. The
 // order doc's `createdAt` only reflects the enquiry date, not the payment
 // date — but the invoice number generated the moment admin taps "Confirm
