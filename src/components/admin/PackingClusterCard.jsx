@@ -129,13 +129,13 @@ export default function PackingClusterCard({
         </div>
       )}
 
-      <div className={`relative z-[1] pl-1.5 ${isMultiOrder && !merged ? "flex flex-col gap-2.5" : ""}`}>
+      <div className={`relative z-[1] pl-1.5 ${cluster.jobs.length > 1 ? "flex flex-col gap-2.5" : ""}`}>
         {cluster.jobs.map((job, i) => (
           <PackingJobCard
             key={job.jobKey}
             job={job}
             slotIndex={i}
-            showSlotLabel={isMultiOrder && !merged}
+            showSlotLabel={cluster.jobs.length > 1}
             packedCount={getPackedCount(job)}
             onStartPacking={() => onStartPacking(job)}
             onQuickMarkPacked={onQuickMarkPacked ? () => onQuickMarkPacked(job) : undefined}
