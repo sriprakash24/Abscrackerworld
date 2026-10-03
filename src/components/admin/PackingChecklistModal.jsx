@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import "react-lazy-load-image-component/src/effects/opacity.css";
@@ -152,6 +152,11 @@ export default function PackingChecklistModal({
   const isFullyPacked = (item) => (tally[item.key] || 0) >= item.quantity;
   const packedCount = items.filter(isFullyPacked).length;
   const allPacked = items.length > 0 && packedCount === items.length;
+  // Unpacked items stay on top (in their original order) so the packer
+  // always sees what's left; packed ones sink to the bottom together.
+  const pendingItems = items.filter((item) => !isFullyPacked(item));
+  const donePackedItems = items.filter(isFullyPacked);
+  const sortedItems = [...pendingItems, ...donePackedItems];
   const savedSet = new Set(savedPackedKeys || []);
   const dirty =
     packedCount !== savedSet.size || items.some((item) => isFullyPacked(item) !== savedSet.has(item.key));
@@ -233,15 +238,32 @@ export default function PackingChecklistModal({
 
             {/* Item list */}
             <div className="flex-1 overflow-y-auto px-4 py-3">
-              <div className="flex flex-col divide-y divide-white/[0.06]">
-                {items.map((item) => {
+              <div className="flex flex-col gap-2">
+                {sortedItems.map((item, index) => {
                   const count = tally[item.key] || 0;
                   const isMulti = item.quantity > 1;
                   const isChecked = count >= item.quantity;
                   const Row = isMulti ? "div" : "button";
+                  const firstPacked = isChecked && index === pendingItems.length;
 
                   return (
-                    <div key={item.key} className="flex flex-col gap-2.5 py-2.5 first:pt-0 last:pb-0">
+                    <Fragment key={item.key}>
+                    {firstPacked && (
+                      <div className="mt-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-wide text-[#8fe3a0]">
+                        <span className="h-px flex-1 bg-[#8fe3a0]/30" />
+                        Packed ({donePackedItems.length})
+                        <span className="h-px flex-1 bg-[#8fe3a0]/30" />
+                      </div>
+                    )}
+                    <motion.div
+                      layout
+                      transition={{ duration: 0.2 }}
+                      className={`flex flex-col gap-2.5 rounded-xl border px-2.5 py-2.5 ${
+                        isChecked
+                          ? "border-[#8fe3a0]/40 bg-[#8fe3a0]/10"
+                          : "border-white/[0.06] bg-white/[0.02]"
+                      }`}
+                    >
                       <Row
                         type={isMulti ? undefined : "button"}
                         onClick={isMulti ? undefined : () => setItemCount(item, isChecked ? 0 : 1)}
@@ -296,7 +318,8 @@ export default function PackingChecklistModal({
                           />
                         </div>
                       )}
-                    </div>
+                    </motion.div>
+                    </Fragment>
                   );
                 })}
               </div>
