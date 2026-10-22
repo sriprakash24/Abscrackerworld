@@ -23,7 +23,7 @@
 import { doc, runTransaction, serverTimestamp } from 'firebase/firestore';
 
 /** Today's date as YYYYMMDD (local time), e.g. "20260801". */
-function todayStamp() {
+export function todayStamp() {
   const now = new Date();
   const y = now.getFullYear();
   const m = String(now.getMonth() + 1).padStart(2, '0');

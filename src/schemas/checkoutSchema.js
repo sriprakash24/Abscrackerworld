@@ -2,7 +2,6 @@ import { z } from 'zod';
 
 // India-format mobile number: 10 digits, starting 6-9.
 const mobileRegex = /^[6-9]\d{9}$/;
-const pincodeRegex = /^\d{6}$/;
 
 const optionalMobile = z
   .string()
@@ -26,29 +25,18 @@ export const checkoutSchema = z.object({
     .regex(mobileRegex, 'Enter a valid 10-digit mobile number'),
   alternateMobile: optionalMobile,
 
-  // Delivery address
-  houseNumber: z.string().trim().min(1, 'Door / house number is required'),
-  street: z.string().trim().min(1, 'Street is required'),
-  area: z.string().trim().min(1, 'Area / locality is required'),
-  city: z.string().trim().min(1, 'Village / town / city is required'),
-  district: z.string().trim().min(1, 'District is required'),
-  state: z.string().trim().min(1, 'State is required'),
-  pincode: z
+  // Delivery address — one free-text box (transport delivery, so no
+  // door-number / street / PIN breakdown). Mandatory, otherwise anything goes.
+  address: z
     .string()
     .trim()
-    .min(1, 'PIN code is required')
-    .regex(pincodeRegex, 'Enter a valid 6-digit PIN code'),
+    .min(1, 'Delivery address is required')
+    .max(600, 'Address is too long'),
 });
 
 export const checkoutDefaultValues = {
   fullName: '',
   mobile: '',
   alternateMobile: '',
-  houseNumber: '',
-  street: '',
-  area: '',
-  city: '',
-  district: '',
-  state: '',
-  pincode: '',
+  address: '',
 };

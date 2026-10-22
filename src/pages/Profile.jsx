@@ -9,6 +9,7 @@ import { Lock, UserRound } from 'lucide-react';
 import { useCustomerStore } from '../store/useCustomerStore';
 import { useCustomerGateStore } from '../store/useCustomerGateStore';
 import { useLogout } from '../hooks/useLogout';
+import { addressToText, textToAddress } from '../utils/formatAddress';
 import LogoutConfirmDialog from '../components/customer/LogoutConfirmDialog';
 import { profileSchema, profileDefaultValues } from '../schemas/profileSchema';
 import { db } from '../firebase/config';
@@ -64,13 +65,7 @@ export default function Profile() {
         if (cancelled) return;
         reset({
           fullName: profile?.name || customer.name || '',
-          houseNumber: address?.houseNumber || '',
-          street: address?.street || '',
-          area: address?.area || '',
-          city: address?.city || '',
-          district: address?.district || '',
-          state: address?.state || '',
-          pincode: address?.pincode || '',
+          address: addressToText(address),
         });
       } catch (err) {
         console.error('Failed to load profile', err);
@@ -102,15 +97,7 @@ export default function Profile() {
       if (!customer?.mobile || isSaving) return;
       setIsSaving(true);
       try {
-        const address = {
-          houseNumber: values.houseNumber.trim(),
-          street: values.street.trim(),
-          area: values.area.trim(),
-          city: values.city.trim(),
-          district: values.district.trim(),
-          state: values.state.trim(),
-          pincode: values.pincode.trim(),
-        };
+        const address = textToAddress(values.address);
         await saveUserAddress(db, customer.mobile, { name: values.fullName, address });
         setCustomer({ name: values.fullName.trim(), mobile: customer.mobile });
         toast.success('Profile updated');

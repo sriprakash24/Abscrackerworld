@@ -20,6 +20,7 @@ const optionalNumberField = (label) =>
 
 export const invoiceItemSchema = z.object({
   productId: z.string().optional(),
+  isCombo: z.boolean().optional(),
   description: z.string().trim().min(1, 'Description is required'),
   qty: numberField('Qty', { min: 0, allowZero: false }),
   rate: numberField('Rate', { min: 0, allowZero: false }),
@@ -55,6 +56,7 @@ export function invoiceToFormValues(invoice) {
     customerAddress: invoice.customer?.address || '',
     items: (invoice.items || []).map((item) => ({
       productId: item.productId || '',
+      isCombo: !!item.isCombo,
       description: item.description || '',
       qty: String(item.qty ?? ''),
       rate: String(item.rate ?? ''),
@@ -77,6 +79,7 @@ export function formValuesToInvoicePayload(values) {
     items: values.items.map((item, i) => ({
       id: `${i + 1}`,
       productId: item.productId || '',
+      isCombo: !!item.isCombo,
       description: item.description,
       qty: item.qty,
       rate: item.rate,

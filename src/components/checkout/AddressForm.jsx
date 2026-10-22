@@ -2,6 +2,11 @@ import { motion } from 'framer-motion';
 import { MapPin } from 'lucide-react';
 import FormField from './FormField';
 
+/**
+ * Delivery address — a single free-text box. Orders go out by transport, so
+ * we only need enough for the team to know where to send it; customers can
+ * type whatever they like (village, town, landmark, transport office...).
+ */
 export default function AddressForm({ register, errors, isActive = false }) {
   return (
     <motion.div
@@ -17,69 +22,16 @@ export default function AddressForm({ register, errors, isActive = false }) {
         <h3 className="text-[12.5px] font-extrabold tracking-wide text-brown">Delivery Address</h3>
       </div>
 
-      <div className="flex flex-col gap-3">
-        <div className="grid grid-cols-2 gap-3">
-          <FormField
-            label="Door / House No."
-            required
-            placeholder="e.g. 12-A"
-            registration={register('houseNumber')}
-            error={errors.houseNumber}
-          />
-          <FormField
-            label="Street"
-            required
-            placeholder="e.g. Gandhi Street"
-            registration={register('street')}
-            error={errors.street}
-          />
-        </div>
-
-        <FormField
-          label="Area / Locality"
-          required
-          placeholder="e.g. Anna Nagar"
-          registration={register('area')}
-          error={errors.area}
-        />
-
-        <div className="grid grid-cols-2 gap-3">
-          <FormField
-            label="Village / Town / City"
-            required
-            placeholder="e.g. Sivakasi"
-            registration={register('city')}
-            error={errors.city}
-          />
-          <FormField
-            label="District"
-            required
-            placeholder="e.g. Virudhunagar"
-            registration={register('district')}
-            error={errors.district}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <FormField
-            label="State"
-            required
-            placeholder="e.g. Tamil Nadu"
-            registration={register('state')}
-            error={errors.state}
-          />
-          <FormField
-            label="PIN Code"
-            required
-            type="tel"
-            inputMode="numeric"
-            maxLength={6}
-            placeholder="626123"
-            registration={register('pincode')}
-            error={errors.pincode}
-          />
-        </div>
-      </div>
+      <FormField
+        label="Address"
+        required
+        as="textarea"
+        rows={4}
+        placeholder="Type your full address — village / town, district, state, PIN, landmark or transport name, anything that helps us deliver"
+        registration={register('address')}
+        error={errors.address}
+        className="[&_textarea]:resize-none [&_textarea]:leading-relaxed"
+      />
     </motion.div>
   );
 }

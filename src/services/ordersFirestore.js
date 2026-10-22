@@ -21,17 +21,47 @@ import {
   onSnapshot,
   writeBatch,
 } from "firebase/firestore";
-import { reserveSequentialId } from "../utils/sequentialId";
-import { formatFullAddress } from "../utils/formatAddress";
+import { reserveSequentialId, todayStamp } from "../utils/sequentialId";
+import { formatFullAddress, textToAddress } from "../utils/formatAddress";
 import { computeCartDiff } from "../utils/orderEditDiff";
+import { computePackingCharge, PACKING_CHARGE_RATE } from "../utils/packingCharge";
+
+/** Rejects if `promise` hasn't settled within `ms` — never leaves the UI spinning forever. */
+function withTimeout(promise, ms, message) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
+const ORDER_ID_TIMEOUT_MS = 6000;
+export const ORDER_WRITE_TIMEOUT_MS = 20000;
 
 /**
  * Generates the order id, e.g. "ABSO20260801108" — ABSO + today's date +
  * a 3-digit counter that resets daily. See src/utils/sequentialId.js for
  * the shared format (invoices use the same helper with the ABSI prefix).
+ *
+ * The counter lives in one shared Firestore doc and is bumped inside a
+ * transaction, which needs a live round-trip to the server and queues up
+ * behind other customers ordering at the same moment. If that takes longer
+ * than a few seconds (slow network, festive-season rush) we don't make the
+ * customer wait: we fall back to a date + random-suffix id, e.g.
+ * "ABSO20261022K3F9", which is still unique and still searchable.
  */
-export function generateOrderId(db) {
-  return reserveSequentialId(db, { prefix: "ABSO", counterKey: "orders" });
+export async function generateOrderId(db) {
+  try {
+    return await withTimeout(
+      reserveSequentialId(db, { prefix: "ABSO", counterKey: "orders" }),
+      ORDER_ID_TIMEOUT_MS,
+      "order id timeout",
+    );
+  } catch (err) {
+    console.warn("Sequential order id unavailable, using fallback id", err);
+    const suffix = (Date.now().toString(36).slice(-3) + Math.random().toString(36).slice(2, 4)).toUpperCase();
+    return `ABSO${todayStamp()}${suffix}`;
+  }
 }
 
 /**
@@ -44,15 +74,7 @@ export function buildOrderPayload({ orderId, formValues, pricing }) {
     mobile,
     alternateMobile,
     email,
-    houseNumber,
-    street,
-    area,
-    city,
-    district,
-    state,
-    pincode,
-    landmark,
-    deliveryNotes,
+    address,
     orderNotes,
   } = formValues;
 
@@ -64,17 +86,7 @@ export function buildOrderPayload({ orderId, formValues, pricing }) {
       alternateMobile: alternateMobile?.trim() || "",
       email: email?.trim() || "",
     },
-    address: {
-      houseNumber: houseNumber.trim(),
-      street: street.trim(),
-      area: area.trim(),
-      city: city.trim(),
-      district: district.trim(),
-      state: state.trim(),
-      pincode: pincode.trim(),
-      landmark: landmark?.trim() || "",
-      deliveryNotes: deliveryNotes?.trim() || "",
-    },
+    address: textToAddress(address),
     orderNotes: orderNotes?.trim() || "",
     cartItems: pricing.items.map(({ product, qty }) => ({
       productId: product.id,
@@ -101,12 +113,34 @@ export function buildOrderPayload({ orderId, formValues, pricing }) {
   };
 }
 
-/** Writes a new order document to orders/{orderId}. */
-export async function submitOrder(db, { formValues, pricing }) {
-  const orderId = await generateOrderId(db);
+/**
+ * Writes a new order document to orders/{orderId}.
+ *
+ * `orderId` can be passed back in when retrying after a timeout: the write is
+ * keyed by that id, so a retry overwrites the same document instead of
+ * creating a duplicate order if the first attempt actually did go through.
+ *
+ * Firestore only resolves a write once the server acknowledges it — on a bad
+ * connection that can take minutes (the write itself stays safely queued on
+ * the device). So we wait at most ORDER_WRITE_TIMEOUT_MS and then throw an
+ * error with `code: "order-write-timeout"` and the `orderId`, letting the UI
+ * tell the customer what's happening instead of spinning forever.
+ */
+export async function submitOrder(db, { formValues, pricing, orderId: existingOrderId }) {
+  const orderId = existingOrderId || (await generateOrderId(db));
   const payload = buildOrderPayload({ orderId, formValues, pricing });
   const ref = doc(db, "orders", orderId);
-  await setDoc(ref, payload);
+  try {
+    await withTimeout(setDoc(ref, payload), ORDER_WRITE_TIMEOUT_MS, "order write timeout");
+  } catch (err) {
+    if (err.message === "order write timeout") {
+      const timeoutErr = new Error("order write timeout");
+      timeoutErr.code = "order-write-timeout";
+      timeoutErr.orderId = orderId;
+      throw timeoutErr;
+    }
+    throw err;
+  }
   return { orderId };
 }
 
@@ -262,7 +296,6 @@ export async function updateOrderStatus(db, orderDocId, patch) {
  * coupon code was used, so an edited order is repriced without one.
  */
 export function computeOrderPricing(items) {
-  const PACKING_CHARGE_RATE = 0.03;
   const subtotalMrp = items.reduce(
     (sum, { product, qty }) => sum + product.mrp * qty,
     0,
@@ -272,7 +305,8 @@ export function computeOrderPricing(items) {
     0,
   );
   const discount = Math.max(0, subtotalMrp - subtotalSale);
-  const packingCharges = Math.round(subtotalSale * PACKING_CHARGE_RATE);
+  // Combo packs are exempt from packing — see utils/packingCharge.js.
+  const packingCharges = computePackingCharge(items, PACKING_CHARGE_RATE);
   const grandTotal = Math.max(0, subtotalSale + packingCharges);
 
   return {

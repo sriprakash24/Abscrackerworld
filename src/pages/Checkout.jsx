@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,6 +11,7 @@ import { checkoutSchema, checkoutDefaultValues } from '../schemas/checkoutSchema
 import { db } from '../firebase/config';
 import { submitOrder } from '../services/ordersFirestore';
 import { getUserProfile, saveUserAddress } from '../services/usersFirestore';
+import { addressToText, textToAddress } from '../utils/formatAddress';
 
 import CheckoutHeader from '../components/checkout/CheckoutHeader';
 import CustomerForm from '../components/checkout/CustomerForm';
@@ -28,6 +29,9 @@ export default function Checkout() {
   const pricing = useCartPricing();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Order id from an attempt that timed out — reused on retry so a slow-but-
+  // successful first write can never turn into a duplicate order.
+  const pendingOrderIdRef = useRef(null);
   const [submittedOrder, setSubmittedOrder] = useState(null); // { orderId } | null
 
   // Tracks which form section currently has focus so its card can show a
@@ -78,13 +82,7 @@ export default function Checkout() {
         const current = getValues();
         reset({
           ...current,
-          houseNumber: current.houseNumber || profile.address.houseNumber || '',
-          street: current.street || profile.address.street || '',
-          area: current.area || profile.address.area || '',
-          city: current.city || profile.address.city || '',
-          district: current.district || profile.address.district || '',
-          state: current.state || profile.address.state || '',
-          pincode: current.pincode || profile.address.pincode || '',
+          address: current.address || addressToText(profile.address),
         });
       } catch (err) {
         console.error('Failed to prefill address from profile', err);
@@ -110,7 +108,12 @@ export default function Checkout() {
       if (isSubmitting || submittedOrder) return; // prevent duplicate submissions
       setIsSubmitting(true);
       try {
-        const { orderId } = await submitOrder(db, { formValues: values, pricing });
+        const { orderId } = await submitOrder(db, {
+          formValues: values,
+          pricing,
+          orderId: pendingOrderIdRef.current,
+        });
+        pendingOrderIdRef.current = null;
         setSubmittedOrder({ orderId, grandTotal: pricing.grandTotal });
         clearCart();
 
@@ -120,19 +123,19 @@ export default function Checkout() {
         // address even if they never open "My Profile" directly.
         saveUserAddress(db, values.mobile.trim(), {
           name: values.fullName,
-          address: {
-            houseNumber: values.houseNumber.trim(),
-            street: values.street.trim(),
-            area: values.area.trim(),
-            city: values.city.trim(),
-            district: values.district.trim(),
-            state: values.state.trim(),
-            pincode: values.pincode.trim(),
-          },
+          address: textToAddress(values.address),
         }).catch((err) => console.error('Failed to sync profile address', err));
       } catch (err) {
         console.error('Order submission failed', err);
-        toast.error("Couldn't place your order. Please check your connection and try again.");
+        if (err.code === 'order-write-timeout') {
+          pendingOrderIdRef.current = err.orderId;
+          toast.error(
+            'Slow network — your order is saved on this phone and is still sending. Tap Place Order again to retry; it will not create a duplicate.',
+            { duration: 8000 }
+          );
+        } else {
+          toast.error("Couldn't place your order. Please check your connection and try again.");
+        }
       } finally {
         setIsSubmitting(false);
       }

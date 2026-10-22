@@ -21,6 +21,7 @@
 // admins confirming payment at the same moment never collide. Orders use
 // the same generator with the ABSO prefix — see src/utils/sequentialId.js.
 
+import { packableInvoiceAmount, isComboProduct } from '../utils/packingCharge';
 import {
   doc,
   addDoc,
@@ -59,7 +60,8 @@ function reserveNextInvoiceNumber(db) {
  */
 export function computeInvoiceTotals({ items, packagePercent = DEFAULT_PACKAGE_PERCENT }) {
   const subtotal = items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
-  const packageAmount = Math.round((subtotal * Number(packagePercent || 0)) / 100);
+  // Combo lines (item.isCombo) are exempt from packing.
+  const packageAmount = Math.round((packableInvoiceAmount(items) * Number(packagePercent || 0)) / 100);
   const grandTotal = Math.max(subtotal + packageAmount, 0);
   return { subtotal, packageAmount, grandTotal };
 }
@@ -68,6 +70,8 @@ export function computeInvoiceTotals({ items, packagePercent = DEFAULT_PACKAGE_P
 function orderToInvoiceItems(order) {
   return (order.cartItems || []).map((item, i) => ({
     id: `${i + 1}`,
+    productId: item.productId || '',
+    isCombo: isComboProduct(item),
     description: item.name,
     qty: item.quantity,
     rate: item.unitPrice,

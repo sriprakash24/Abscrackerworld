@@ -24,13 +24,13 @@ export default function PlaceOrderButton({ disabled, loading, grandTotal }) {
     <div className="sticky bottom-0 z-30 px-4 pb-4 pt-3">
       <div
         className="panel-3d rounded-2xl p-2.5"
-        style={{ background: 'linear-gradient(180deg, rgba(5,5,5,0) 0%, rgba(5,5,5,0.92) 40%)' }}
+        style={{ background: 'linear-gradient(180deg, rgba(255,247,232,0) 0%, rgba(255,247,232,0.96) 40%)' }}
       >
         <button
           type="submit"
           onPointerDown={handlePointerDown}
           disabled={disabled || loading}
-          className={`btn-3d relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl py-3.5 text-[13.5px] font-extrabold tracking-wide text-black transition-opacity ${
+          className={`btn-3d relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl py-3.5 text-[13.5px] font-extrabold tracking-wide text-white transition-opacity ${
             disabled || loading ? 'cursor-not-allowed opacity-50' : ''
           }`}
         >

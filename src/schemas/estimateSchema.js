@@ -37,6 +37,7 @@ export function estimateToFormValues(estimate) {
     customerAddress: estimate.customer?.address || '',
     items: (estimate.items || []).map((item) => ({
       productId: item.productId || '',
+      isCombo: !!item.isCombo,
       description: item.description || '',
       qty: String(item.qty ?? ''),
       rate: String(item.rate ?? ''),
@@ -57,6 +58,7 @@ export function formValuesToEstimatePayload(values) {
     items: values.items.map((item, i) => ({
       id: `${i + 1}`,
       productId: item.productId || '',
+      isCombo: !!item.isCombo,
       description: item.description,
       qty: item.qty,
       rate: item.rate,

@@ -16,10 +16,10 @@ export function repriceFromCatalog(order, productsById) {
     const liveProduct = productsById[item.productId];
     return {
       product: liveProduct
-        ? { id: liveProduct.id, mrp: liveProduct.mrp, sale: liveProduct.sale }
+        ? { id: liveProduct.id, mrp: liveProduct.mrp, sale: liveProduct.sale, category: liveProduct.category, isCombo: liveProduct.isCombo }
         // Product no longer in the catalog (e.g. deleted) — keep whatever
         // was billed originally rather than losing the line item.
-        : { id: item.productId, mrp: item.mrp ?? item.unitPrice, sale: item.unitPrice },
+        : { id: item.productId, mrp: item.mrp ?? item.unitPrice, sale: item.unitPrice, category: item.category },
       qty: item.quantity,
     };
   });

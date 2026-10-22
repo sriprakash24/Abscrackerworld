@@ -50,7 +50,11 @@ export default function EstimateFormModal({ open, estimate, onClose }) {
   const items = watch('items');
   const packagePercent = Number(watch('packagePercent')) || 0;
   const subtotal = (items || []).reduce((sum, it) => sum + (Number(it.qty) || 0) * (Number(it.rate) || 0), 0);
-  const packageAmount = Math.round((subtotal * packagePercent) / 100);
+  const packableAmount = (items || []).reduce(
+    (sum, it) => (it.isCombo ? sum : sum + (Number(it.qty) || 0) * (Number(it.rate) || 0)),
+    0,
+  );
+  const packageAmount = Math.round((packableAmount * packagePercent) / 100);
   const grandTotal = Math.max(subtotal + packageAmount, 0);
 
   const onSubmit = async (values) => {

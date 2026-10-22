@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,6 +28,9 @@ export default function CheckoutModal({ open, onClose, pricing }) {
   const customer = useCustomerStore((s) => s.customer);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Order id from an attempt that timed out — reused on retry so a slow-but-
+  // successful first write can never turn into a duplicate order.
+  const pendingOrderIdRef = useRef(null);
   const [submittedOrder, setSubmittedOrder] = useState(null); // { orderId, grandTotal } | null
   const [activeSection, setActiveSection] = useState(null);
 
@@ -74,12 +77,25 @@ export default function CheckoutModal({ open, onClose, pricing }) {
       if (isSubmitting || submittedOrder) return; // prevent duplicate submissions
       setIsSubmitting(true);
       try {
-        const { orderId } = await submitOrder(db, { formValues: values, pricing });
+        const { orderId } = await submitOrder(db, {
+          formValues: values,
+          pricing,
+          orderId: pendingOrderIdRef.current,
+        });
+        pendingOrderIdRef.current = null;
         setSubmittedOrder({ orderId, grandTotal: pricing.grandTotal });
         clearCart();
       } catch (err) {
         console.error('Order submission failed', err);
-        toast.error("Couldn't place your order. Please check your connection and try again.");
+        if (err.code === 'order-write-timeout') {
+          pendingOrderIdRef.current = err.orderId;
+          toast.error(
+            'Slow network — your order is saved on this phone and is still sending. Tap Place Order again to retry; it will not create a duplicate.',
+            { duration: 8000 }
+          );
+        } else {
+          toast.error("Couldn't place your order. Please check your connection and try again.");
+        }
       } finally {
         setIsSubmitting(false);
       }
@@ -124,11 +140,14 @@ export default function CheckoutModal({ open, onClose, pricing }) {
             className="absolute inset-x-0 bottom-0 top-[5%] mx-auto flex w-full max-w-[430px] flex-col overflow-hidden rounded-t-[28px] bg-bg"
             style={{ boxShadow: '0 -12px 40px rgba(113,50,31,0.17)' }}
           >
-            {/* Ambient layers — matches the app-wide dark navy background */}
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#080c17] via-transparent to-[#080c17]" />
+            {/* Soft peach ambient glow — matches the app-wide light theme */}
+            <div
+              className="pointer-events-none absolute inset-0"
+              style={{ background: 'linear-gradient(180deg, #ffeedb 0%, #fff7e8 45%, #fff7e8 100%)' }}
+            />
             <div
               className="pointer-events-none absolute inset-x-0 top-0 h-1/3"
-              style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(255,213,79,0.10) 0%, rgba(0,0,0,0) 65%)' }}
+              style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(255,179,71,0.22) 0%, rgba(255,179,71,0) 65%)' }}
             />
 
             <div className="relative z-10 flex justify-center pt-2.5">

@@ -46,7 +46,7 @@ import {
 import { repriceFromCatalog } from "../../utils/orderPricing";
 import { getWhatsappSendStatus } from "../../utils/whatsappSendStatus";
 import { getOrderSlot } from "../../utils/packingAccent";
-import { formatStreetLine } from "../../utils/formatAddress";
+import { formatStreetLine, formatFullAddress } from "../../utils/formatAddress";
 import {
   createInvoiceForOrder,
   getInvoice,
@@ -1145,17 +1145,7 @@ function AdminOrderCard({ order, delay = 0, index = 0, mergedGroupHint = null })
                   <div className="flex items-start gap-2 rounded-xl bg-brown/8 px-3 py-2.5 text-[10.5px] leading-relaxed text-muted">
                     <MapPin size={13} className="mt-0.5 shrink-0 text-orange" />
                     <span>
-                      {[
-                        order.address.houseNumber,
-                        order.address.street,
-                        order.address.area,
-                        order.address.city,
-                        order.address.district,
-                        order.address.state,
-                        order.address.pincode,
-                      ]
-                        .filter(Boolean)
-                        .join(", ")}
+                      {formatFullAddress(order.address)}
                       {order.address.landmark
                         ? ` (near ${order.address.landmark})`
                         : ""}

@@ -1,3 +1,4 @@
+import { SHOP_WHATSAPP_URL, SHOP_TEL_URL } from '../../constants/invoiceConstants';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -127,7 +128,7 @@ export default function SideMenu({ open, onClose }) {
 
             <div className="flex flex-col gap-1 px-3">
               <a
-                href="https://wa.me/919597189599"
+                href={SHOP_WHATSAPP_URL}
                 target="_blank"
                 rel="noreferrer"
                 onClick={onClose}
@@ -142,7 +143,7 @@ export default function SideMenu({ open, onClose }) {
                 <span className="text-[12.5px] font-bold text-brown">WhatsApp Support</span>
               </a>
               <a
-                href="tel:+919597189599"
+                href={SHOP_TEL_URL}
                 onClick={onClose}
                 className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-brown/6"
               >

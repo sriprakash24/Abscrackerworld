@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { getOrderQtyCap } from '../utils/productLimits';
+import { packableSubtotal, comboSubtotal, computePackingCharge } from '../utils/packingCharge';
 
 // ---------------------------------------------------------------------------
 // Pricing config — kept here so CartPage / OrderSummary / FreeDeliveryProgress
@@ -196,8 +197,11 @@ export const useCartStore = create(
         // odd-looking numbers like "₹18,000 OFF" on a ₹2,000 item.
         const discountPercentage = subtotalMrp > 0 ? Math.round((discount / subtotalMrp) * 100) : 0;
 
-        // Packing charge is 3% of the amount (sale total), not MRP.
-        const packingCharges = Math.round(subtotalSale * PACKING_CHARGE_RATE);
+        // Packing charge is 3% of the sale total of NON-combo items only —
+        // combo packs are exempt (see utils/packingCharge.js).
+        const packingCharges = computePackingCharge(items, PACKING_CHARGE_RATE);
+        const packableAmount = packableSubtotal(items);
+        const comboAmount = comboSubtotal(items);
 
         // Delivery is disabled for now — pricing/threshold logic is kept
         // here (unused in the cart total) so it's ready to switch back on
@@ -221,6 +225,8 @@ export const useCartStore = create(
           itemCount: items.reduce((a, { qty }) => a + qty, 0),
           subtotalMrp,
           subtotalSale,
+          packableAmount,
+          comboAmount,
           discount,
           discountPercentage,
           packingCharges,

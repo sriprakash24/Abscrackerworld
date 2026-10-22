@@ -1,3 +1,4 @@
+import { formatFullAddress } from '../../utils/formatAddress';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -17,12 +18,7 @@ function formatJoinedDate(createdAt) {
   return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-function formatAddress(address) {
-  if (!address) return '';
-  return [address.houseNumber, address.street, address.area, address.city, address.district, address.state, address.pincode]
-    .filter(Boolean)
-    .join(', ');
-}
+const formatAddress = (address) => formatFullAddress(address);
 
 export default function AdminUsers() {
   const { user, logout } = useAdminAuth();

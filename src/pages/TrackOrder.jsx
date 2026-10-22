@@ -1,3 +1,4 @@
+import { formatFullAddress } from '../utils/formatAddress';
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -300,17 +301,7 @@ export default function TrackOrder() {
                 <div className="flex items-start gap-2 rounded-xl bg-brown/8 px-3 py-2.5 text-[10.5px] leading-relaxed text-muted">
                   <MapPin size={13} className="mt-0.5 shrink-0 text-orange" />
                   <span>
-                    {[
-                      selectedOrder.address.houseNumber,
-                      selectedOrder.address.street,
-                      selectedOrder.address.area,
-                      selectedOrder.address.city,
-                      selectedOrder.address.district,
-                      selectedOrder.address.state,
-                      selectedOrder.address.pincode,
-                    ]
-                      .filter(Boolean)
-                      .join(", ")}
+                    {formatFullAddress(selectedOrder.address)}
                   </span>
                 </div>
               )}

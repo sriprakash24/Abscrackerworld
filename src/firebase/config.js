@@ -33,7 +33,15 @@ export const firebaseApp = getApps().length ? getApps()[0] : initializeApp(fireb
 // Firestore free-tier quota getting exceeded with only a handful of users.
 // persistentMultipleTabManager lets several open tabs share the same
 // IndexedDB cache instead of fighting over an exclusive lock.
+//
+// experimentalAutoDetectLongPolling: on many Indian mobile networks / carrier
+// proxies Firestore's default streaming (WebChannel) connection gets blocked
+// or buffered, and the SDK silently sits waiting on it for a long time —
+// writes (like Place Order) then take minutes to be acknowledged. With this
+// flag the SDK notices a stalled stream within a few seconds and switches to
+// plain HTTP long-polling, which works everywhere.
 export const db = initializeFirestore(firebaseApp, {
+  experimentalAutoDetectLongPolling: true,
   localCache: persistentLocalCache({
     tabManager: persistentMultipleTabManager(),
   }),

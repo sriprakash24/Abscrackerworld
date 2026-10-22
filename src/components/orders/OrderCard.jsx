@@ -1,3 +1,4 @@
+import { formatFullAddress } from '../../utils/formatAddress';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -338,9 +339,7 @@ export default function OrderCard({ order, delay = 0 }) {
                 <div className="flex items-start gap-2 rounded-xl bg-brown/8 px-3 py-2.5 text-[10.5px] leading-relaxed text-muted">
                   <MapPin size={13} className="mt-0.5 shrink-0 text-orange" />
                   <span>
-                    {[order.address.houseNumber, order.address.street, order.address.area, order.address.city, order.address.district, order.address.state, order.address.pincode]
-                      .filter(Boolean)
-                      .join(', ')}
+                    {formatFullAddress(order.address)}
                   </span>
                 </div>
               )}

@@ -9,6 +9,7 @@
 // "Payment Pending" status pill, and shows the order's own price breakdown
 // (subtotal / discount / packing / delivery) instead of the invoice's
 // post-payment totals.
+import { formatFullAddress } from './formatAddress';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { SHOP_INFO } from '../constants/invoiceConstants';
@@ -67,17 +68,7 @@ function orderToBillData(order) {
     amount: item.lineTotal ?? item.unitPrice * item.quantity,
   }));
 
-  const address = [
-    order.address?.houseNumber,
-    order.address?.street,
-    order.address?.area,
-    order.address?.city,
-    order.address?.district,
-    order.address?.state,
-    order.address?.pincode,
-  ]
-    .filter(Boolean)
-    .join(', ');
+  const address = formatFullAddress(order.address);
 
   const subtotal = order.subtotal ?? 0;
   const discount = order.discount ?? 0;

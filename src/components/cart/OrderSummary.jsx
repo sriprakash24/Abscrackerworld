@@ -7,6 +7,8 @@ export default function OrderSummary({ pricing }) {
     subtotalSale,
     discountPercentage,
     packingCharges,
+    comboAmount,
+    packableAmount,
     coupon,
     couponDiscount,
     grandTotal,
@@ -24,7 +26,7 @@ export default function OrderSummary({ pricing }) {
             <Row label="You Save" value={`${discountPercentage}% OFF`} valueClassName="text-[#1E8E4A]" />
           )}
           <div className="py-0.5">
-            <PackingChargesCard amount={packingCharges} />
+            <PackingChargesCard amount={packingCharges} comboAmount={comboAmount} packableAmount={packableAmount} />
           </div>
           {coupon && couponDiscount > 0 && (
             <Row label={`Coupon (${coupon.code})`} value={`− ₹${couponDiscount}`} valueClassName="text-[#1E8E4A]" />

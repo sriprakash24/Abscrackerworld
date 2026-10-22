@@ -1,3 +1,4 @@
+import { isComboProduct } from '../../utils/packingCharge';
 import { useState } from 'react';
 import { useFieldArray } from 'react-hook-form';
 import { Plus, Trash2, LayoutGrid } from 'lucide-react';
@@ -23,6 +24,7 @@ export default function InvoiceItemsEditor({ control, register, watch, setValue,
     if (!productId) return;
     const product = products.find((p) => p.id === productId);
     if (!product) return;
+    setValue(`items.${index}.isCombo`, isComboProduct(product));
     setValue(`items.${index}.description`, product.name, { shouldValidate: true });
     setValue(`items.${index}.rate`, String(product.sale ?? ''), { shouldValidate: true });
   };
@@ -42,6 +44,7 @@ export default function InvoiceItemsEditor({ control, register, watch, setValue,
       const product = products.find((p) => p.id === productId);
       newRows.push({
         productId,
+        isCombo: isComboProduct(product),
         description: product?.name || '',
         qty: String(qty),
         rate: String(product?.sale ?? ''),

@@ -15,6 +15,13 @@ export const SHOP_INFO = {
   thankYouLine: "Have a Safe & Prosperous Festival",
 };
 
+// Single place the shop's contact number is turned into links — the success
+// screen, floating WhatsApp button and side menu all use these, so changing
+// SHOP_INFO.whatsapp / SHOP_INFO.phone above updates every one of them.
+const lastTenDigits = (s) => String(s).replace(/\D/g, "").slice(-10);
+export const SHOP_WHATSAPP_URL = `https://wa.me/91${lastTenDigits(SHOP_INFO.whatsapp)}`;
+export const SHOP_TEL_URL = `tel:+91${lastTenDigits(SHOP_INFO.phone)}`;
+
 export const PAYMENT_MODES = ["CASH", "UPI", "CARD", "OTHER"];
 
 export const PAYMENT_MODE_LABELS = {

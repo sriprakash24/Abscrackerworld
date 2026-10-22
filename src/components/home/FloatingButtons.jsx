@@ -1,3 +1,4 @@
+import { SHOP_WHATSAPP_URL } from '../../constants/invoiceConstants';
 import { useEffect, useState } from "react";
 import { ShoppingCart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -56,7 +57,7 @@ export default function FloatingButtons() {
           `fixed` already creates a positioning context, so no extra
           `relative` class is needed here. */}
       <motion.a
-        href="https://wa.me/919597189599"
+        href={SHOP_WHATSAPP_URL}
         target="_blank"
         rel="noreferrer"
         initial={{ opacity: 0, scale: 0.6 }}

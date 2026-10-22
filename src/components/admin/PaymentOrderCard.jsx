@@ -58,8 +58,8 @@ export default function PaymentOrderCard({ order, index = 0, delay = 0, autoDown
       const liveProduct = productsById[item.productId];
       return {
         product: liveProduct
-          ? { id: liveProduct.id, mrp: liveProduct.mrp, sale: liveProduct.sale }
-          : { id: item.productId, mrp: item.mrp ?? item.unitPrice, sale: item.unitPrice },
+          ? { id: liveProduct.id, mrp: liveProduct.mrp, sale: liveProduct.sale, category: liveProduct.category, isCombo: liveProduct.isCombo }
+          : { id: item.productId, mrp: item.mrp ?? item.unitPrice, sale: item.unitPrice, category: item.category },
         qty: item.quantity,
       };
     });

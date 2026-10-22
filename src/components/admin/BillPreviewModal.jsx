@@ -1,3 +1,4 @@
+import { formatFullAddress } from '../../utils/formatAddress';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, Download } from 'lucide-react';
 import { SHOP_INFO } from '../../constants/invoiceConstants';
@@ -21,17 +22,7 @@ export default function BillPreviewModal({ open, order, onClose }) {
   // MRP-minus-discount arithmetic walked out on screen.
   const salesTotal = Math.max(subtotal - discount, 0);
   const discountPercent = subtotal > 0 ? Math.round((discount / subtotal) * 100) : 0;
-  const address = [
-    order.address?.houseNumber,
-    order.address?.street,
-    order.address?.area,
-    order.address?.city,
-    order.address?.district,
-    order.address?.state,
-    order.address?.pincode,
-  ]
-    .filter(Boolean)
-    .join(', ');
+  const address = formatFullAddress(order.address);
 
   return (
     <AnimatePresence>

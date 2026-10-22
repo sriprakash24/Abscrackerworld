@@ -1,3 +1,4 @@
+import { addressToText, textToAddress } from '../../utils/formatAddress';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -35,13 +36,7 @@ export default function UserFormModal({ open, user, onClose }) {
     const address = user?.address;
     reset({
       name: user?.name || '',
-      houseNumber: address?.houseNumber || '',
-      street: address?.street || '',
-      area: address?.area || '',
-      city: address?.city || '',
-      district: address?.district || '',
-      state: address?.state || '',
-      pincode: address?.pincode || '',
+      address: addressToText(address),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, user]);
@@ -50,31 +45,11 @@ export default function UserFormModal({ open, user, onClose }) {
     if (!user) return;
     setSubmitting(true);
     try {
-      const hasAnyAddressField = [
-        values.houseNumber,
-        values.street,
-        values.area,
-        values.city,
-        values.district,
-        values.state,
-        values.pincode,
-      ].some(Boolean);
+      const addressText = (values.address || '').trim();
 
       await updateUserProfile(db, user.id, {
         name: values.name,
-        ...(hasAnyAddressField
-          ? {
-              address: {
-                houseNumber: values.houseNumber.trim(),
-                street: values.street.trim(),
-                area: values.area.trim(),
-                city: values.city.trim(),
-                district: values.district.trim(),
-                state: values.state.trim(),
-                pincode: values.pincode.trim(),
-              },
-            }
-          : {}),
+        ...(addressText ? { address: textToAddress(addressText) } : {}),
       });
       toast.success('User updated');
       onClose();
@@ -120,32 +95,14 @@ export default function UserFormModal({ open, user, onClose }) {
 
               <div className="mt-1 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
-              <p className="text-[11px] font-bold tracking-wide text-muted">Delivery Address</p>
-
-              <div className="grid grid-cols-2 gap-3">
-                <FormField label="Door / House No." placeholder="e.g. 12-A" registration={register('houseNumber')} error={errors.houseNumber} />
-                <FormField label="Street" placeholder="e.g. Gandhi Street" registration={register('street')} error={errors.street} />
-              </div>
-
-              <FormField label="Area / Locality" placeholder="e.g. Anna Nagar" registration={register('area')} error={errors.area} />
-
-              <div className="grid grid-cols-2 gap-3">
-                <FormField label="Village / Town / City" placeholder="e.g. Sivakasi" registration={register('city')} error={errors.city} />
-                <FormField label="District" placeholder="e.g. Virudhunagar" registration={register('district')} error={errors.district} />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <FormField label="State" placeholder="e.g. Tamil Nadu" registration={register('state')} error={errors.state} />
-                <FormField
-                  label="PIN Code"
-                  type="tel"
-                  inputMode="numeric"
-                  maxLength={6}
-                  placeholder="626123"
-                  registration={register('pincode')}
-                  error={errors.pincode}
-                />
-              </div>
+                            <FormField
+                label="Address"
+                as="textarea"
+                rows={4}
+                placeholder="Full delivery address"
+                registration={register('address')}
+                error={errors.address}
+              />
 
               <div className="mt-1 flex gap-2.5">
                 <button type="button" onClick={onClose} className="btn-3d-outline flex-1 rounded-xl py-2.5 text-[12.5px] font-bold text-brown">
