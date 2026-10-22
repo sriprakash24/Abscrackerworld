@@ -19,7 +19,7 @@ export default function FormField({
 
   return (
     <label className={`block ${className}`}>
-      <span className="mb-1.5 flex items-center gap-1 text-[11px] font-bold tracking-wide text-[#cfc7bd]">
+      <span className="mb-1.5 flex items-center gap-1 text-[11px] font-bold tracking-wide text-muted">
         {label}
         {required && <span className="text-orange">*</span>}
       </span>
@@ -28,10 +28,10 @@ export default function FormField({
         {...registration}
         {...props}
         {...(as === 'textarea' ? { rows } : {})}
-        className={`w-full rounded-xl border bg-[#0c0906] px-3.5 py-2.5 text-[12.5px] font-semibold text-[#f2ece2] outline-none transition-all duration-200 placeholder:text-muted placeholder:font-normal ${
+        className={`w-full rounded-xl border bg-white px-3.5 py-2.5 text-[12.5px] font-semibold text-brown outline-none transition-all duration-200 placeholder:text-muted placeholder:font-normal ${
           error
             ? 'border-[#e35226] shadow-[0_0_0_3px_rgba(227,82,38,0.15)]'
-            : 'border-white/10 focus:border-orange/70 focus:shadow-[0_0_0_3px_rgba(255,122,0,0.14)]'
+            : 'border-brown/12 focus:border-orange/70 focus:shadow-[0_0_0_3px_rgba(255,122,0,0.14)]'
         }`}
       />
 

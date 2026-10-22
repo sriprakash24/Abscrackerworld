@@ -63,7 +63,7 @@ export default function InvoiceItemsEditor({ control, register, watch, setValue,
   return (
     <div className="flex flex-col gap-2.5">
       <div className="flex items-center justify-between">
-        <span className="text-[11px] font-bold tracking-wide text-[#cfc7bd]">Items</span>
+        <span className="text-[11px] font-bold tracking-wide text-muted">Items</span>
         <button
           type="button"
           onClick={() => setPickerOpen(true)}
@@ -80,12 +80,12 @@ export default function InvoiceItemsEditor({ control, register, watch, setValue,
         const itemErrors = errors?.items?.[index];
 
         return (
-          <div key={field.id} className="rounded-xl border border-white/10 bg-[#0c0906] p-3">
+          <div key={field.id} className="rounded-xl border border-brown/12 bg-white p-3">
             <div className="mb-2 flex items-center gap-2">
               <select
                 onChange={(e) => handlePickProduct(index, e.target.value)}
                 defaultValue={field.productId || ''}
-                className="w-full rounded-lg border border-white/10 bg-[#111111] px-2.5 py-1.5 text-[11px] font-semibold text-[#cfc7bd] outline-none focus:border-orange/60"
+                className="w-full rounded-lg border border-brown/12 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-muted outline-none focus:border-orange/60"
               >
                 <option value="">Pick from catalog (optional) — or type a custom line below</option>
                 {products.map((p) => (
@@ -110,8 +110,8 @@ export default function InvoiceItemsEditor({ control, register, watch, setValue,
                 <input
                   {...register(`items.${index}.description`)}
                   placeholder="Description of crackers"
-                  className={`w-full rounded-lg border bg-[#111111] px-2.5 py-1.5 text-[11.5px] font-semibold text-[#f2ece2] outline-none ${
-                    itemErrors?.description ? 'border-[#e35226]' : 'border-white/10 focus:border-orange/60'
+                  className={`w-full rounded-lg border bg-white px-2.5 py-1.5 text-[11.5px] font-semibold text-brown outline-none ${
+                    itemErrors?.description ? 'border-[#e35226]' : 'border-brown/12 focus:border-orange/60'
                   }`}
                 />
                 {itemErrors?.description && (
@@ -124,8 +124,8 @@ export default function InvoiceItemsEditor({ control, register, watch, setValue,
                   step="1"
                   {...register(`items.${index}.qty`)}
                   placeholder="Qty"
-                  className={`w-full rounded-lg border bg-[#111111] px-2 py-1.5 text-center text-[11.5px] font-semibold text-[#f2ece2] outline-none ${
-                    itemErrors?.qty ? 'border-[#e35226]' : 'border-white/10 focus:border-orange/60'
+                  className={`w-full rounded-lg border bg-white px-2 py-1.5 text-center text-[11.5px] font-semibold text-brown outline-none ${
+                    itemErrors?.qty ? 'border-[#e35226]' : 'border-brown/12 focus:border-orange/60'
                   }`}
                 />
               </div>
@@ -135,8 +135,8 @@ export default function InvoiceItemsEditor({ control, register, watch, setValue,
                   step="0.01"
                   {...register(`items.${index}.rate`)}
                   placeholder="Rate ₹"
-                  className={`w-full rounded-lg border bg-[#111111] px-2 py-1.5 text-right text-[11.5px] font-semibold text-[#f2ece2] outline-none ${
-                    itemErrors?.rate ? 'border-[#e35226]' : 'border-white/10 focus:border-orange/60'
+                  className={`w-full rounded-lg border bg-white px-2 py-1.5 text-right text-[11.5px] font-semibold text-brown outline-none ${
+                    itemErrors?.rate ? 'border-[#e35226]' : 'border-brown/12 focus:border-orange/60'
                   }`}
                 />
               </div>
@@ -156,7 +156,7 @@ export default function InvoiceItemsEditor({ control, register, watch, setValue,
       <button
         type="button"
         onClick={() => append({ productId: '', description: '', qty: '1', rate: '' })}
-        className="btn-3d-outline flex items-center justify-center gap-1.5 self-start rounded-lg px-3 py-1.5 text-[11px] font-bold text-[#f2ece2]"
+        className="btn-3d-outline flex items-center justify-center gap-1.5 self-start rounded-lg px-3 py-1.5 text-[11px] font-bold text-brown"
       >
         <Plus size={12} />
         Add Line

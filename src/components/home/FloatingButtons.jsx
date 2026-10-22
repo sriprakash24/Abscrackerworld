@@ -70,7 +70,7 @@ export default function FloatingButtons() {
         style={{
           background: "linear-gradient(180deg,#3ee878,#20bd5a 55%,#189649)",
           boxShadow:
-            "0 1px 0 rgba(255,255,255,.5) inset, 0 -3px 6px rgba(0,0,0,.25) inset, 0 10px 22px -6px rgba(37,211,102,.55), 0 3px 6px rgba(0,0,0,.35)",
+            "0 1px 0 rgba(255,255,255,.5) inset, 0 10px 22px -6px rgba(37,211,102,.55), 0 3px 6px rgba(113,50,31,.18)",
         }}
         aria-label="Chat with us on WhatsApp"
       >
@@ -114,8 +114,8 @@ export default function FloatingButtons() {
             )}
             style={{
               boxShadow: hit
-                ? "0 0 0 2px rgba(255,200,150,1), 0 0 26px 8px rgba(255,120,20,.9), 0 8px 20px -6px rgba(0,0,0,.7)"
-                : "0 0 0 1.5px rgba(240,64,10,.5), 0 10px 22px -6px rgba(240,64,10,.55), 0 3px 6px rgba(0,0,0,.35)",
+                ? "0 0 0 2px rgba(255,255,255,1), 0 0 26px 8px rgba(255,138,101,.8), 0 8px 20px -6px rgba(113,50,31,.4)"
+                : "0 0 0 1.5px rgba(255,255,255,.9), 0 10px 22px -6px rgba(240,68,82,.55), 0 3px 6px rgba(113,50,31,.18)",
             }}
           >
             {/* idle pulse — a slow sparkler-like breathing glow behind the whole pill */}
@@ -136,11 +136,11 @@ export default function FloatingButtons() {
             <span
               className="relative flex flex-col items-center justify-center gap-0.5 px-3 py-2"
               style={{
-                background: "linear-gradient(165deg, #1a0f08, #0d0705)",
-                borderRight: "1px solid rgba(255,154,0,.28)",
+                background: "linear-gradient(165deg, #8a3d24, #71321f)",
+                borderRight: "1px solid rgba(255,255,255,.25)",
               }}
             >
-              <span className="text-[6.5px] font-bold uppercase tracking-widest text-[#ffb87a]/70">
+              <span className="text-[6.5px] font-bold uppercase tracking-widest text-[#ffd4af]">
                 Total
               </span>
               <AnimatePresence mode="popLayout">
@@ -150,8 +150,7 @@ export default function FloatingButtons() {
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ y: 8, opacity: 0 }}
                   transition={{ type: "spring", stiffness: 500, damping: 24 }}
-                  className="text-[12.5px] font-extrabold tabular-nums text-gold"
-                  style={{ textShadow: "0 0 8px rgba(255,180,60,.65)" }}
+                  className="text-[12.5px] font-extrabold tabular-nums text-[#ffb347]"
                 >
                   ₹{subtotalSale}
                 </motion.span>
@@ -167,7 +166,7 @@ export default function FloatingButtons() {
                 // everywhere else on the site, so this pill reads as its own
                 // branded thing rather than blending into the UI.
                 background:
-                  "linear-gradient(160deg, #ff6a2e 0%, #f0400a 55%, #b82d06 100%)",
+                  "linear-gradient(135deg, #ff8a65 0%, #f04452 100%)",
               }}
             >
               <span className="relative">
@@ -188,8 +187,8 @@ export default function FloatingButtons() {
                     transition={{ type: "spring", stiffness: 500, damping: 20 }}
                     className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full px-[3px] text-[9px] font-extrabold text-white"
                     style={{
-                      background: "linear-gradient(180deg,#ff8a5c,#e35226)",
-                      boxShadow: "0 0 6px rgba(255,87,34,.7)",
+                      background: "#71321f",
+                      boxShadow: "0 0 0 1.5px #fff",
                     }}
                   >
                     {count}

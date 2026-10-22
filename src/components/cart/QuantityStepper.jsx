@@ -66,7 +66,7 @@ export default function QuantityStepper({
             if (e.key === 'Enter') e.currentTarget.blur();
           }}
           onFocus={(e) => e.currentTarget.select()}
-          className="h-5 w-8 shrink-0 bg-transparent text-center text-[13px] font-extrabold text-[#f2ece2] outline-none"
+          className="h-5 w-8 shrink-0 bg-transparent text-center text-[13px] font-extrabold text-brown outline-none"
           aria-label="Edit quantity"
         />
       ) : (
@@ -85,7 +85,7 @@ export default function QuantityStepper({
               exit={{ y: -14, opacity: 0 }}
               transition={{ duration: 0.18, ease: 'easeOut' }}
               className={cn(
-                'absolute text-[13px] font-extrabold text-[#f2ece2]',
+                'absolute text-[13px] font-extrabold text-brown',
                 onSetQuantity && 'underline decoration-white/30 decoration-dotted underline-offset-2'
               )}
             >

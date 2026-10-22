@@ -123,7 +123,7 @@ export default function OrderDateFilter({
       <button
         onClick={() => setOpen((v) => !v)}
         className={`surface-3d flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-[12px] font-medium transition-colors ${
-          selected.length ? "text-orange" : "text-[#f2ece2]"
+          selected.length ? "text-orange" : "text-brown"
         }`}
       >
         <CalendarDays size={15} className="shrink-0 text-orange" />
@@ -148,7 +148,7 @@ export default function OrderDateFilter({
       )}
 
       {open && (
-        <div className="absolute left-0 top-[calc(100%+6px)] z-20 w-[286px] rounded-xl border border-white/10 bg-[#150007] p-3 shadow-xl">
+        <div className="absolute left-0 top-[calc(100%+6px)] z-20 w-[286px] rounded-xl border border-brown/12 bg-bg p-3 shadow-xl">
           {!hasAnyData ? (
             <div className="px-2 py-6 text-center text-[11px] text-muted">No {countNoun}s yet.</div>
           ) : (
@@ -160,7 +160,7 @@ export default function OrderDateFilter({
                   className={`mb-2.5 flex w-full items-center justify-between rounded-lg border px-2.5 py-1.5 text-[11px] font-extrabold transition-colors ${
                     allSelected
                       ? "border-orange/50 bg-orange/15 text-orange"
-                      : "border-white/10 bg-white/[0.06] text-[#f2ece2] hover:bg-white/10"
+                      : "border-brown/12 bg-white/[0.06] text-brown hover:bg-brown/12"
                   }`}
                 >
                   <span>{allSelected ? "Clear all dates" : "Select all dates"}</span>
@@ -178,7 +178,7 @@ export default function OrderDateFilter({
                 >
                   <ChevronLeft size={13} />
                 </button>
-                <span className="text-[11.5px] font-extrabold text-[#f2ece2]">{monthLabel}</span>
+                <span className="text-[11.5px] font-extrabold text-brown">{monthLabel}</span>
                 <button
                   onClick={() => setViewMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
                   className="orb-3d flex h-6 w-6 items-center justify-center !rounded-full text-muted"
@@ -213,7 +213,7 @@ export default function OrderDateFilter({
                         checked
                           ? "bg-orange text-[#150007]"
                           : hasOrders
-                            ? "bg-white/[0.06] text-[#f2ece2] hover:bg-white/10"
+                            ? "bg-white/[0.06] text-brown hover:bg-brown/12"
                             : "text-muted/40"
                       }`}
                     >
@@ -239,12 +239,12 @@ export default function OrderDateFilter({
               )}
 
               {selectedSummary.length > 0 && (
-                <div className="mt-3 border-t border-dashed border-white/10 pt-2.5">
+                <div className="mt-3 border-t border-dashed border-brown/12 pt-2.5">
                   <div className="flex flex-col gap-1">
                     {selectedSummary.map((s) => (
                       <div
                         key={s.value}
-                        className="flex items-center justify-between rounded-lg bg-white/5 px-2.5 py-1.5 text-[10.5px] font-semibold text-[#f2ece2]"
+                        className="flex items-center justify-between rounded-lg bg-brown/6 px-2.5 py-1.5 text-[10.5px] font-semibold text-brown"
                       >
                         <span>{s.label}</span>
                         <span className="text-orange">{s.count} {plural(s.count)}</span>

@@ -41,6 +41,7 @@ import { db, storage } from "../firebase/config";
 import {
   CATEGORY_ICONS,
   CATEGORY_TAGLINES,
+  COMBO_CATEGORY_NAME,
   slugify,
 } from "../constants/catalog";
 
@@ -89,8 +90,22 @@ function deriveDiscountPercentage(raw) {
 }
 
 /** Normalizes one raw Firestore product doc into the shape the UI expects. */
+async function normalizeComboItems(rawItems) {
+  if (!Array.isArray(rawItems)) return [];
+  return Promise.all(
+    rawItems.map(async (it) => ({
+      name: it?.name || "",
+      qty: Number(it?.qty) > 0 ? Number(it.qty) : 1,
+      productId: it?.productId || "",
+      rawImage: it?.image || "",
+      image: await getProductImageUrl(it?.image || ""),
+    })),
+  );
+}
+
 async function normalizeProduct(id, raw) {
   const stock = deriveStock(raw);
+  const isCombo = !!raw.isCombo || raw.category === COMBO_CATEGORY_NAME;
   return {
     id,
     name: raw.name || "Unnamed product",
@@ -115,6 +130,14 @@ async function normalizeProduct(id, raw) {
     flashDeal: !!raw.flashDeal,
     description: raw.description || "",
     displayOrder: Number(raw.displayOrder ?? 0),
+    // --- Combo packs (Admin → Combos) -----------------------------------
+    // `comboImage` is the "what's inside" picture shown in the View popup;
+    // `comboItems` is the optional itemised list ({name, qty, image}).
+    isCombo,
+    badge: raw.badge || "",
+    comboImage: isCombo ? await getProductImageUrl(raw.comboImage || "") : "",
+    rawComboImage: raw.comboImage || "",
+    comboItems: isCombo ? await normalizeComboItems(raw.comboItems) : [],
   };
 }
 
@@ -190,17 +213,23 @@ export function groupByCategory(products, categoryMeta = {}) {
   const order = [];
   const map = new Map();
   for (const p of products) {
-    if (!map.has(p.category)) {
-      map.set(p.category, []);
-      order.push(p.category);
+    // Combo products always group under the pinned combo category, even if
+    // their stored `category` string drifted.
+    const cat = p.isCombo ? COMBO_CATEGORY_NAME : p.category;
+    if (!map.has(cat)) {
+      map.set(cat, []);
+      order.push(cat);
     }
-    map.get(p.category).push(p);
+    map.get(cat).push(p);
   }
   // Sort by categoryMeta[name].displayOrder when known (from the
   // `categories` collection); categories not present there keep falling
   // back to first-appearance order, placed after every category that does
   // have an explicit order.
   const sorted = [...order].sort((a, b) => {
+    // The combo category is always pinned to the very top of the storefront.
+    if (a === COMBO_CATEGORY_NAME && b !== COMBO_CATEGORY_NAME) return -1;
+    if (b === COMBO_CATEGORY_NAME && a !== COMBO_CATEGORY_NAME) return 1;
     const hasA = Object.prototype.hasOwnProperty.call(categoryMeta, a);
     const hasB = Object.prototype.hasOwnProperty.call(categoryMeta, b);
     if (hasA && hasB)
@@ -210,6 +239,7 @@ export function groupByCategory(products, categoryMeta = {}) {
     return order.indexOf(a) - order.indexOf(b);
   });
   return sorted.map((name) => ({
+    isCombo: name === COMBO_CATEGORY_NAME,
     name,
     nameTa: categoryMeta[name]?.nameTa || "",
     slug: slugify(name),
@@ -268,6 +298,15 @@ export function subscribeToCategoryDocs(onData, onError) {
 export async function uploadProductImageFile(file) {
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
   const path = `products/${Date.now()}-${safeName}`;
+  const storageRef = ref(storage, path);
+  await uploadBytes(storageRef, file);
+  return getDownloadURL(storageRef);
+}
+
+/** Uploads a combo image (card photo, "what's inside" picture, item photo) to Storage and returns a download URL. */
+export async function uploadComboImageFile(file) {
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const path = `combos/${Date.now()}-${safeName}`;
   const storageRef = ref(storage, path);
   await uploadBytes(storageRef, file);
   return getDownloadURL(storageRef);

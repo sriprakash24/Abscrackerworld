@@ -89,7 +89,7 @@ export default function InvoiceFormModal({ open, invoice, onClose }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-black/70 px-4 py-6"
+          className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-brown/60 px-4 py-6"
           onClick={onClose}
         >
           <motion.div
@@ -140,22 +140,22 @@ export default function InvoiceFormModal({ open, invoice, onClose }) {
                 </div>
               )}
 
-              <div className="rounded-xl bg-black/20 px-3.5 py-3 text-[10.5px] text-[#cfc7bd]">
+              <div className="rounded-xl bg-brown/8 px-3.5 py-3 text-[10.5px] text-muted">
                 <div className="flex justify-between"><span>Total Amount</span><span>₹{subtotal.toLocaleString('en-IN')}</span></div>
                 <div className="flex justify-between"><span>Packing Charge ({packagePercent}%)</span><span>₹{packageAmount.toLocaleString('en-IN')}</span></div>
-                <div className="mt-1 flex justify-between border-t border-dashed border-white/10 pt-1.5 text-[12.5px] font-extrabold text-[#f2ece2]">
+                <div className="mt-1 flex justify-between border-t border-dashed border-brown/12 pt-1.5 text-[12.5px] font-extrabold text-brown">
                   <span>Grand Total</span><span>₹{grandTotal.toLocaleString('en-IN')}</span>
                 </div>
               </div>
 
               <div>
-                <span className="mb-1.5 block text-[11px] font-bold tracking-wide text-[#cfc7bd]">Payment Mode</span>
+                <span className="mb-1.5 block text-[11px] font-bold tracking-wide text-muted">Payment Mode</span>
                 <div className="flex flex-wrap gap-2">
                   {PAYMENT_MODES.map((mode) => (
                     <label
                       key={mode}
                       className={`flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold transition-colors ${
-                        watch('paymentMode') === mode ? 'border-orange/50 bg-orange/15 text-orange' : 'border-white/10 bg-[#0c0906] text-muted'
+                        watch('paymentMode') === mode ? 'border-orange/50 bg-orange/15 text-orange' : 'border-brown/12 bg-white text-muted'
                       }`}
                     >
                       <input type="radio" value={mode} {...register('paymentMode')} className="hidden" />
@@ -169,7 +169,7 @@ export default function InvoiceFormModal({ open, invoice, onClose }) {
               <FormField label="Notes" as="textarea" rows={2} registration={register('notes')} error={errors.notes} />
 
               <div className="mt-2 flex gap-2.5">
-                <button type="button" onClick={onClose} className="btn-3d-outline flex-1 rounded-xl py-2.5 text-[12.5px] font-bold text-[#f2ece2]">
+                <button type="button" onClick={onClose} className="btn-3d-outline flex-1 rounded-xl py-2.5 text-[12.5px] font-bold text-brown">
                   Cancel
                 </button>
                 <button

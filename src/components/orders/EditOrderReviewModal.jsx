@@ -47,7 +47,7 @@ export default function EditOrderReviewModal({ open, orderId, pricing, onClose, 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[70] flex items-end justify-center bg-black/70 backdrop-blur-[2px] sm:items-center sm:px-4"
+          className="fixed inset-0 z-[70] flex items-end justify-center bg-brown/60 backdrop-blur-[2px] sm:items-center sm:px-4"
           onClick={handleClose}
         >
           <motion.div
@@ -56,10 +56,10 @@ export default function EditOrderReviewModal({ open, orderId, pricing, onClose, 
             exit={{ opacity: 0, y: 40 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
             onClick={(e) => e.stopPropagation()}
-            className="flex w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-[#150007] sm:rounded-2xl"
+            className="flex w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-bg sm:rounded-2xl"
             style={{ maxHeight: '88vh' }}
           >
-            <div className="flex items-center justify-between gap-2 border-b border-white/10 px-5 py-4">
+            <div className="flex items-center justify-between gap-2 border-b border-brown/12 px-5 py-4">
               <div>
                 <h2 className="text-[15px] font-extrabold text-gradient-gold">Review Updated Order</h2>
                 <p className="text-[10.5px] text-muted">{orderId}</p>
@@ -76,7 +76,7 @@ export default function EditOrderReviewModal({ open, orderId, pricing, onClose, 
 
             <div className="flex-1 overflow-y-auto px-4 py-4">
               {isEmpty ? (
-                <div className="rounded-xl bg-black/20 px-3.5 py-6 text-center text-[11.5px] text-muted">
+                <div className="rounded-xl bg-brown/8 px-3.5 py-6 text-center text-[11.5px] text-muted">
                   Your cart is empty — add at least one product to update this order.
                 </div>
               ) : (
@@ -87,12 +87,12 @@ export default function EditOrderReviewModal({ open, orderId, pricing, onClose, 
               )}
             </div>
 
-            <div className="flex gap-2.5 border-t border-white/10 px-4 py-4">
+            <div className="flex gap-2.5 border-t border-brown/12 px-4 py-4">
               <button
                 type="button"
                 onClick={handleClose}
                 disabled={saving}
-                className="btn-3d-outline flex-1 rounded-xl py-2.5 text-[12.5px] font-bold text-[#f2ece2] disabled:opacity-60"
+                className="btn-3d-outline flex-1 rounded-xl py-2.5 text-[12.5px] font-bold text-brown disabled:opacity-60"
               >
                 Keep Editing
               </button>

@@ -121,7 +121,7 @@ export default function CategoryFormModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-brown/60 px-4"
           onClick={onClose}
         >
           <motion.div
@@ -157,7 +157,7 @@ export default function CategoryFormModal({
               />
 
               <div>
-                <span className="mb-1.5 flex items-center gap-1 text-[11px] font-bold tracking-wide text-[#cfc7bd]">
+                <span className="mb-1.5 flex items-center gap-1 text-[11px] font-bold tracking-wide text-muted">
                   Category image
                 </span>
                 <div className="flex items-center gap-3">
@@ -184,7 +184,7 @@ export default function CategoryFormModal({
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={uploading}
-                      className="btn-3d-outline flex items-center justify-center gap-1.5 self-start rounded-lg px-3 py-1.5 text-[11px] font-bold text-[#f2ece2] disabled:opacity-50"
+                      className="btn-3d-outline flex items-center justify-center gap-1.5 self-start rounded-lg px-3 py-1.5 text-[11px] font-bold text-brown disabled:opacity-50"
                     >
                       {uploading ? (
                         <Loader2 size={12} className="animate-spin" />
@@ -219,7 +219,7 @@ export default function CategoryFormModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="btn-3d-outline flex-1 rounded-xl py-2.5 text-[12.5px] font-bold text-[#f2ece2]"
+                  className="btn-3d-outline flex-1 rounded-xl py-2.5 text-[12.5px] font-bold text-brown"
                 >
                   Cancel
                 </button>

@@ -20,7 +20,7 @@ export default function EstimatePreviewModal({ open, estimate, onClose }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[65] flex items-start justify-center overflow-y-auto bg-black/70 px-4 py-6"
+          className="fixed inset-0 z-[65] flex items-start justify-center overflow-y-auto bg-brown/60 px-4 py-6"
           onClick={onClose}
         >
           <motion.div
@@ -32,7 +32,7 @@ export default function EstimatePreviewModal({ open, estimate, onClose }) {
             className="w-full max-w-xl overflow-hidden rounded-2xl bg-[#fdfaf5] text-[#241d15] shadow-2xl"
           >
             {/* Toolbar */}
-            <div className="flex items-center justify-between gap-2 border-b border-black/10 bg-[#111111] px-4 py-3">
+            <div className="flex items-center justify-between gap-2 border-b border-black/10 bg-white px-4 py-3">
               <div className="flex items-center gap-1.5">
                 <h2 className="text-[13px] font-extrabold text-gradient-gold">{estimate.estimateNo}</h2>
                 <span className="flex items-center gap-1 rounded-full border border-gold/35 bg-gold/10 px-1.5 py-0.5 text-[9px] font-bold text-gold">

@@ -1,7 +1,13 @@
 // Product catalog data — ABS Crackers World
 // Flat product list grouped into categories for Home + Category Listing screens.
 
+// Combo packs live in their own pinned category — always the first section
+// on the storefront (above SPARKLERS). Products with `isCombo: true` (created
+// from Admin → Combos) are grouped under this name.
+export const COMBO_CATEGORY_NAME = 'COMBO ABS';
+
 export const CATEGORY_ICONS = {
+  [COMBO_CATEGORY_NAME]: '🎁',
   SPARKLERS: '✨',
   'GROUND CHAKKARAS': '🌀',
   'FLOWER POT': '🏺',
@@ -21,6 +27,7 @@ export const CATEGORY_ICONS = {
 };
 
 export const CATEGORY_TAGLINES = {
+  [COMBO_CATEGORY_NAME]: 'Ready-made festival packs at the best price',
   SPARKLERS: 'Hand held magic for every celebration',
   'GROUND CHAKKARAS': 'Spinning discs of colour & sound',
   'FLOWER POT': 'Golden fountains that light up the night',

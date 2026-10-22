@@ -11,7 +11,7 @@ export default function AdminStatsStrip({ orders }) {
   const stats = [
     { label: 'Awaiting Confirmation', value: awaiting, icon: Clock, className: 'text-gold' },
     { label: 'In Progress', value: inProgress, icon: Loader, className: 'text-orange' },
-    { label: 'Delivered', value: delivered, icon: CheckCircle2, className: 'text-[#8fe3a0]' },
+    { label: 'Delivered', value: delivered, icon: CheckCircle2, className: 'text-[#1E8E4A]' },
     { label: 'Payment Pending', value: `₹${pendingRevenue.toLocaleString('en-IN')}`, icon: IndianRupee, className: 'text-[#e35226]' },
   ];
 
@@ -23,7 +23,7 @@ export default function AdminStatsStrip({ orders }) {
             <Icon size={14} />
           </span>
           <div className="min-w-0">
-            <div className="truncate text-[14px] font-extrabold text-[#f2ece2]">{value}</div>
+            <div className="truncate text-[14px] font-extrabold text-brown">{value}</div>
             <div className="truncate text-[9.5px] font-semibold text-muted">{label}</div>
           </div>
         </div>

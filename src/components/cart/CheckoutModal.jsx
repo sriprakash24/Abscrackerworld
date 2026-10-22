@@ -112,7 +112,7 @@ export default function CheckoutModal({ open, onClose, pricing }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            className="absolute inset-0 bg-brown/60 backdrop-blur-sm"
             onClick={handleClose}
           />
 
@@ -121,8 +121,8 @@ export default function CheckoutModal({ open, onClose, pricing }) {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 32, stiffness: 320 }}
-            className="absolute inset-x-0 bottom-0 top-[5%] mx-auto flex w-full max-w-[430px] flex-col overflow-hidden rounded-t-[28px] bg-[#150007]"
-            style={{ boxShadow: '0 -12px 40px rgba(0,0,0,.6)' }}
+            className="absolute inset-x-0 bottom-0 top-[5%] mx-auto flex w-full max-w-[430px] flex-col overflow-hidden rounded-t-[28px] bg-bg"
+            style={{ boxShadow: '0 -12px 40px rgba(113,50,31,0.17)' }}
           >
             {/* Ambient layers — matches the app-wide dark navy background */}
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#080c17] via-transparent to-[#080c17]" />
@@ -132,17 +132,17 @@ export default function CheckoutModal({ open, onClose, pricing }) {
             />
 
             <div className="relative z-10 flex justify-center pt-2.5">
-              <span className="h-1 w-10 rounded-full bg-white/15" />
+              <span className="h-1 w-10 rounded-full bg-brown/16" />
             </div>
 
             <div className="relative z-10 flex items-center gap-2.5 px-4 pb-3 pt-2">
               <div className="min-w-0 flex-1">
-                <div className="text-embossed truncate text-[14.5px] font-extrabold leading-tight text-[#f2ece2]">
+                <div className="text-embossed truncate text-[14.5px] font-extrabold leading-tight text-brown">
                   {submittedOrder ? 'Order Confirmed' : 'Checkout'}
                 </div>
                 {!submittedOrder && (
                   <div className="flex items-center gap-1 text-[10px] font-semibold text-muted">
-                    <ShieldCheck size={11} className="text-[#8fe3a0]" />
+                    <ShieldCheck size={11} className="text-[#1E8E4A]" />
                     Secure Order · No Payment Now
                   </div>
                 )}

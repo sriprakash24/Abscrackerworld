@@ -73,7 +73,7 @@ export default function PaymentDateCalendar({ value, onChange, disabled = false 
           e.stopPropagation();
           setOpen((v) => !v);
         }}
-        className="surface-3d flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-[12px] font-bold text-[#f2ece2] outline-none transition-colors focus:border-gold/50 disabled:opacity-60"
+        className="surface-3d flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-[12px] font-bold text-brown outline-none transition-colors focus:border-gold/50 disabled:opacity-60"
       >
         <CalendarDays size={14} className="shrink-0 text-orange" />
         {displayLabel}
@@ -81,7 +81,7 @@ export default function PaymentDateCalendar({ value, onChange, disabled = false 
 
       {open && (
         <div
-          className="absolute left-0 top-[calc(100%+6px)] z-[80] w-[260px] rounded-xl border border-white/10 bg-[#150007] p-3 shadow-xl"
+          className="absolute left-0 top-[calc(100%+6px)] z-[80] w-[260px] rounded-xl border border-brown/12 bg-bg p-3 shadow-xl"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="mb-2 flex items-center justify-between">
@@ -93,7 +93,7 @@ export default function PaymentDateCalendar({ value, onChange, disabled = false 
             >
               <ChevronLeft size={13} />
             </button>
-            <span className="text-[11.5px] font-extrabold text-[#f2ece2]">{monthLabel}</span>
+            <span className="text-[11.5px] font-extrabold text-brown">{monthLabel}</span>
             <button
               type="button"
               onClick={() => setViewMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
@@ -136,7 +136,7 @@ export default function PaymentDateCalendar({ value, onChange, disabled = false 
                         ? "text-muted/30"
                         : isToday
                           ? "border border-orange/50 text-orange"
-                          : "text-[#f2ece2] hover:bg-white/10"
+                          : "text-brown hover:bg-brown/12"
                   }`}
                 >
                   {date.getDate()}
@@ -151,7 +151,7 @@ export default function PaymentDateCalendar({ value, onChange, disabled = false 
               onChange(todayValue);
               setOpen(false);
             }}
-            className="mt-2 w-full rounded-lg bg-white/5 py-1.5 text-[10.5px] font-bold text-muted hover:text-[#f2ece2]"
+            className="mt-2 w-full rounded-lg bg-brown/6 py-1.5 text-[10.5px] font-bold text-muted hover:text-brown"
           >
             Today
           </button>

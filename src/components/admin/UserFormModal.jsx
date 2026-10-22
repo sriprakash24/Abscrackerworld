@@ -93,7 +93,7 @@ export default function UserFormModal({ open, user, onClose }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-brown/60 px-4"
           onClick={onClose}
         >
           <motion.div
@@ -114,13 +114,13 @@ export default function UserFormModal({ open, user, onClose }) {
             <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3.5">
               <FormField label="Name" required registration={register('name')} error={errors.name} />
 
-              <div className="rounded-xl bg-black/20 px-3.5 py-2.5 text-[11px] font-semibold text-muted">
+              <div className="rounded-xl bg-brown/8 px-3.5 py-2.5 text-[11px] font-semibold text-muted">
                 Mobile: {user?.mobile} <span className="text-[10px] font-medium">(can't be changed here)</span>
               </div>
 
               <div className="mt-1 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
-              <p className="text-[11px] font-bold tracking-wide text-[#cfc7bd]">Delivery Address</p>
+              <p className="text-[11px] font-bold tracking-wide text-muted">Delivery Address</p>
 
               <div className="grid grid-cols-2 gap-3">
                 <FormField label="Door / House No." placeholder="e.g. 12-A" registration={register('houseNumber')} error={errors.houseNumber} />
@@ -148,7 +148,7 @@ export default function UserFormModal({ open, user, onClose }) {
               </div>
 
               <div className="mt-1 flex gap-2.5">
-                <button type="button" onClick={onClose} className="btn-3d-outline flex-1 rounded-xl py-2.5 text-[12.5px] font-bold text-[#f2ece2]">
+                <button type="button" onClick={onClose} className="btn-3d-outline flex-1 rounded-xl py-2.5 text-[12.5px] font-bold text-brown">
                   Cancel
                 </button>
                 <button

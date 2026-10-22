@@ -110,7 +110,7 @@ export default function CategoryListing() {
     return (
       <div className="relative flex min-h-screen flex-col items-center justify-center px-6 text-center">
         <span className="art-float text-5xl">⚠️</span>
-        <h1 className="mt-4 text-[16px] font-extrabold text-[#f2ece2]">Couldn't load products</h1>
+        <h1 className="mt-4 text-[16px] font-extrabold text-brown">Couldn't load products</h1>
         <p className="mt-1 text-[12px] text-muted">
           There was a problem reaching the catalog. Please check your connection and try again.
         </p>
@@ -125,7 +125,7 @@ export default function CategoryListing() {
     return (
       <div className="relative flex min-h-screen flex-col items-center justify-center px-6 text-center">
         <span className="art-float text-5xl">🎆</span>
-        <h1 className="mt-4 text-[16px] font-extrabold text-[#f2ece2]">Category not found</h1>
+        <h1 className="mt-4 text-[16px] font-extrabold text-brown">Category not found</h1>
         <p className="mt-1 text-[12px] text-muted">This category doesn't exist or may have been removed.</p>
         <Link to="/" className="btn-3d mt-5 rounded-lg px-5 py-2.5 text-[12px] font-bold text-white">
           Back to Home

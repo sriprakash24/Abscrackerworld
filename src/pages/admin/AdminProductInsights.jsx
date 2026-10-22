@@ -182,7 +182,7 @@ export default function AdminProductInsights() {
   const confirmedMeta = getOrderStatusMeta('CONFIRMED');
 
   return (
-    <div className="min-h-screen w-full bg-[#050505] pb-28 text-white">
+    <div className="min-h-screen w-full bg-bg pb-28 text-brown">
       <AdminSectionHeader
         icon={BarChart3}
         title="Product Order Insights"
@@ -195,7 +195,7 @@ export default function AdminProductInsights() {
       <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-5 sm:px-6">
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
           <SummaryCard icon={Clock3} label="Awaiting Confirmation (units)" value={totals.awaitingQty.toLocaleString('en-IN')} className="text-gold" />
-          <SummaryCard icon={CheckCircle2} label="Confirmed (units)" value={totals.confirmedQty.toLocaleString('en-IN')} className="text-[#8fe3a0]" />
+          <SummaryCard icon={CheckCircle2} label="Confirmed (units)" value={totals.confirmedQty.toLocaleString('en-IN')} className="text-[#1E8E4A]" />
           <SummaryCard icon={Layers} label="Products With Orders" value={totals.productsOrdered.toLocaleString('en-IN')} className="text-orange" />
         </div>
 
@@ -213,7 +213,7 @@ export default function AdminProductInsights() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search products…"
-            className="w-full bg-transparent text-[12.5px] font-semibold text-[#f2ece2] outline-none placeholder:text-muted placeholder:font-normal"
+            className="w-full bg-transparent text-[12.5px] font-semibold text-brown outline-none placeholder:text-muted placeholder:font-normal"
           />
         </div>
 
@@ -223,7 +223,7 @@ export default function AdminProductInsights() {
               key={key}
               onClick={() => setFilter(key)}
               className={`shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-bold tracking-wide transition-colors ${
-                filter === key ? 'border-orange/50 bg-orange/15 text-orange' : 'border-white/10 bg-[#0c0906] text-muted'
+                filter === key ? 'border-orange/50 bg-orange/15 text-orange' : 'border-brown/12 bg-white text-muted'
               }`}
             >
               {label} ({counts[key] ?? 0})
@@ -263,7 +263,7 @@ function SummaryCard({ icon: Icon, label, value, className }) {
         <Icon size={14} />
       </span>
       <div className="min-w-0">
-        <div className="truncate text-[13.5px] font-extrabold text-[#f2ece2]">{value}</div>
+        <div className="truncate text-[13.5px] font-extrabold text-brown">{value}</div>
         <div className="truncate text-[9px] font-semibold text-muted">{label}</div>
       </div>
     </div>
@@ -282,7 +282,7 @@ function ProductInsightRow({ row, awaitingMeta, confirmedMeta }) {
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[12.5px] font-bold text-[#f2ece2]">{row.name}</p>
+        <p className="truncate text-[12.5px] font-bold text-brown">{row.name}</p>
         <p className="truncate text-[10.5px] font-semibold text-muted">{row.category || 'Uncategorized'}</p>
         <div className="mt-1.5 flex flex-wrap gap-1.5">
           <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${awaitingMeta.className}`}>
@@ -300,7 +300,7 @@ function ProductInsightRow({ row, awaitingMeta, confirmedMeta }) {
       </div>
 
       <div className="shrink-0 text-right">
-        <div className="text-[15px] font-extrabold text-[#f2ece2]">{row.totalQty}</div>
+        <div className="text-[15px] font-extrabold text-brown">{row.totalQty}</div>
         <div className="text-[9px] font-semibold text-muted">
           units · {row.totalOrders} {row.totalOrders === 1 ? 'order' : 'orders'}
         </div>
@@ -312,12 +312,12 @@ function ProductInsightRow({ row, awaitingMeta, confirmedMeta }) {
 function RowSkeleton() {
   return (
     <div className="surface-3d flex animate-pulse items-center gap-3 rounded-2xl p-3">
-      <div className="h-14 w-14 shrink-0 rounded-xl bg-white/5" />
+      <div className="h-14 w-14 shrink-0 rounded-xl bg-brown/6" />
       <div className="flex-1 space-y-2">
-        <div className="h-3 w-2/3 rounded bg-white/5" />
-        <div className="h-2.5 w-1/2 rounded bg-white/5" />
+        <div className="h-3 w-2/3 rounded bg-brown/6" />
+        <div className="h-2.5 w-1/2 rounded bg-brown/6" />
       </div>
-      <div className="h-7 w-16 rounded-lg bg-white/5" />
+      <div className="h-7 w-16 rounded-lg bg-brown/6" />
     </div>
   );
 }

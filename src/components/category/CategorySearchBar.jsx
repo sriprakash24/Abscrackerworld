@@ -16,7 +16,7 @@ export default function CategorySearchBar({ open, value, onChange, categoryName 
           <div className="px-4 py-2.5">
             <div
               className="flex items-center gap-2.5 rounded-[14px] border border-orange bg-gradient-to-b from-[#0d0a08] to-[#151109] px-3.5 py-2.5"
-              style={{ boxShadow: '0 0 0 3px rgba(255,122,0,.15), 0 0 18px rgba(255,122,0,.3), 0 2px 8px rgba(0,0,0,.5) inset' }}
+              style={{ boxShadow: '0 0 0 3px rgba(255,122,0,.15), 0 0 18px rgba(255,122,0,.3), 0 2px 8px rgba(113,50,31,0.14) inset' }}
             >
               <Search size={16} strokeWidth={2.2} className="shrink-0 text-orange" />
               <input

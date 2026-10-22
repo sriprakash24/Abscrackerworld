@@ -131,7 +131,7 @@ export default function AdminOrderLimits() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#050505] pb-44 text-white">
+    <div className="min-h-screen w-full bg-bg pb-44 text-brown">
       <AdminSectionHeader
         icon={Gauge}
         title="Order Limits"
@@ -175,7 +175,7 @@ export default function AdminOrderLimits() {
                   ? `Search in ${categoryFilter}…`
                   : 'Search…'
             }
-            className="w-full bg-transparent text-[12.5px] font-semibold text-[#f2ece2] outline-none placeholder:text-muted placeholder:font-normal"
+            className="w-full bg-transparent text-[12.5px] font-semibold text-brown outline-none placeholder:text-muted placeholder:font-normal"
           />
         </div>
 
@@ -187,7 +187,7 @@ export default function AdminOrderLimits() {
             </span>
             <p className="min-w-0 flex-1 text-[11.5px] font-semibold text-muted">
               Set max qty per order for{' '}
-              <span className="font-extrabold text-[#f2ece2]">
+              <span className="font-extrabold text-brown">
                 all {categoryProducts.length} {search ? 'matching' : 'visible'} {categoryProducts.length === 1 ? 'product' : 'products'}
               </span>{' '}
               {search
@@ -202,7 +202,7 @@ export default function AdminOrderLimits() {
               value={bulkValue}
               onChange={(e) => setBulkValue(e.target.value)}
               placeholder="e.g. 5"
-              className="w-20 shrink-0 rounded-lg border border-white/10 bg-[#0c0906] px-2.5 py-1.5 text-[12px] font-bold text-orange outline-none focus:border-orange/70"
+              className="w-20 shrink-0 rounded-lg border border-brown/12 bg-white px-2.5 py-1.5 text-[12px] font-bold text-orange outline-none focus:border-orange/70"
             />
             <button
               onClick={applyBulkValue}
@@ -243,9 +243,9 @@ export default function AdminOrderLimits() {
 
       {/* Sticky save bar — sits just above the bottom nav */}
       {changedCount > 0 && (
-        <div className="fixed inset-x-0 bottom-20 z-40 border-t border-orange/30 bg-[#050505]/95 px-4 py-3 backdrop-blur-sm sm:px-6">
+        <div className="fixed inset-x-0 bottom-20 z-40 border-t border-orange/30 bg-bg/95 px-4 py-3 backdrop-blur-sm sm:px-6">
           <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
-            <p className="text-[12px] font-semibold text-[#f2ece2]">
+            <p className="text-[12px] font-semibold text-brown">
               <span className="font-extrabold text-orange">{changedCount}</span>{' '}
               {changedCount === 1 ? 'product' : 'products'} changed
             </p>
@@ -256,7 +256,7 @@ export default function AdminOrderLimits() {
                   setBulkValue('');
                 }}
                 disabled={saving}
-                className="btn-3d-outline rounded-xl px-4 py-2.5 text-[12px] font-bold text-[#f2ece2] disabled:opacity-50"
+                className="btn-3d-outline rounded-xl px-4 py-2.5 text-[12px] font-bold text-brown disabled:opacity-50"
               >
                 Discard
               </button>
@@ -281,7 +281,7 @@ function FilterChip({ active, onClick, label }) {
     <button
       onClick={onClick}
       className={`shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-bold tracking-wide transition-colors ${
-        active ? 'border-orange/50 bg-orange/15 text-orange' : 'border-white/10 bg-[#0c0906] text-muted'
+        active ? 'border-orange/50 bg-orange/15 text-orange' : 'border-brown/12 bg-white text-muted'
       }`}
     >
       {label}
@@ -310,7 +310,7 @@ function LimitRow({ product, edit, onChange, onRevert }) {
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[12.5px] font-bold text-[#f2ece2]">{product.name}</p>
+        <p className="truncate text-[12.5px] font-bold text-brown">{product.name}</p>
         <p className="truncate text-[10.5px] font-semibold text-muted">
           {product.subcategory ? `${product.subcategory} · ` : ''}Stock: {product.stockQty ?? '—'}
         </p>
@@ -329,8 +329,8 @@ function LimitRow({ product, edit, onChange, onRevert }) {
             value={value}
             onChange={(e) => onChange(e.target.value.replace(/[^\d]/g, ''))}
             placeholder="No limit"
-            className={`w-[76px] rounded-lg border bg-[#0c0906] px-2 py-1.5 text-center text-[12px] font-bold outline-none placeholder:text-[9.5px] placeholder:font-semibold placeholder:text-muted ${
-              isUnlimited ? 'border-white/10 text-muted focus:border-orange/70' : 'border-white/10 text-orange focus:border-orange/70'
+            className={`w-[76px] rounded-lg border bg-white px-2 py-1.5 text-center text-[12px] font-bold outline-none placeholder:text-[9.5px] placeholder:font-semibold placeholder:text-muted ${
+              isUnlimited ? 'border-brown/12 text-muted focus:border-orange/70' : 'border-brown/12 text-orange focus:border-orange/70'
             }`}
           />
         </label>
@@ -351,12 +351,12 @@ function LimitRow({ product, edit, onChange, onRevert }) {
 function RowSkeleton() {
   return (
     <div className="surface-3d flex animate-pulse items-center gap-3 rounded-2xl p-3">
-      <div className="h-12 w-12 shrink-0 rounded-xl bg-white/5" />
+      <div className="h-12 w-12 shrink-0 rounded-xl bg-brown/6" />
       <div className="flex-1 space-y-2">
-        <div className="h-3 w-2/3 rounded bg-white/5" />
-        <div className="h-2.5 w-1/3 rounded bg-white/5" />
+        <div className="h-3 w-2/3 rounded bg-brown/6" />
+        <div className="h-2.5 w-1/3 rounded bg-brown/6" />
       </div>
-      <div className="h-9 w-20 rounded-lg bg-white/5" />
+      <div className="h-9 w-20 rounded-lg bg-brown/6" />
     </div>
   );
 }

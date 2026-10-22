@@ -65,7 +65,7 @@ export default function InvoiceProductPickerModal({ open, products, onAdd, onClo
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto bg-black/70 px-4 py-6"
+          className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto bg-brown/60 px-4 py-6"
           onClick={handleClose}
         >
           <motion.div
@@ -90,7 +90,7 @@ export default function InvoiceProductPickerModal({ open, products, onAdd, onClo
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search products…"
-                className="w-full bg-transparent text-[12.5px] font-semibold text-[#f2ece2] outline-none placeholder:text-muted placeholder:font-normal"
+                className="w-full bg-transparent text-[12.5px] font-semibold text-brown outline-none placeholder:text-muted placeholder:font-normal"
               />
             </div>
 
@@ -99,7 +99,7 @@ export default function InvoiceProductPickerModal({ open, products, onAdd, onClo
                 type="button"
                 onClick={() => setCategory('ALL')}
                 className={`shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-bold tracking-wide transition-colors ${
-                  category === 'ALL' ? 'border-orange/50 bg-orange/15 text-orange' : 'border-white/10 bg-[#0c0906] text-muted'
+                  category === 'ALL' ? 'border-orange/50 bg-orange/15 text-orange' : 'border-brown/12 bg-white text-muted'
                 }`}
               >
                 All
@@ -110,7 +110,7 @@ export default function InvoiceProductPickerModal({ open, products, onAdd, onClo
                   type="button"
                   onClick={() => setCategory(c)}
                   className={`shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-bold tracking-wide transition-colors ${
-                    category === c ? 'border-orange/50 bg-orange/15 text-orange' : 'border-white/10 bg-[#0c0906] text-muted'
+                    category === c ? 'border-orange/50 bg-orange/15 text-orange' : 'border-brown/12 bg-white text-muted'
                   }`}
                 >
                   {c}
@@ -120,7 +120,7 @@ export default function InvoiceProductPickerModal({ open, products, onAdd, onClo
 
             <div className="flex-1 overflow-y-auto pr-0.5">
               {visibleProducts.length === 0 ? (
-                <div className="rounded-xl bg-black/20 px-3.5 py-6 text-center text-[11.5px] text-muted">No products found.</div>
+                <div className="rounded-xl bg-brown/8 px-3.5 py-6 text-center text-[11.5px] text-muted">No products found.</div>
               ) : (
                 <div className="flex flex-col gap-1.5">
                   {visibleProducts.map((p) => {
@@ -129,19 +129,19 @@ export default function InvoiceProductPickerModal({ open, products, onAdd, onClo
                       <div
                         key={p.id}
                         className={`flex items-center gap-2.5 rounded-xl border px-3 py-2 transition-colors ${
-                          qty > 0 ? 'border-orange/40 bg-orange/[0.06]' : 'border-white/10 bg-[#0c0906]'
+                          qty > 0 ? 'border-orange/40 bg-orange/[0.06]' : 'border-brown/12 bg-white'
                         }`}
                       >
                         <span
                           className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${
-                            qty > 0 ? 'border-orange/60 bg-orange/20 text-orange' : 'border-white/15 text-transparent'
+                            qty > 0 ? 'border-orange/60 bg-orange/20 text-orange' : 'border-brown/16 text-transparent'
                           }`}
                         >
                           <Check size={12} />
                         </span>
 
                         <div className="min-w-0 flex-1">
-                          <div className="truncate text-[11.5px] font-bold text-[#f2ece2]">{p.name}</div>
+                          <div className="truncate text-[11.5px] font-bold text-brown">{p.name}</div>
                           {p.nameTa && (
                             <div className="truncate text-[10px] font-semibold text-gold">{p.nameTa}</div>
                           )}
@@ -159,7 +159,7 @@ export default function InvoiceProductPickerModal({ open, products, onAdd, onClo
                           >
                             <Minus size={11} />
                           </button>
-                          <span className="w-4 text-center text-[11px] font-extrabold text-[#f2ece2]">{qty}</span>
+                          <span className="w-4 text-center text-[11px] font-extrabold text-brown">{qty}</span>
                           <button
                             type="button"
                             onClick={() => setQty(p.id, qty + 1)}
@@ -176,7 +176,7 @@ export default function InvoiceProductPickerModal({ open, products, onAdd, onClo
             </div>
 
             <div className="mt-4 flex gap-2.5">
-              <button type="button" onClick={handleClose} className="btn-3d-outline flex-1 rounded-xl py-2.5 text-[12.5px] font-bold text-[#f2ece2]">
+              <button type="button" onClick={handleClose} className="btn-3d-outline flex-1 rounded-xl py-2.5 text-[12.5px] font-bold text-brown">
                 Cancel
               </button>
               <button

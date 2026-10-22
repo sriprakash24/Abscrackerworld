@@ -100,7 +100,7 @@ export default function AdminCategories() {
     : 0;
 
   return (
-    <div className="min-h-screen w-full bg-[#050505] pb-28 text-white">
+    <div className="min-h-screen w-full bg-bg pb-28 text-brown">
       <AdminSectionHeader
         icon={LayoutGrid}
         title="Category Management"
@@ -201,14 +201,14 @@ function CategoryRow({
         <button
           onClick={onMoveUp}
           disabled={isFirst || moving}
-          className="orb-3d flex h-7 w-7 items-center justify-center !rounded-full text-[#f2ece2] disabled:opacity-25"
+          className="orb-3d flex h-7 w-7 items-center justify-center !rounded-full text-brown disabled:opacity-25"
         >
           <ChevronUp size={14} />
         </button>
         <button
           onClick={onMoveDown}
           disabled={isLast || moving}
-          className="orb-3d flex h-7 w-7 items-center justify-center !rounded-full text-[#f2ece2] disabled:opacity-25"
+          className="orb-3d flex h-7 w-7 items-center justify-center !rounded-full text-brown disabled:opacity-25"
         >
           <ChevronDown size={14} />
         </button>
@@ -227,7 +227,7 @@ function CategoryRow({
       </span>
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] font-bold text-[#f2ece2]">
+        <p className="truncate text-[13px] font-bold text-brown">
           {category.categoryName}
         </p>
         <p className="text-[10.5px] font-semibold text-muted">
@@ -239,13 +239,13 @@ function CategoryRow({
       <div className="flex shrink-0 gap-1.5">
         <button
           onClick={onEdit}
-          className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-[#f2ece2] hover:text-orange"
+          className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-brown hover:text-orange"
         >
           <Pencil size={13} />
         </button>
         <button
           onClick={onDelete}
-          className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-[#f2ece2] hover:text-[#e35226]"
+          className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-brown hover:text-[#e35226]"
         >
           <Trash2 size={13} />
         </button>
@@ -257,10 +257,10 @@ function CategoryRow({
 function CategoryRowSkeleton() {
   return (
     <div className="surface-3d flex animate-pulse items-center gap-3 rounded-2xl p-3">
-      <div className="h-11 w-11 shrink-0 rounded-full bg-white/5" />
+      <div className="h-11 w-11 shrink-0 rounded-full bg-brown/6" />
       <div className="flex-1 space-y-2">
-        <div className="h-3 w-1/2 rounded bg-white/5" />
-        <div className="h-2.5 w-1/3 rounded bg-white/5" />
+        <div className="h-3 w-1/2 rounded bg-brown/6" />
+        <div className="h-2.5 w-1/3 rounded bg-brown/6" />
       </div>
     </div>
   );

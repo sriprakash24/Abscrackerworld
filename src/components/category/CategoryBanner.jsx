@@ -12,10 +12,10 @@ export default function CategoryBanner({ name, icon, image, tagline, productCoun
         className="relative overflow-hidden rounded-[20px] p-5"
         style={{
           background:
-            'radial-gradient(120% 140% at 15% 0%, #3a2410 0%, #1c1108 45%, #0a0705 100%)',
-          border: '1px solid rgba(255,178,90,.22)',
+            'linear-gradient(120deg, #ffe9d0 0%, #ffd4af 100%)',
+          border: '1px solid rgba(255,138,101,.45)',
           boxShadow:
-            '0 1px 0 rgba(255,200,130,.14) inset, 0 18px 34px -16px rgba(0,0,0,.7), 0 0 30px rgba(255,122,0,.15)',
+            '0 18px 34px -18px rgba(240,100,70,.5)',
         }}
       >
         <FireworkBurst size={110} className="-right-4 -top-6 opacity-60" delay={0.2} />
@@ -31,11 +31,11 @@ export default function CategoryBanner({ name, icon, image, tagline, productCoun
             />
           </div>
           <div className="min-w-0">
-            <h1 className="text-embossed truncate text-[19px] font-extrabold tracking-wide text-[#f7f0e4]">
+            <h1 className="text-embossed truncate text-[19px] font-extrabold tracking-wide text-brown">
               {name}
             </h1>
-            <p className="mt-0.5 line-clamp-2 text-[11.5px] leading-snug text-[#cfc7bd]">{tagline}</p>
-            <span className="mt-2 inline-flex items-center rounded-full border border-gold/25 bg-gold/10 px-2 py-0.5 text-[10px] font-bold text-gold">
+            <p className="mt-0.5 line-clamp-2 text-[11.5px] leading-snug text-muted">{tagline}</p>
+            <span className="mt-2 inline-flex items-center rounded-full border border-red/30 bg-white px-2 py-0.5 text-[10px] font-bold text-red">
               {productCount} items available
             </span>
           </div>

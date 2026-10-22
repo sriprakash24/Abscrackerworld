@@ -12,7 +12,7 @@ export default function EmptyState({ onReset }) {
       <div className="orb-3d flex h-20 w-20 items-center justify-center !rounded-full text-orange">
         <SearchX size={30} className="art-float" />
       </div>
-      <h3 className="mt-4 text-[14px] font-extrabold text-[#f2ece2]">No crackers found</h3>
+      <h3 className="mt-4 text-[14px] font-extrabold text-brown">No crackers found</h3>
       <p className="mt-1 max-w-[220px] text-[12px] leading-snug text-muted">
         We couldn't find anything matching your filters. Try adjusting or resetting them.
       </p>

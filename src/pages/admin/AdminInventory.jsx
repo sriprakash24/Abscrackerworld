@@ -103,7 +103,7 @@ export default function AdminInventory() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#050505] pb-28 text-white">
+    <div className="min-h-screen w-full bg-bg pb-28 text-brown">
       <AdminSectionHeader
         icon={Boxes}
         title="Inventory & Stock"
@@ -116,8 +116,8 @@ export default function AdminInventory() {
       <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-5 sm:px-6">
         {/* Summary strip */}
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-          <SummaryCard icon={Boxes} label="Total Units" value={totalUnits.toLocaleString('en-IN')} className="text-[#f2ece2]" />
-          <SummaryCard icon={PackageCheck} label="Stock Value (₹)" value={`₹${stockValue.toLocaleString('en-IN')}`} className="text-[#8fe3a0]" />
+          <SummaryCard icon={Boxes} label="Total Units" value={totalUnits.toLocaleString('en-IN')} className="text-brown" />
+          <SummaryCard icon={PackageCheck} label="Stock Value (₹)" value={`₹${stockValue.toLocaleString('en-IN')}`} className="text-[#1E8E4A]" />
           <SummaryCard icon={AlertTriangle} label="Low Stock" value={counts.low || 0} className="text-gold" />
           <SummaryCard icon={PackageX} label="Out of Stock" value={counts.out || 0} className="text-[#e35226]" />
         </div>
@@ -128,7 +128,7 @@ export default function AdminInventory() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search products…"
-            className="w-full bg-transparent text-[12.5px] font-semibold text-[#f2ece2] outline-none placeholder:text-muted placeholder:font-normal"
+            className="w-full bg-transparent text-[12.5px] font-semibold text-brown outline-none placeholder:text-muted placeholder:font-normal"
           />
         </div>
 
@@ -138,7 +138,7 @@ export default function AdminInventory() {
               key={key}
               onClick={() => setFilter(key)}
               className={`shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-bold tracking-wide transition-colors ${
-                filter === key ? 'border-orange/50 bg-orange/15 text-orange' : 'border-white/10 bg-[#0c0906] text-muted'
+                filter === key ? 'border-orange/50 bg-orange/15 text-orange' : 'border-brown/12 bg-white text-muted'
               }`}
             >
               {label} ({counts[key] ?? 0})
@@ -171,12 +171,12 @@ export default function AdminInventory() {
         <div className="surface-3d rounded-2xl p-4">
           <div className="mb-3 flex items-center gap-2">
             <History size={14} className="text-orange" />
-            <h2 className="text-[12.5px] font-extrabold text-[#f2ece2]">Recent Stock Activity</h2>
+            <h2 className="text-[12.5px] font-extrabold text-brown">Recent Stock Activity</h2>
           </div>
           {feedLoading ? (
             <div className="flex flex-col gap-2">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-11 animate-pulse rounded-xl bg-white/5" />
+                <div key={i} className="h-11 animate-pulse rounded-xl bg-brown/6" />
               ))}
             </div>
           ) : recentMovements.length === 0 ? (
@@ -186,17 +186,17 @@ export default function AdminInventory() {
               {recentMovements.map((m) => {
                 const up = m.delta > 0;
                 return (
-                  <div key={m.id} className="flex items-center gap-2.5 rounded-xl border border-white/5 bg-[#0c0906] px-3 py-2">
-                    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${up ? 'bg-[#8fe3a0]/10 text-[#8fe3a0]' : 'bg-[#e35226]/10 text-[#e35226]'}`}>
+                  <div key={m.id} className="flex items-center gap-2.5 rounded-xl border border-brown/6 bg-white px-3 py-2">
+                    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${up ? 'bg-[#1E8E4A]/10 text-[#1E8E4A]' : 'bg-[#e35226]/10 text-[#e35226]'}`}>
                       {up ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[11px] font-bold text-[#f2ece2]">
+                      <p className="truncate text-[11px] font-bold text-brown">
                         {m.productName || 'Product'} <span className="text-muted font-semibold">— {m.previousQty} → {m.newQty}</span>
                       </p>
                       <p className="truncate text-[9.5px] font-semibold text-muted">{m.adminEmail || 'admin'}</p>
                     </div>
-                    <span className={`shrink-0 text-[10.5px] font-extrabold ${up ? 'text-[#8fe3a0]' : 'text-[#e35226]'}`}>
+                    <span className={`shrink-0 text-[10.5px] font-extrabold ${up ? 'text-[#1E8E4A]' : 'text-[#e35226]'}`}>
                       {up ? '+' : ''}
                       {m.delta}
                     </span>
@@ -220,7 +220,7 @@ function SummaryCard({ icon: Icon, label, value, className }) {
         <Icon size={14} />
       </span>
       <div className="min-w-0">
-        <div className="truncate text-[13.5px] font-extrabold text-[#f2ece2]">{value}</div>
+        <div className="truncate text-[13.5px] font-extrabold text-brown">{value}</div>
         <div className="truncate text-[9px] font-semibold text-muted">{label}</div>
       </div>
     </div>
@@ -239,7 +239,7 @@ function InventoryRow({ product, busy, onAdjust, onSetQty, onViewHistory }) {
   }, [product.stockQty, focused]);
 
   const stockMeta = {
-    in: { label: 'In stock', className: 'border-[#8fe3a0]/35 bg-[#8fe3a0]/10 text-[#8fe3a0]' },
+    in: { label: 'In stock', className: 'border-[#1E8E4A]/35 bg-[#1E8E4A]/10 text-[#1E8E4A]' },
     low: { label: 'Low stock', className: 'border-gold/35 bg-gold/10 text-gold' },
     out: { label: 'Out of stock', className: 'border-[#e35226]/35 bg-[#e35226]/10 text-[#e35226]' },
   }[product.stock];
@@ -264,7 +264,7 @@ function InventoryRow({ product, busy, onAdjust, onSetQty, onViewHistory }) {
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[12.5px] font-bold text-[#f2ece2]">{product.name}</p>
+        <p className="truncate text-[12.5px] font-bold text-brown">{product.name}</p>
         {product.nameTa && (
           <p className="truncate text-[10px] font-semibold text-gold">{product.nameTa}</p>
         )}
@@ -278,7 +278,7 @@ function InventoryRow({ product, busy, onAdjust, onSetQty, onViewHistory }) {
       <div className="flex shrink-0 items-center gap-1.5">
         <button
           onClick={onViewHistory}
-          className="orb-3d flex h-7 w-7 items-center justify-center !rounded-full text-[#f2ece2] hover:text-orange"
+          className="orb-3d flex h-7 w-7 items-center justify-center !rounded-full text-brown hover:text-orange"
           title="View stock history"
         >
           <History size={12} />
@@ -286,7 +286,7 @@ function InventoryRow({ product, busy, onAdjust, onSetQty, onViewHistory }) {
         <button
           disabled={busy || product.stockQty <= 0}
           onClick={() => onAdjust(-1)}
-          className="orb-3d flex h-7 w-7 items-center justify-center !rounded-full text-[#f2ece2] hover:text-orange disabled:opacity-30"
+          className="orb-3d flex h-7 w-7 items-center justify-center !rounded-full text-brown hover:text-orange disabled:opacity-30"
         >
           <Minus size={12} />
         </button>
@@ -301,12 +301,12 @@ function InventoryRow({ product, busy, onAdjust, onSetQty, onViewHistory }) {
           onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
           disabled={busy}
           inputMode="numeric"
-          className="w-12 rounded-lg border border-white/10 bg-[#0c0906] px-1 py-1.5 text-center text-[12px] font-extrabold text-[#f2ece2] outline-none focus:border-orange/50"
+          className="w-12 rounded-lg border border-brown/12 bg-white px-1 py-1.5 text-center text-[12px] font-extrabold text-brown outline-none focus:border-orange/50"
         />
         <button
           disabled={busy}
           onClick={() => onAdjust(1)}
-          className="orb-3d flex h-7 w-7 items-center justify-center !rounded-full text-[#f2ece2] hover:text-orange disabled:opacity-30"
+          className="orb-3d flex h-7 w-7 items-center justify-center !rounded-full text-brown hover:text-orange disabled:opacity-30"
         >
           <Plus size={12} />
         </button>
@@ -318,12 +318,12 @@ function InventoryRow({ product, busy, onAdjust, onSetQty, onViewHistory }) {
 function InventoryRowSkeleton() {
   return (
     <div className="surface-3d flex animate-pulse items-center gap-3 rounded-2xl p-3">
-      <div className="h-14 w-14 shrink-0 rounded-xl bg-white/5" />
+      <div className="h-14 w-14 shrink-0 rounded-xl bg-brown/6" />
       <div className="flex-1 space-y-2">
-        <div className="h-3 w-2/3 rounded bg-white/5" />
-        <div className="h-2.5 w-1/2 rounded bg-white/5" />
+        <div className="h-3 w-2/3 rounded bg-brown/6" />
+        <div className="h-2.5 w-1/2 rounded bg-brown/6" />
       </div>
-      <div className="h-7 w-24 rounded-lg bg-white/5" />
+      <div className="h-7 w-24 rounded-lg bg-brown/6" />
     </div>
   );
 }

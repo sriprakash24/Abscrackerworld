@@ -37,7 +37,7 @@ function CrackerToast({ variant = 'success', title, subtitle }) {
         <Icon size={15} strokeWidth={3} />
       </span>
       <div className="min-w-0">
-        <div className="truncate text-[12.5px] font-extrabold leading-tight text-[#f2ece2]">{title}</div>
+        <div className="truncate text-[12.5px] font-extrabold leading-tight text-brown">{title}</div>
         {subtitle && <div className="mt-0.5 text-[10px] font-semibold text-muted">{subtitle}</div>}
       </div>
     </div>

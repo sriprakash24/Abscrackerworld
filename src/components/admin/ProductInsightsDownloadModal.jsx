@@ -4,7 +4,7 @@ import { X, Download, Clock3, CheckCircle2, XCircle } from 'lucide-react';
 
 const STATUS_OPTIONS = [
   { key: 'includeAwaiting', label: 'Awaiting Confirmation', icon: Clock3, activeClass: 'border-gold/50 bg-gold/15 text-gold' },
-  { key: 'includeConfirmed', label: 'Confirmed', icon: CheckCircle2, activeClass: 'border-[#8fe3a0]/50 bg-[#8fe3a0]/15 text-[#8fe3a0]' },
+  { key: 'includeConfirmed', label: 'Confirmed', icon: CheckCircle2, activeClass: 'border-[#1E8E4A]/50 bg-[#1E8E4A]/15 text-[#1E8E4A]' },
   { key: 'includeCancelled', label: 'Cancelled', icon: XCircle, activeClass: 'border-[#e35226]/50 bg-[#e35226]/15 text-[#e35226]' },
 ];
 
@@ -56,7 +56,7 @@ export default function ProductInsightsDownloadModal({ open, onClose, onDownload
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[65] flex items-start justify-center overflow-y-auto bg-black/70 px-4 py-6"
+          className="fixed inset-0 z-[65] flex items-start justify-center overflow-y-auto bg-brown/60 px-4 py-6"
           onClick={onClose}
         >
           <motion.div
@@ -76,7 +76,7 @@ export default function ProductInsightsDownloadModal({ open, onClose, onDownload
 
             <div className="flex flex-col gap-4">
               <div>
-                <span className="mb-2 block text-[11px] font-bold tracking-wide text-[#cfc7bd]">Include Orders</span>
+                <span className="mb-2 block text-[11px] font-bold tracking-wide text-muted">Include Orders</span>
                 <div className="flex flex-wrap gap-2">
                   {STATUS_OPTIONS.map(({ key, label, icon: Icon, activeClass }) => (
                     <button
@@ -84,7 +84,7 @@ export default function ProductInsightsDownloadModal({ open, onClose, onDownload
                       type="button"
                       onClick={() => statusSetters[key]((v) => !v)}
                       className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold transition-colors ${
-                        statusState[key] ? activeClass : 'border-white/10 bg-[#0c0906] text-muted'
+                        statusState[key] ? activeClass : 'border-brown/12 bg-white text-muted'
                       }`}
                     >
                       <Icon size={12} />
@@ -98,13 +98,13 @@ export default function ProductInsightsDownloadModal({ open, onClose, onDownload
               </div>
 
               <div>
-                <span className="mb-2 block text-[11px] font-bold tracking-wide text-[#cfc7bd]">Show</span>
+                <span className="mb-2 block text-[11px] font-bold tracking-wide text-muted">Show</span>
                 <div className="flex flex-col gap-1.5">
                   {METRIC_OPTIONS.map(({ key, label }) => (
                     <label
                       key={key}
                       className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-[11.5px] font-semibold transition-colors ${
-                        metric === key ? 'border-orange/50 bg-orange/10 text-[#f2ece2]' : 'border-white/10 bg-[#0c0906] text-muted'
+                        metric === key ? 'border-orange/50 bg-orange/10 text-brown' : 'border-brown/12 bg-white text-muted'
                       }`}
                     >
                       <input
@@ -122,11 +122,11 @@ export default function ProductInsightsDownloadModal({ open, onClose, onDownload
               </div>
 
               <div>
-                <span className="mb-2 block text-[11px] font-bold tracking-wide text-[#cfc7bd]">Products</span>
+                <span className="mb-2 block text-[11px] font-bold tracking-wide text-muted">Products</span>
                 <div className="flex flex-col gap-1.5">
                   <label
                     className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-[11.5px] font-semibold transition-colors ${
-                      scope === 'filtered' ? 'border-orange/50 bg-orange/10 text-[#f2ece2]' : 'border-white/10 bg-[#0c0906] text-muted'
+                      scope === 'filtered' ? 'border-orange/50 bg-orange/10 text-brown' : 'border-brown/12 bg-white text-muted'
                     }`}
                   >
                     <input
@@ -141,7 +141,7 @@ export default function ProductInsightsDownloadModal({ open, onClose, onDownload
                   </label>
                   <label
                     className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-[11.5px] font-semibold transition-colors ${
-                      scope === 'all' ? 'border-orange/50 bg-orange/10 text-[#f2ece2]' : 'border-white/10 bg-[#0c0906] text-muted'
+                      scope === 'all' ? 'border-orange/50 bg-orange/10 text-brown' : 'border-brown/12 bg-white text-muted'
                     }`}
                   >
                     <input
@@ -159,7 +159,7 @@ export default function ProductInsightsDownloadModal({ open, onClose, onDownload
             </div>
 
             <div className="mt-5 flex gap-2.5">
-              <button type="button" onClick={onClose} className="btn-3d-outline flex-1 rounded-xl py-2.5 text-[12.5px] font-bold text-[#f2ece2]">
+              <button type="button" onClick={onClose} className="btn-3d-outline flex-1 rounded-xl py-2.5 text-[12.5px] font-bold text-brown">
                 Cancel
               </button>
               <button

@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import ProductCard from './ProductCard';
+import ComboCard from '../combo/ComboCard';
 import SkeletonCard from './SkeletonCard';
 import EmptyState from './EmptyState';
 import { getCategoryTheme } from '../../utils/categoryTheme';
@@ -27,9 +28,13 @@ function ProductGrid({ products, loading, onResetFilters, categoryName }) {
 
   return (
     <div className="grid grid-cols-2 items-stretch gap-3 px-4 pb-6">
-      {products.map((product) => (
-        <ProductCard key={product.id} product={product} theme={theme} />
-      ))}
+      {products.map((product) =>
+        product.isCombo ? (
+          <ComboCard key={product.id} product={product} theme={theme} />
+        ) : (
+          <ProductCard key={product.id} product={product} theme={theme} />
+        ),
+      )}
     </div>
   );
 }

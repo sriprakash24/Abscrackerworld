@@ -111,18 +111,16 @@ export default function SearchBar({ products = [] }) {
         className={cn(
           'relative flex items-center gap-2.5 rounded-[14px] px-3.5 py-3 transition-all duration-300',
           !focused &&
-            'border border-gold/70 shadow-[0_2px_10px_rgba(0,0,0,.45)_inset,0_0_0_1px_rgba(255,213,79,.18),0_4px_20px_-4px_rgba(255,154,0,.45)]',
+            'border border-coral/60 shadow-[0_6px_18px_-8px_rgba(240,100,70,0.45)]',
           focused &&
-            'border border-gold shadow-[0_0_0_3px_rgba(255,180,0,.3),0_0_26px_rgba(255,154,0,.55),0_2px_10px_rgba(0,0,0,.45)_inset]'
+            'border border-red shadow-[0_0_0_3px_rgba(255,138,101,.3),0_8px_22px_-8px_rgba(240,68,82,0.5)]'
         )}
         style={{
           // Was near-identical in tone to the page's own #220000 background
           // (same dark-maroon family, low contrast) — this pulls the fill
           // noticeably lighter/warmer so the bar reads as its own surface
           // rather than blending into whatever's behind it.
-          background: 'linear-gradient(180deg, rgba(120,42,24,.88), rgba(72,20,14,.92))',
-          backdropFilter: 'blur(12px) saturate(150%)',
-          WebkitBackdropFilter: 'blur(12px) saturate(150%)',
+          background: '#ffffff',
         }}
       >
         {/* Quiet breathing glow around the search icon — enough to say
@@ -130,17 +128,17 @@ export default function SearchBar({ products = [] }) {
         <span className="relative shrink-0">
           <motion.span
             className="pointer-events-none absolute -inset-1.5 rounded-full"
-            style={{ boxShadow: '0 0 0 1px rgba(255,180,0,.4)' }}
+            style={{ boxShadow: '0 0 0 1px rgba(240,68,82,.35)' }}
             animate={{ opacity: [0.6, 0, 0.6], scale: [1, 1.5, 1] }}
             transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
           />
-          <Search size={18} strokeWidth={2.2} className="relative text-gold" />
+          <Search size={18} strokeWidth={2.2} className="relative text-red" />
         </span>
         <input
           type="text"
           value={value}
           placeholder="Search crackers, packs..."
-          className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-[#f2e9da]/80"
+          className="flex-1 bg-transparent text-sm font-semibold text-brown outline-none placeholder:font-normal placeholder:text-muted"
           onFocus={() => {
             setFocused(true);
             if (value.trim()) setShowResults(true);
@@ -172,7 +170,7 @@ export default function SearchBar({ products = [] }) {
           aria-label={listening ? 'Stop voice search' : 'Search by voice'}
           className={cn(
             'relative shrink-0 flex h-7 w-7 items-center justify-center rounded-full transition-colors',
-            listening ? 'text-white' : 'text-muted'
+            listening ? 'text-white' : 'text-red'
           )}
           style={
             listening
@@ -199,10 +197,10 @@ export default function SearchBar({ products = [] }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="absolute inset-x-4 top-full z-30 mt-1 max-h-[60vh] overflow-y-auto rounded-[14px] border border-[#262220]"
+            className="absolute inset-x-4 top-full z-30 mt-1 max-h-[60vh] overflow-y-auto rounded-[14px] border border-coral/40"
             style={{
-              background: 'linear-gradient(180deg,#130f0c,#0c0906)',
-              boxShadow: '0 14px 30px -10px rgba(0,0,0,.7)',
+              background: '#ffffff',
+              boxShadow: '0 14px 30px -10px rgba(113,50,31,0.20)',
             }}
           >
             {results.length === 0 ? (
@@ -215,9 +213,9 @@ export default function SearchBar({ products = [] }) {
                   key={p.id}
                   type="button"
                   onClick={() => goToProduct(p)}
-                  className="flex w-full items-center gap-3 border-b border-white/5 px-3.5 py-2.5 text-left last:border-none active:bg-white/5"
+                  className="flex w-full items-center gap-3 border-b border-brown/6 px-3.5 py-2.5 text-left last:border-none active:bg-brown/6"
                 >
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-black/30">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-peach-light">
                     {p.img ? (
                       <img src={p.img} alt="" className="h-full w-full object-contain" />
                     ) : (
@@ -225,7 +223,7 @@ export default function SearchBar({ products = [] }) {
                     )}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[12px] font-bold text-[#f2ece2]">{p.name}</span>
+                    <span className="block truncate text-[12px] font-bold text-brown">{p.name}</span>
                     {p.nameTa && (
                       <span className="block truncate text-[10px] font-semibold text-gold">{p.nameTa}</span>
                     )}

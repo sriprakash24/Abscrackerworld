@@ -44,7 +44,7 @@ export default function EditOrderBar() {
       >
         <div
           className="panel-3d flex items-center justify-between gap-3 rounded-2xl px-4 py-3"
-          style={{ boxShadow: '0 12px 30px -10px rgba(0,0,0,.65), 0 0 20px rgba(255,122,0,.12)' }}
+          style={{ boxShadow: '0 12px 30px -10px rgba(113,50,31,0.18), 0 0 20px rgba(255,122,0,.12)' }}
         >
           <button
             onClick={handleCancel}

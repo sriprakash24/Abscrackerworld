@@ -13,7 +13,7 @@ export const ORDER_STATUS_META = {
   CONFIRMED: {
     label: 'Confirmed',
     emoji: '🟢',
-    className: 'border-[#8fe3a0]/35 bg-[#8fe3a0]/10 text-[#8fe3a0]',
+    className: 'border-[#1E8E4A]/35 bg-[#1E8E4A]/10 text-[#1E8E4A]',
   },
   PACKED: {
     label: 'Packed',
@@ -28,7 +28,7 @@ export const ORDER_STATUS_META = {
   DELIVERED: {
     label: 'Delivered',
     emoji: '✅',
-    className: 'border-[#8fe3a0]/35 bg-[#8fe3a0]/10 text-[#8fe3a0]',
+    className: 'border-[#1E8E4A]/35 bg-[#1E8E4A]/10 text-[#1E8E4A]',
   },
   CANCELLED: {
     label: 'Cancelled',

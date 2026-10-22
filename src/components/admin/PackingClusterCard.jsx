@@ -68,7 +68,7 @@ export default function PackingClusterCard({
             {(cluster.customerName || "?").trim().charAt(0).toUpperCase()}
           </span>
           <div className="min-w-0">
-            <div className="truncate text-[12.5px] font-extrabold text-[#f2ece2]">
+            <div className="truncate text-[12.5px] font-extrabold text-brown">
               {cluster.customerName}
             </div>
             <div className="text-[10px] text-muted">
@@ -88,7 +88,7 @@ export default function PackingClusterCard({
             }
             className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10.5px] font-extrabold transition-all disabled:opacity-60 ${
               merged
-                ? "border-[#8fe3a0]/45 bg-[#8fe3a0]/15 text-[#8fe3a0]"
+                ? "border-[#1E8E4A]/45 bg-[#1E8E4A]/15 text-[#1E8E4A]"
                 : "merge-available-pulse border-gold/60 bg-gradient-to-b from-gold/25 to-orange/15 text-gold"
             }`}
           >

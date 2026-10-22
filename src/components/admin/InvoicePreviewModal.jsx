@@ -20,7 +20,7 @@ export default function InvoicePreviewModal({ open, invoice, onClose }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[65] flex items-start justify-center overflow-y-auto bg-black/70 px-4 py-6"
+          className="fixed inset-0 z-[65] flex items-start justify-center overflow-y-auto bg-brown/60 px-4 py-6"
           onClick={onClose}
         >
           <motion.div
@@ -32,12 +32,12 @@ export default function InvoicePreviewModal({ open, invoice, onClose }) {
             className="w-full max-w-xl overflow-hidden rounded-2xl bg-[#fdfaf5] text-[#241d15] shadow-2xl"
           >
             {/* Toolbar */}
-            <div className="flex items-center justify-between gap-2 border-b border-black/10 bg-[#111111] px-4 py-3">
+            <div className="flex items-center justify-between gap-2 border-b border-black/10 bg-white px-4 py-3">
               <div className="flex items-center gap-1.5">
                 <h2 className="text-[13px] font-extrabold text-gradient-gold">{invoice.invoiceNo}</h2>
                 <span
                   className={`flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${
-                    invoice.source === 'ORDER' ? 'border-gold/35 bg-gold/10 text-gold' : 'border-white/15 bg-white/5 text-muted'
+                    invoice.source === 'ORDER' ? 'border-gold/35 bg-gold/10 text-gold' : 'border-brown/16 bg-brown/6 text-muted'
                   }`}
                 >
                   {invoice.source === 'ORDER' ? <Link2 size={9} /> : <PenSquare size={9} />}

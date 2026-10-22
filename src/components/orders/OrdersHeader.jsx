@@ -6,7 +6,7 @@ export default function OrdersHeader({ orderCount, onBack }) {
       className="glass relative sticky top-0 z-30 flex items-center gap-2.5 overflow-hidden px-3 py-3"
       style={{
         borderBottom: '1px solid rgba(255,154,0,.22)',
-        boxShadow: '0 10px 26px -14px rgba(0,0,0,.7), 0 0 20px rgba(255,122,0,.1)',
+        boxShadow: '0 10px 26px -14px rgba(113,50,31,0.20), 0 0 20px rgba(255,122,0,.1)',
       }}
     >
       {/* Orange ambient glow behind the header */}
@@ -28,7 +28,7 @@ export default function OrdersHeader({ orderCount, onBack }) {
           <ClipboardList size={16} strokeWidth={2.3} />
         </span>
         <div className="min-w-0">
-          <div className="text-embossed truncate text-[14.5px] font-extrabold leading-tight text-[#f2ece2]">
+          <div className="text-embossed truncate text-[14.5px] font-extrabold leading-tight text-brown">
             My Orders
           </div>
           <div className="text-[10px] font-semibold text-muted">

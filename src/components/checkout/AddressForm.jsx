@@ -14,7 +14,7 @@ export default function AddressForm({ register, errors, isActive = false }) {
         <span className="orb-3d flex h-7 w-7 shrink-0 items-center justify-center !rounded-full text-orange">
           <MapPin size={13} />
         </span>
-        <h3 className="text-[12.5px] font-extrabold tracking-wide text-[#f2ece2]">Delivery Address</h3>
+        <h3 className="text-[12.5px] font-extrabold tracking-wide text-brown">Delivery Address</h3>
       </div>
 
       <div className="flex flex-col gap-3">

@@ -24,7 +24,7 @@ export default function EmptyOrders({ needsIdentity, onIdentify, onShopNow }) {
 
       {needsIdentity ? (
         <>
-          <h3 className="mt-4 text-[14px] font-extrabold text-[#f2ece2]">Tell us who's asking</h3>
+          <h3 className="mt-4 text-[14px] font-extrabold text-brown">Tell us who's asking</h3>
           <p className="mt-1 max-w-[240px] text-[12px] leading-snug text-muted">
             Share your name &amp; mobile number so we can pull up your past orders.
           </p>
@@ -37,7 +37,7 @@ export default function EmptyOrders({ needsIdentity, onIdentify, onShopNow }) {
         </>
       ) : (
         <>
-          <h3 className="mt-4 text-[14px] font-extrabold text-[#f2ece2]">No orders yet</h3>
+          <h3 className="mt-4 text-[14px] font-extrabold text-brown">No orders yet</h3>
           <p className="mt-1 max-w-[240px] text-[12px] leading-snug text-muted">
             Once you place an order, it'll show up here with live status updates.
           </p>

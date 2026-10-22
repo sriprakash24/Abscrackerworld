@@ -80,7 +80,7 @@ function TrackHeader({ onBack }) {
           <Truck size={16} strokeWidth={2.4} />
         </span>
         <div className="min-w-0">
-          <div className="text-embossed truncate text-[14.5px] font-extrabold leading-tight text-[#f2ece2]">
+          <div className="text-embossed truncate text-[14.5px] font-extrabold leading-tight text-brown">
             Track Order
           </div>
           <div className="text-[10px] font-semibold text-muted">
@@ -215,7 +215,7 @@ export default function TrackOrder() {
                       className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-[10.5px] font-bold transition-colors ${
                         isSelected
                           ? meta.className
-                          : "border-white/10 bg-black/20 text-muted"
+                          : "border-brown/12 bg-brown/8 text-muted"
                       }`}
                     >
                       {meta.emoji} {order.orderId || order.id}
@@ -234,7 +234,7 @@ export default function TrackOrder() {
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
-                  <div className="truncate text-[13px] font-extrabold text-[#f2ece2]">
+                  <div className="truncate text-[13px] font-extrabold text-brown">
                     {selectedOrder.orderId || selectedOrder.id}
                   </div>
                   <div className="text-[10px] text-muted">
@@ -297,7 +297,7 @@ export default function TrackOrder() {
               </div>
 
               {selectedOrder.address && (
-                <div className="flex items-start gap-2 rounded-xl bg-black/20 px-3 py-2.5 text-[10.5px] leading-relaxed text-[#cfc7bd]">
+                <div className="flex items-start gap-2 rounded-xl bg-brown/8 px-3 py-2.5 text-[10.5px] leading-relaxed text-muted">
                   <MapPin size={13} className="mt-0.5 shrink-0 text-orange" />
                   <span>
                     {[
@@ -330,7 +330,7 @@ export default function TrackOrder() {
                 </button>
               )}
 
-              <div className="flex items-center gap-2 border-t border-dashed border-white/10 pt-3">
+              <div className="flex items-center gap-2 border-t border-dashed border-brown/12 pt-3">
                 <button
                   onClick={() => copyOrderId(selectedOrder)}
                   className="btn-3d-outline flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-[11px] font-bold text-gold"

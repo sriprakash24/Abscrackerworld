@@ -30,6 +30,7 @@ import AdminPriceUpdate from "./pages/admin/AdminPriceUpdate";
 import AdminOrderLimits from "./pages/admin/AdminOrderLimits";
 import AdminInventory from "./pages/admin/AdminInventory";
 import AdminCategories from "./pages/admin/AdminCategories";
+import AdminCombos from "./pages/admin/AdminCombos";
 import AdminInvoices from "./pages/admin/AdminInvoices";
 import AdminEstimates from "./pages/admin/AdminEstimates";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -51,7 +52,7 @@ function CustomerApp() {
     <ProductsProvider>
       <div
         id="app-shell"
-        className="relative w-full max-w-[430px] overflow-hidden bg-[#150007] text-white"
+        className="relative w-full max-w-[430px] overflow-hidden bg-bg text-brown"
         style={{ transform: 'translateZ(0)', height: '100dvh' }}
       >
         <AmbientBackground />
@@ -186,6 +187,14 @@ function AdminApp() {
               }
             />
             <Route
+              path="combos"
+              element={
+                <AdminRoute>
+                  <AdminCombos />
+                </AdminRoute>
+              }
+            />
+            <Route
               path="invoices"
               element={
                 <AdminRoute>
@@ -234,13 +243,13 @@ export default function App() {
       </Routes>
 
       <Toaster
-        theme="dark"
+        theme="light"
         position="bottom-center"
         toastOptions={{
           style: {
-            background: "#1a1512",
-            border: "1px solid rgba(255,122,0,.4)",
-            color: "#fff",
+            background: "#ffffff",
+            border: "1px solid rgba(255,138,101,.5)",
+            color: "#71321F",
             fontSize: "12.5px",
           },
         }}

@@ -15,7 +15,7 @@ export default function OrderReview({ items }) {
         <span className="orb-3d flex h-7 w-7 shrink-0 items-center justify-center !rounded-full text-orange">
           <PackageSearch size={13} />
         </span>
-        <h3 className="text-[12.5px] font-extrabold tracking-wide text-[#f2ece2]">
+        <h3 className="text-[12.5px] font-extrabold tracking-wide text-brown">
           Review Order <span className="font-semibold text-muted">({items.length})</span>
         </h3>
       </div>
@@ -39,7 +39,7 @@ export default function OrderReview({ items }) {
               </div>
 
               <div className="min-w-0 flex-1">
-                <div className="line-clamp-1 text-[12px] font-bold text-[#f2ece2]">{product.name}</div>
+                <div className="line-clamp-1 text-[12px] font-bold text-brown">{product.name}</div>
                 {product.nameTa && (
                   <div className="line-clamp-1 text-[10px] font-semibold text-gold">{product.nameTa}</div>
                 )}

@@ -91,7 +91,7 @@ export default function AdminEstimates() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#050505] pb-28 text-white">
+    <div className="min-h-screen w-full bg-bg pb-28 text-brown">
       <AdminSectionHeader
         icon={FileText}
         title="Estimate Bill"
@@ -109,7 +109,7 @@ export default function AdminEstimates() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search estimate no., customer…"
-              className="w-full bg-transparent text-[12.5px] font-semibold text-[#f2ece2] outline-none placeholder:text-muted placeholder:font-normal"
+              className="w-full bg-transparent text-[12.5px] font-semibold text-brown outline-none placeholder:text-muted placeholder:font-normal"
             />
           </div>
           <button
@@ -165,7 +165,7 @@ function EstimateRow({ estimate, onView, onEdit, onDelete }) {
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <p className="truncate text-[12.5px] font-bold text-[#f2ece2]">{estimate.estimateNo}</p>
+          <p className="truncate text-[12.5px] font-bold text-brown">{estimate.estimateNo}</p>
         </div>
         <p className="truncate text-[10.5px] font-semibold text-muted">
           {estimate.customer?.name} · {estimate.customer?.mobile}
@@ -174,21 +174,21 @@ function EstimateRow({ estimate, onView, onEdit, onDelete }) {
       </div>
 
       <div className="flex shrink-0 flex-col gap-1.5">
-        <button onClick={onView} className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-[#f2ece2] hover:text-orange">
+        <button onClick={onView} className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-brown hover:text-orange">
           <Eye size={13} />
         </button>
-        <button onClick={onEdit} className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-[#f2ece2] hover:text-orange">
+        <button onClick={onEdit} className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-brown hover:text-orange">
           <Pencil size={13} />
         </button>
         <button
           onClick={() => generateEstimatePdf(estimate)}
-          className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-[#f2ece2] hover:text-orange"
+          className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-brown hover:text-orange"
         >
           <Download size={13} />
         </button>
         <button
           onClick={onDelete}
-          className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-[#f2ece2] hover:text-[#e35226]"
+          className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-brown hover:text-[#e35226]"
         >
           <Trash2 size={13} />
         </button>
@@ -200,11 +200,11 @@ function EstimateRow({ estimate, onView, onEdit, onDelete }) {
 function EstimateRowSkeleton() {
   return (
     <div className="surface-3d flex animate-pulse items-center gap-3 rounded-2xl p-3">
-      <div className="h-12 w-12 shrink-0 rounded-xl bg-white/5" />
+      <div className="h-12 w-12 shrink-0 rounded-xl bg-brown/6" />
       <div className="flex-1 space-y-2">
-        <div className="h-3 w-1/3 rounded bg-white/5" />
-        <div className="h-2.5 w-1/2 rounded bg-white/5" />
-        <div className="h-2.5 w-1/4 rounded bg-white/5" />
+        <div className="h-3 w-1/3 rounded bg-brown/6" />
+        <div className="h-2.5 w-1/2 rounded bg-brown/6" />
+        <div className="h-2.5 w-1/4 rounded bg-brown/6" />
       </div>
     </div>
   );

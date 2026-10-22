@@ -36,12 +36,12 @@ export default function FreeDeliveryProgress({ unlocked, progressPct, amountRema
         </AnimatePresence>
 
         <div className="relative z-10 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 text-[11.5px] font-extrabold tracking-wide text-[#f2ece2]">
-            <Truck size={15} className={unlocked ? 'text-[#8fe3a0]' : 'text-orange'} />
+          <div className="flex items-center gap-1.5 text-[11.5px] font-extrabold tracking-wide text-brown">
+            <Truck size={15} className={unlocked ? 'text-[#1E8E4A]' : 'text-orange'} />
             FREE DELIVERY
           </div>
           {unlocked ? (
-            <span className="flex items-center gap-1 text-[10px] font-bold text-[#8fe3a0]">
+            <span className="flex items-center gap-1 text-[10px] font-bold text-[#1E8E4A]">
               <PartyPopper size={12} /> Unlocked
             </span>
           ) : (
@@ -49,7 +49,7 @@ export default function FreeDeliveryProgress({ unlocked, progressPct, amountRema
           )}
         </div>
 
-        <p className="relative z-10 mt-1 text-[11px] leading-snug text-[#cfc7bd]">
+        <p className="relative z-10 mt-1 text-[11px] leading-snug text-muted">
           {unlocked ? (
             <>🎉 Congratulations! You unlocked FREE Delivery.</>
           ) : (

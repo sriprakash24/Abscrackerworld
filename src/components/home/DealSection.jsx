@@ -67,7 +67,7 @@ export default function DealSection() {
           <div className="art-float my-2 text-center text-[46px] leading-none">
             🎆
           </div>
-          <p className="mb-3 flex-1 text-center text-[12px] leading-snug text-[#cfc7bd]">
+          <p className="mb-3 flex-1 text-center text-[12px] leading-snug text-muted">
             Check out our latest collection
           </p>
           <button

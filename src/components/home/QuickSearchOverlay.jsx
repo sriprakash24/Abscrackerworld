@@ -66,8 +66,8 @@ export default function QuickSearchOverlay({ open, onClose, products = [] }) {
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className="fixed inset-x-4 top-14 z-50 overflow-hidden rounded-[16px] border border-gold/60"
             style={{
-              background: 'linear-gradient(180deg, rgba(120,42,24,.96), rgba(24,6,4,.98))',
-              boxShadow: '0 16px 34px -10px rgba(0,0,0,.75)',
+              background: '#ffffff',
+              boxShadow: '0 16px 34px -10px rgba(113,50,31,0.21)',
             }}
           >
             <div className="flex items-center gap-2.5 px-3.5 py-3">
@@ -78,7 +78,7 @@ export default function QuickSearchOverlay({ open, onClose, products = [] }) {
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 placeholder="Search crackers, packs..."
-                className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-[#f2e9da]/80"
+                className="flex-1 bg-transparent text-sm font-semibold text-brown outline-none placeholder:font-normal placeholder:text-muted"
               />
               <button type="button" onClick={onClose} aria-label="Close search" className="shrink-0 text-muted">
                 <X size={16} strokeWidth={2.2} />
@@ -86,7 +86,7 @@ export default function QuickSearchOverlay({ open, onClose, products = [] }) {
             </div>
 
             {value.trim() && (
-              <div className="max-h-[50vh] overflow-y-auto border-t border-white/10">
+              <div className="max-h-[50vh] overflow-y-auto border-t border-brown/12">
                 {results.length === 0 ? (
                   <div className="px-4 py-3.5 text-[12px] text-muted">
                     No crackers found for "{value.trim()}"
@@ -97,7 +97,7 @@ export default function QuickSearchOverlay({ open, onClose, products = [] }) {
                       key={p.id}
                       type="button"
                       onClick={() => goToProduct(p)}
-                      className="flex w-full items-center gap-3 border-b border-white/5 px-3.5 py-2.5 text-left last:border-none active:bg-white/5"
+                      className="flex w-full items-center gap-3 border-b border-brown/6 px-3.5 py-2.5 text-left last:border-none active:bg-brown/6"
                     >
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-black/30">
                         {p.img ? (
@@ -107,7 +107,7 @@ export default function QuickSearchOverlay({ open, onClose, products = [] }) {
                         )}
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[12px] font-bold text-[#f2ece2]">{p.name}</span>
+                        <span className="block truncate text-[12px] font-bold text-brown">{p.name}</span>
                         {p.nameTa && (
                           <span className="block truncate text-[10px] font-semibold text-gold">{p.nameTa}</span>
                         )}

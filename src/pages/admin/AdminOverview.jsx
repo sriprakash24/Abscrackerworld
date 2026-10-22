@@ -211,7 +211,7 @@ export default function AdminOverview() {
   const loading = ordersLoading || productsLoading;
 
   return (
-    <div className="min-h-screen w-full bg-[#050505] pb-28 text-white">
+    <div className="min-h-screen w-full bg-bg pb-28 text-brown">
       <AdminSectionHeader
         icon={LayoutDashboard}
         title="Overview"
@@ -242,18 +242,18 @@ export default function AdminOverview() {
 
         {/* Top stat cards */}
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-          <StatCard icon={IndianRupee} label="Delivered Revenue" value={`₹${stats.totalRevenue.toLocaleString('en-IN')}`} className="text-[#8fe3a0]" loading={loading} />
+          <StatCard icon={IndianRupee} label="Delivered Revenue" value={`₹${stats.totalRevenue.toLocaleString('en-IN')}`} className="text-[#1E8E4A]" loading={loading} />
           <StatCard icon={TrendingUp} label="Pipeline Value" value={`₹${stats.pipelineValue.toLocaleString('en-IN')}`} className="text-orange" loading={loading} />
-          <StatCard icon={CircleCheck} label="Confirmed Amount" value={`₹${stats.confirmedAmount.toLocaleString('en-IN')}`} className="text-[#8fe3a0]" loading={loading} />
+          <StatCard icon={CircleCheck} label="Confirmed Amount" value={`₹${stats.confirmedAmount.toLocaleString('en-IN')}`} className="text-[#1E8E4A]" loading={loading} />
           <StatCard icon={Hourglass} label="Awaiting Payment" value={`₹${stats.awaitingAmount.toLocaleString('en-IN')}`} className="text-gold" loading={loading} />
-          <StatCard icon={ClipboardList} label="Total Orders" value={stats.totalOrders} className="text-[#f2ece2]" loading={loading} />
+          <StatCard icon={ClipboardList} label="Total Orders" value={stats.totalOrders} className="text-brown" loading={loading} />
           <StatCard icon={Clock} label="Today's Orders" value={stats.todayOrders} className="text-gold" loading={loading} />
-          <StatCard icon={PackageSearch} label="Products" value={products.length} className="text-[#f2ece2]" loading={loading} />
+          <StatCard icon={PackageSearch} label="Products" value={products.length} className="text-brown" loading={loading} />
           <StatCard
             icon={AlertTriangle}
             label="Low / Out of Stock"
             value={lowStockProducts.length}
-            className={lowStockProducts.length > 0 ? 'text-[#e35226]' : 'text-[#8fe3a0]'}
+            className={lowStockProducts.length > 0 ? 'text-[#e35226]' : 'text-[#1E8E4A]'}
             loading={loading}
           />
         </div>
@@ -263,13 +263,13 @@ export default function AdminOverview() {
             "last 7 days". */}
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-[11.5px] font-extrabold uppercase tracking-wide text-muted">Trends</h2>
-          <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-[#0c0906] p-1">
+          <div className="flex items-center gap-1.5 rounded-full border border-brown/12 bg-white p-1">
             {RANGE_OPTIONS.map((opt) => (
               <button
                 key={opt.days}
                 onClick={() => setRangeDays(opt.days)}
                 className={`rounded-full px-3 py-1 text-[10.5px] font-bold transition-colors ${
-                  rangeDays === opt.days ? 'bg-gradient-to-b from-orange to-gold text-black' : 'text-muted hover:text-[#cfc7bd]'
+                  rangeDays === opt.days ? 'bg-gradient-to-b from-orange to-gold text-black' : 'text-muted hover:text-muted'
                 }`}
               >
                 {opt.label}
@@ -283,7 +283,7 @@ export default function AdminOverview() {
           <div className="surface-3d rounded-2xl p-4">
             <div className="mb-3 flex items-center justify-between gap-2">
               <div className="min-w-0">
-                <h2 className="text-[12.5px] font-extrabold text-[#f2ece2]">Orders Placed</h2>
+                <h2 className="text-[12.5px] font-extrabold text-brown">Orders Placed</h2>
                 <p className="truncate text-[9.5px] font-semibold text-muted">{orderTrend.rangeLabel}</p>
               </div>
               <Link to="/admin/orders" className="flex shrink-0 items-center gap-1 text-[10.5px] font-bold text-orange hover:underline">
@@ -308,7 +308,7 @@ export default function AdminOverview() {
           <div className="surface-3d rounded-2xl p-4">
             <div className="mb-3 flex items-center justify-between gap-2">
               <div className="min-w-0">
-                <h2 className="text-[12.5px] font-extrabold text-[#f2ece2]">Invoices Generated</h2>
+                <h2 className="text-[12.5px] font-extrabold text-brown">Invoices Generated</h2>
                 <p className="truncate text-[9.5px] font-semibold text-muted">Payments confirmed, by date</p>
               </div>
               <Link to="/admin/invoices" className="flex shrink-0 items-center gap-1 text-[10.5px] font-bold text-orange hover:underline">
@@ -320,7 +320,7 @@ export default function AdminOverview() {
                 <div key={day.label + day.date.getDate()} className="flex flex-1 flex-col items-center gap-1.5">
                   <span className="text-[9px] font-bold text-muted">{day.count > 0 ? day.count : ''}</span>
                   <div
-                    className="w-full max-w-[22px] rounded-t-md bg-gradient-to-t from-[#3fae5c]/70 to-[#8fe3a0]/70"
+                    className="w-full max-w-[22px] rounded-t-md bg-gradient-to-t from-[#3fae5c]/70 to-[#1E8E4A]/70"
                     style={{ height: `${Math.max(4, (day.count / invoiceTrend.max) * 100)}px` }}
                   />
                   {rangeDays <= 14 && <span className="text-[8.5px] font-semibold text-muted">{day.label}</span>}
@@ -331,7 +331,7 @@ export default function AdminOverview() {
 
           {/* Status breakdown */}
           <div className="surface-3d rounded-2xl p-4">
-            <h2 className="mb-3 text-[12.5px] font-extrabold text-[#f2ece2]">Order Status Breakdown</h2>
+            <h2 className="mb-3 text-[12.5px] font-extrabold text-brown">Order Status Breakdown</h2>
             {statusBreakdown.length === 0 ? (
               <p className="text-[11px] text-muted">No orders yet.</p>
             ) : (
@@ -341,12 +341,12 @@ export default function AdminOverview() {
                   return (
                     <div key={status}>
                       <div className="mb-1 flex items-center justify-between text-[10.5px] font-bold">
-                        <span className="text-[#f2ece2]">
+                        <span className="text-brown">
                           {meta.emoji} {meta.label}
                         </span>
                         <span className="text-muted">{count}</span>
                       </div>
-                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/5">
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-brown/6">
                         <div
                           className="h-full rounded-full"
                           style={{ width: `${pct}%`, background: 'linear-gradient(90deg, var(--color-orange), var(--color-gold))' }}
@@ -364,7 +364,7 @@ export default function AdminOverview() {
           {/* Top products */}
           <div className="surface-3d rounded-2xl p-4 lg:col-span-2">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-[12.5px] font-extrabold text-[#f2ece2]">Top Selling Products</h2>
+              <h2 className="text-[12.5px] font-extrabold text-brown">Top Selling Products</h2>
               <Link to="/admin/products" className="flex items-center gap-1 text-[10.5px] font-bold text-orange hover:underline">
                 Manage products <ArrowUpRight size={11} />
               </Link>
@@ -374,13 +374,13 @@ export default function AdminOverview() {
             ) : (
               <div className="flex flex-col gap-2">
                 {topProducts.map((p, i) => (
-                  <div key={p.name + i} className="flex items-center gap-2.5 rounded-xl border border-white/5 bg-[#0c0906] px-3 py-2">
+                  <div key={p.name + i} className="flex items-center gap-2.5 rounded-xl border border-brown/6 bg-white px-3 py-2">
                     <span className="orb-3d flex h-6 w-6 shrink-0 items-center justify-center !rounded-full text-[10px] font-extrabold text-gold">{i + 1}</span>
                     <div className="orb-3d flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden !rounded-lg">
                       {p.image ? <img src={p.image} alt={p.name} className="h-full w-full object-cover" /> : <ImageOff size={12} className="text-muted" />}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[11.5px] font-bold text-[#f2ece2]">{p.name}</p>
+                      <p className="truncate text-[11.5px] font-bold text-brown">{p.name}</p>
                       {p.nameTa && (
                         <p className="truncate text-[10px] font-semibold text-gold">{p.nameTa}</p>
                       )}
@@ -395,7 +395,7 @@ export default function AdminOverview() {
           {/* Low stock alerts */}
           <div className="surface-3d rounded-2xl p-4">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-[12.5px] font-extrabold text-[#f2ece2]">Stock Alerts</h2>
+              <h2 className="text-[12.5px] font-extrabold text-brown">Stock Alerts</h2>
               <Link to="/admin/inventory" className="flex items-center gap-1 text-[10.5px] font-bold text-orange hover:underline">
                 Manage <ArrowUpRight size={11} />
               </Link>
@@ -405,9 +405,9 @@ export default function AdminOverview() {
             ) : (
               <div className="flex flex-col gap-2">
                 {lowStockProducts.slice(0, 6).map((p) => (
-                  <div key={p.id} className="flex items-center justify-between gap-2 rounded-xl border border-white/5 bg-[#0c0906] px-3 py-2">
+                  <div key={p.id} className="flex items-center justify-between gap-2 rounded-xl border border-brown/6 bg-white px-3 py-2">
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[11px] font-bold text-[#f2ece2]">{p.name}</span>
+                      <span className="block truncate text-[11px] font-bold text-brown">{p.name}</span>
                       {p.nameTa && (
                         <span className="block truncate text-[9.5px] font-semibold text-gold">{p.nameTa}</span>
                       )}
@@ -433,7 +433,7 @@ export default function AdminOverview() {
           {/* Recent orders */}
           <div className="surface-3d rounded-2xl p-4 lg:col-span-2">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-[12.5px] font-extrabold text-[#f2ece2]">Recent Orders</h2>
+              <h2 className="text-[12.5px] font-extrabold text-brown">Recent Orders</h2>
               <Link to="/admin/orders" className="flex items-center gap-1 text-[10.5px] font-bold text-orange hover:underline">
                 View all <ArrowUpRight size={11} />
               </Link>
@@ -445,9 +445,9 @@ export default function AdminOverview() {
                 {recentOrders.map((o) => {
                   const meta = getOrderStatusMeta(o.status);
                   return (
-                    <div key={o.id} className="flex items-center justify-between gap-2 rounded-xl border border-white/5 bg-[#0c0906] px-3 py-2">
+                    <div key={o.id} className="flex items-center justify-between gap-2 rounded-xl border border-brown/6 bg-white px-3 py-2">
                       <div className="min-w-0">
-                        <p className="truncate text-[11.5px] font-bold text-[#f2ece2]">{o.orderId || o.id}</p>
+                        <p className="truncate text-[11.5px] font-bold text-brown">{o.orderId || o.id}</p>
                         <p className="truncate text-[10px] font-semibold text-muted">{o.customer?.name} · ₹{(o.grandTotal || 0).toLocaleString('en-IN')}</p>
                       </div>
                       <span className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${meta.className}`}>{meta.label}</span>
@@ -463,20 +463,20 @@ export default function AdminOverview() {
               count. */}
           <div className="surface-3d rounded-2xl p-4">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-[12.5px] font-extrabold text-[#f2ece2]">Customers</h2>
+              <h2 className="text-[12.5px] font-extrabold text-brown">Customers</h2>
               <Link to="/admin/users" className="flex items-center gap-1 text-[10.5px] font-bold text-orange hover:underline">
                 View all <ArrowUpRight size={11} />
               </Link>
             </div>
-            <div className="mb-3 flex items-center gap-3 rounded-xl border border-white/5 bg-[#0c0906] px-3.5 py-3">
+            <div className="mb-3 flex items-center gap-3 rounded-xl border border-brown/6 bg-white px-3.5 py-3">
               <span className="orb-3d flex h-9 w-9 shrink-0 items-center justify-center !rounded-full text-orange">
                 <Users size={15} />
               </span>
               <div>
-                <p className="text-[16px] font-extrabold text-[#f2ece2]">{users.length}</p>
+                <p className="text-[16px] font-extrabold text-brown">{users.length}</p>
                 <p className="text-[10px] font-semibold text-muted">captured customer profiles</p>
               </div>
-              <div className="ml-auto flex items-center gap-1.5 rounded-full border border-[#8fe3a0]/30 bg-[#8fe3a0]/10 px-2 py-1 text-[10px] font-bold text-[#8fe3a0]">
+              <div className="ml-auto flex items-center gap-1.5 rounded-full border border-[#1E8E4A]/30 bg-[#1E8E4A]/10 px-2 py-1 text-[10px] font-bold text-[#1E8E4A]">
                 <UserPlus size={11} />
                 {customerTrend.days.reduce((sum, d) => sum + d.count, 0)} new
               </div>
@@ -508,7 +508,7 @@ function StatCard({ icon: Icon, label, value, className, loading }) {
         <Icon size={14} />
       </span>
       <div className="min-w-0">
-        <div className="truncate text-[13.5px] font-extrabold text-[#f2ece2]">{loading ? '—' : value}</div>
+        <div className="truncate text-[13.5px] font-extrabold text-brown">{loading ? '—' : value}</div>
         <div className="truncate text-[9px] font-semibold text-muted">{label}</div>
       </div>
     </div>

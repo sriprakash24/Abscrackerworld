@@ -260,7 +260,7 @@ function MergedConfirmedCard({ orders, delay = 0 }) {
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay, ease: "easeOut" }}
-        className="surface-3d relative overflow-hidden rounded-2xl border border-[#8fe3a0]/35"
+        className="surface-3d relative overflow-hidden rounded-2xl border border-[#1E8E4A]/35"
       >
         <span
           className="pointer-events-none absolute inset-y-0 left-0 z-10 w-[4px]"
@@ -269,10 +269,10 @@ function MergedConfirmedCard({ orders, delay = 0 }) {
         <div className="relative z-[1] flex flex-col gap-3 p-4 pl-[18px]">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div className="min-w-0">
-              <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#8fe3a0]">
+              <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#1E8E4A]">
                 <Layers size={12} /> Merged · {orders.length} orders · one invoice
               </div>
-              <div className="truncate text-[12.5px] font-extrabold text-[#f2ece2]">
+              <div className="truncate text-[12.5px] font-extrabold text-brown">
                 {first.customer?.name || "Customer"}
               </div>
               <div className="text-[10px] text-muted">{first.customer?.mobile}</div>
@@ -289,7 +289,7 @@ function MergedConfirmedCard({ orders, delay = 0 }) {
                     type="button"
                     onClick={() => setActionsOpen((v) => !v)}
                     title="More actions"
-                    className="orb-3d flex h-7 w-7 shrink-0 items-center justify-center !rounded-full text-muted hover:text-[#f2ece2]"
+                    className="orb-3d flex h-7 w-7 shrink-0 items-center justify-center !rounded-full text-muted hover:text-brown"
                   >
                     <MoreVertical size={14} />
                   </button>
@@ -300,7 +300,7 @@ function MergedConfirmedCard({ orders, delay = 0 }) {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -4 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute right-0 top-[calc(100%+6px)] z-30 w-52 overflow-hidden rounded-xl border border-white/10 bg-[#150007] py-1 shadow-xl"
+                        className="absolute right-0 top-[calc(100%+6px)] z-30 w-52 overflow-hidden rounded-xl border border-brown/12 bg-bg py-1 shadow-xl"
                       >
                         {revokeAction && (
                           <button
@@ -308,7 +308,7 @@ function MergedConfirmedCard({ orders, delay = 0 }) {
                               setActionsOpen(false);
                               setRevoking(true);
                             }}
-                            className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[11.5px] font-bold text-gold hover:bg-white/5"
+                            className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[11.5px] font-bold text-gold hover:bg-brown/6"
                           >
                             <Undo2 size={13} /> {revokeAction.label} (All)
                           </button>
@@ -319,7 +319,7 @@ function MergedConfirmedCard({ orders, delay = 0 }) {
                               setActionsOpen(false);
                               setConfirmingCancelAll(true);
                             }}
-                            className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[11.5px] font-bold text-[#ff8a63] hover:bg-white/5"
+                            className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[11.5px] font-bold text-[#ff8a63] hover:bg-brown/6"
                           >
                             <Ban size={13} /> Cancel All Orders
                           </button>
@@ -336,7 +336,7 @@ function MergedConfirmedCard({ orders, delay = 0 }) {
             {orders.map((o) => (
               <span
                 key={o.id}
-                className="rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[10px] font-bold text-[#cfc7bd]"
+                className="rounded-full border border-brown/12 bg-brown/8 px-2 py-0.5 text-[10px] font-bold text-muted"
               >
                 {o.orderId || o.id}
               </span>
@@ -407,7 +407,7 @@ function MergedConfirmedCard({ orders, delay = 0 }) {
                 setAddDate(toDateInputValue(new Date()));
                 setAddingOrder(true);
               }}
-              className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-[#5AC8FA]/40 bg-[#5AC8FA]/10 py-2 text-[10.5px] font-bold text-[#5AC8FA]"
+              className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-[#0B7FBF]/40 bg-[#0B7FBF]/10 py-2 text-[10.5px] font-bold text-[#0B7FBF]"
             >
               <PlusCircle size={13} />
               {addableOrders.length > 1
@@ -439,7 +439,7 @@ function MergedConfirmedCard({ orders, delay = 0 }) {
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-white/10 py-2 text-[10.5px] font-bold text-muted hover:text-[#f2ece2]"
+            className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-brown/12 py-2 text-[10.5px] font-bold text-muted hover:text-brown"
           >
             <ChevronDown size={13} className={`transition-transform ${open ? "rotate-180" : ""}`} />
             {open ? "Hide details" : `Show ${items.length} merged items`}
@@ -455,7 +455,7 @@ function MergedConfirmedCard({ orders, delay = 0 }) {
                 className="overflow-hidden"
               >
                 <div className="flex flex-col gap-3 pt-1">
-                  <div className="flex flex-col divide-y divide-white/[0.06] rounded-xl bg-black/20 px-3">
+                  <div className="flex flex-col divide-y divide-white/[0.06] rounded-xl bg-brown/8 px-3">
                     {items.map((item, i) => (
                       <div key={item.key || i} className="flex items-center gap-3 py-2 first:pt-2.5 last:pb-2.5">
                         <div className="orb-3d orb-cream flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden !rounded-lg">
@@ -466,7 +466,7 @@ function MergedConfirmedCard({ orders, delay = 0 }) {
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="line-clamp-1 text-[11.5px] font-bold text-[#f2ece2]">{item.name}</div>
+                          <div className="line-clamp-1 text-[11.5px] font-bold text-brown">{item.name}</div>
                           {item.nameTa && (
                             <div className="line-clamp-1 text-[10px] font-semibold text-gold">{item.nameTa}</div>
                           )}
@@ -477,7 +477,7 @@ function MergedConfirmedCard({ orders, delay = 0 }) {
                   </div>
 
                   {first.address && (
-                    <div className="flex items-start gap-2 rounded-xl bg-black/20 px-3 py-2.5 text-[10.5px] leading-relaxed text-[#cfc7bd]">
+                    <div className="flex items-start gap-2 rounded-xl bg-brown/8 px-3 py-2.5 text-[10.5px] leading-relaxed text-muted">
                       <MapPin size={13} className="mt-0.5 shrink-0 text-orange" />
                       <span>
                         {[first.address.houseNumber, first.address.street, first.address.area, first.address.city, first.address.district, first.address.state, first.address.pincode]
@@ -496,7 +496,7 @@ function MergedConfirmedCard({ orders, delay = 0 }) {
                   <button
                     type="button"
                     onClick={() => setShowChildren((v) => !v)}
-                    className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-white/10 py-2 text-[10.5px] font-bold text-muted hover:text-[#f2ece2]"
+                    className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-brown/12 py-2 text-[10.5px] font-bold text-muted hover:text-brown"
                   >
                     <ChevronDown size={13} className={`transition-transform ${showChildren ? "rotate-180" : ""}`} />
                     {showChildren ? "Hide child orders" : `Manage ${orders.length} child orders`}

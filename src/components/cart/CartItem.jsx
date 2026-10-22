@@ -8,7 +8,7 @@ import { getOrderQtyCap } from '../../utils/productLimits';
 import QuantityStepper from './QuantityStepper';
 
 const STOCK_LABEL = {
-  in: { text: 'In Stock', className: 'text-[#8fe3a0]' },
+  in: { text: 'In Stock', className: 'text-[#1E8E4A]' },
   low: { className: 'text-gold' },
   out: { text: 'Out of Stock', className: 'text-[#e35226]' },
 };
@@ -84,7 +84,7 @@ export default function CartItem({ product, qty }) {
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <div className="line-clamp-2 text-[12.5px] font-bold leading-snug text-[#f2ece2]">
+              <div className="line-clamp-2 text-[12.5px] font-bold leading-snug text-brown">
                 {product.name}
               </div>
               {product.nameTa && (
@@ -155,7 +155,7 @@ export default function CartItem({ product, qty }) {
           </div>
 
           {!soldOut && product.stock === 'in' && (
-            <span className="mt-1.5 flex items-center gap-1 text-[9.5px] font-semibold text-[#8fe3a0]">
+            <span className="mt-1.5 flex items-center gap-1 text-[9.5px] font-semibold text-[#1E8E4A]">
               <PackageCheck size={12} />
               Ready to ship
             </span>

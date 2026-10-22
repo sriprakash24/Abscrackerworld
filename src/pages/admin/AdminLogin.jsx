@@ -52,7 +52,7 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-[#050505] px-4 py-10">
+    <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-bg px-4 py-10">
       <div className="pointer-events-none absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-orange/20 blur-[100px]" />
       <div className="pointer-events-none absolute -bottom-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-gold/10 blur-[100px]" />
 

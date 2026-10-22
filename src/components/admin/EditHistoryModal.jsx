@@ -21,9 +21,9 @@ function formatEditedAt(editedAt) {
 function HistoryEntry({ entry }) {
   const { diff } = entry;
   return (
-    <div className="flex flex-col gap-2 rounded-xl bg-black/20 px-3.5 py-3">
+    <div className="flex flex-col gap-2 rounded-xl bg-brown/8 px-3.5 py-3">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[10.5px] font-bold text-[#f2ece2]">
+        <span className="text-[10.5px] font-bold text-brown">
           {formatEditedAt(entry.editedAt)}
         </span>
         <span className="text-[10px] text-muted">
@@ -34,7 +34,7 @@ function HistoryEntry({ entry }) {
       </div>
       <div className="flex flex-col gap-1 text-[10.5px]">
         {diff?.added?.map((item) => (
-          <div key={`add-${item.productId}`} className="flex items-center gap-1.5 text-[#8fe3a0]">
+          <div key={`add-${item.productId}`} className="flex items-center gap-1.5 text-[#1E8E4A]">
             <Plus size={11} /> {item.name} × {item.quantity}
           </div>
         ))}
@@ -96,7 +96,7 @@ export default function EditHistoryModal({ open, orderId, onClose }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[70] flex items-end justify-center bg-black/70 backdrop-blur-[2px] sm:items-center sm:px-4"
+          className="fixed inset-0 z-[70] flex items-end justify-center bg-brown/60 backdrop-blur-[2px] sm:items-center sm:px-4"
           onClick={onClose}
         >
           <motion.div
@@ -105,12 +105,12 @@ export default function EditHistoryModal({ open, orderId, onClose }) {
             exit={{ opacity: 0, y: 40 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
             onClick={(e) => e.stopPropagation()}
-            className="flex w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-[#150007] sm:rounded-2xl"
+            className="flex w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-bg sm:rounded-2xl"
             style={{ maxHeight: "80vh" }}
           >
-            <div className="flex items-center justify-between gap-2 border-b border-white/10 px-5 py-4">
+            <div className="flex items-center justify-between gap-2 border-b border-brown/12 px-5 py-4">
               <div className="flex items-center gap-2">
-                <History size={15} className="text-[#5AC8FA]" />
+                <History size={15} className="text-[#0B7FBF]" />
                 <div>
                   <h2 className="text-[15px] font-extrabold text-gradient-gold">Edit History</h2>
                   <p className="text-[10.5px] text-muted">{orderId}</p>
@@ -131,11 +131,11 @@ export default function EditHistoryModal({ open, orderId, onClose }) {
                   <Loader2 size={14} className="animate-spin" /> Loading edits…
                 </div>
               ) : error ? (
-                <div className="rounded-xl bg-black/20 px-3.5 py-6 text-center text-[11.5px] text-muted">
+                <div className="rounded-xl bg-brown/8 px-3.5 py-6 text-center text-[11.5px] text-muted">
                   Couldn't load edit history. Please try again.
                 </div>
               ) : history.length === 0 ? (
-                <div className="rounded-xl bg-black/20 px-3.5 py-6 text-center text-[11.5px] text-muted">
+                <div className="rounded-xl bg-brown/8 px-3.5 py-6 text-center text-[11.5px] text-muted">
                   No item changes recorded yet.
                 </div>
               ) : (

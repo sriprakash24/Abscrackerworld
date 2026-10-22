@@ -12,16 +12,16 @@ function FactoryRouteBadge() {
     <div
       className="mx-4 mb-2.5 flex items-center justify-center gap-2 rounded-full px-3 py-1.5"
       style={{
-        background: 'linear-gradient(90deg, rgba(255,122,0,0.14), rgba(255,213,79,0.09), rgba(255,122,0,0.14))',
-        border: '1px solid rgba(255,183,77,0.4)',
-        boxShadow: '0 4px 14px -6px rgba(0,0,0,0.6), 0 0 14px rgba(255,122,0,0.18)',
+        background: 'linear-gradient(90deg, #ffe3cc, #fff1de, #ffe3cc)',
+        border: '1px solid rgba(255,138,101,0.5)',
+        boxShadow: '0 6px 14px -8px rgba(240,100,70,0.4)',
       }}
     >
       <span
         className="orb-3d flex h-6 w-6 shrink-0 items-center justify-center !rounded-full"
         style={{ animation: 'glowPulse 2.6s ease-in-out infinite' }}
       >
-        <Factory size={12} strokeWidth={2.2} className="text-gold" style={{ filter: 'drop-shadow(0 0 4px rgba(255,213,79,.7))' }} />
+        <Factory size={12} strokeWidth={2.2} className="text-red"  />
       </span>
 
       <div className="relative h-3 w-11 shrink-0">
@@ -35,7 +35,6 @@ function FactoryRouteBadge() {
           className="absolute top-1/2 text-orange"
           style={{
             transform: 'translateY(-50%)',
-            filter: 'drop-shadow(0 0 4px rgba(255,122,0,.75))',
             animation: 'routeTruck 3.2s ease-in-out infinite',
           }}
         />
@@ -45,10 +44,10 @@ function FactoryRouteBadge() {
         className="orb-3d flex h-6 w-6 shrink-0 items-center justify-center !rounded-full"
         style={{ animation: 'glowPulse 2.6s ease-in-out infinite', animationDelay: '1.3s' }}
       >
-        <Home size={12} strokeWidth={2.2} className="text-gold" style={{ filter: 'drop-shadow(0 0 4px rgba(255,213,79,.7))' }} />
+        <Home size={12} strokeWidth={2.2} className="text-red"  />
       </span>
 
-      <span className="ml-0.5 text-[10px] font-extrabold tracking-wide text-[#f7ead0] whitespace-nowrap">
+      <span className="ml-0.5 text-[10px] font-extrabold tracking-wide text-brown whitespace-nowrap">
         Direct Factory Outlet
       </span>
       <span className="h-1 w-1 shrink-0 rounded-full bg-orange/70" />
@@ -65,11 +64,9 @@ export default function TrustStrip() {
       <div
         className="mx-4 mb-4 grid grid-cols-5 rounded-2xl px-1 py-2 text-center"
         style={{
-          background: 'linear-gradient(160deg, rgba(42,10,12,0.94), rgba(18,4,6,0.94))',
-          backdropFilter: 'blur(14px) saturate(150%)',
-          WebkitBackdropFilter: 'blur(14px) saturate(150%)',
-          border: '1px solid rgba(255,154,0,0.35)',
-          boxShadow: '0 10px 22px -10px rgba(0,0,0,0.65), 0 0 18px rgba(255,122,0,0.25)',
+          background: '#ffffff',
+          border: '1px solid rgba(255,138,101,0.4)',
+          boxShadow: '0 10px 22px -12px rgba(240,100,70,0.4)',
         }}
       >
         {TRUST_ITEMS.map((item, i) => {
@@ -79,18 +76,17 @@ export default function TrustStrip() {
               key={item.label}
               className="flex flex-col items-center gap-0.5 px-0.5"
               style={{
-                borderRight: i < TRUST_ITEMS.length - 1 ? '1px solid rgba(255,154,0,0.22)' : 'none',
+                borderRight: i < TRUST_ITEMS.length - 1 ? '1px solid rgba(255,138,101,0.28)' : 'none',
               }}
             >
               <span className="orb-3d flex h-6 w-6 shrink-0 items-center justify-center !rounded-full">
                 <Icon
                   size={12}
                   strokeWidth={2}
-                  className="text-gold"
-                  style={{ filter: 'drop-shadow(0 0 5px rgba(255,213,79,.65))' }}
+                  className="text-red"
                 />
               </span>
-              <span className="text-[7.5px] font-bold leading-tight text-[#f0e6d8]">{item.label}</span>
+              <span className="text-[7.5px] font-bold leading-tight text-brown">{item.label}</span>
             </div>
           );
         })}

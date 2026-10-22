@@ -26,7 +26,7 @@ export default function ProductCard({ product }) {
   return (
     <div className="surface-3d relative flex flex-col overflow-hidden rounded-2xl p-2.5">
       {disc > 0 && (
-        <div className="absolute left-2 top-2 z-10 rounded-md bg-gradient-to-b from-[#ff7a52] to-accent px-1.5 py-0.5 text-[9px] font-bold text-white shadow-[0_2px_6px_rgba(0,0,0,.5)]">
+        <div className="absolute left-2 top-2 z-10 rounded-md bg-gradient-to-b from-[#ff7a52] to-accent px-1.5 py-0.5 text-[9px] font-bold text-white shadow-[0_2px_6px_rgba(113,50,31,0.14)]">
           {disc}% OFF
         </div>
       )}
@@ -57,7 +57,7 @@ export default function ProductCard({ product }) {
         )}
       </div>
 
-      <div className="mt-2 line-clamp-2 text-[12px] font-bold leading-snug text-[#f2ece2]">
+      <div className="mt-2 line-clamp-2 text-[12px] font-bold leading-snug text-brown">
         {product.name}
       </div>
       <div className="text-[10px] text-muted">{product.unit}</div>

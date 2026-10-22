@@ -1,7 +1,7 @@
 // Color identity for the packing screen — separate from categoryTheme
 // because the need here is different: category colors identify *what*
 // a product is, but on the packing screen every card is already dark
-// maroon/black (surface-3d, bg-black/20) so one customer's block reads
+// maroon/black (surface-3d, bg-brown/8) so one customer's block reads
 // identically to the next, and two orders stacked under the same
 // customer read as one repeated block. These palettes exist purely so
 // the operator's eye can separate "customer A's box" from "customer

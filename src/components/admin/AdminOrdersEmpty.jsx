@@ -15,7 +15,7 @@ export default function AdminOrdersEmpty({ filtered, onClearFilters }) {
 
       {filtered ? (
         <>
-          <h3 className="mt-4 text-[13.5px] font-extrabold text-[#f2ece2]">No matching orders</h3>
+          <h3 className="mt-4 text-[13.5px] font-extrabold text-brown">No matching orders</h3>
           <p className="mt-1 max-w-[260px] text-[11.5px] leading-snug text-muted">
             Try a different search term or clear the filters to see everything.
           </p>
@@ -28,7 +28,7 @@ export default function AdminOrdersEmpty({ filtered, onClearFilters }) {
         </>
       ) : (
         <>
-          <h3 className="mt-4 text-[13.5px] font-extrabold text-[#f2ece2]">No orders yet</h3>
+          <h3 className="mt-4 text-[13.5px] font-extrabold text-brown">No orders yet</h3>
           <p className="mt-1 max-w-[260px] text-[11.5px] leading-snug text-muted">
             New orders placed by customers will show up here in real time.
           </p>

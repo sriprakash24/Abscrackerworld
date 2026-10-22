@@ -14,7 +14,7 @@ export default function CustomerForm({ register, errors, isActive = false }) {
         <span className="orb-3d flex h-7 w-7 shrink-0 items-center justify-center !rounded-full text-orange">
           <User size={13} />
         </span>
-        <h3 className="text-[12.5px] font-extrabold tracking-wide text-[#f2ece2]">Customer Information</h3>
+        <h3 className="text-[12.5px] font-extrabold tracking-wide text-brown">Customer Information</h3>
       </div>
 
       <div className="flex flex-col gap-3">

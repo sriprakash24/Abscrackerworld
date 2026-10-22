@@ -3,8 +3,6 @@ import { Menu, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCartStore } from '../../store/useCartStore';
 import absLogo from '../../assets/abs-logo.png';
-import headerBgLeft from '../../assets/hero/header-bg-left.jpg';
-import headerBgRight from '../../assets/hero/header-bg-right.jpg';
 import SideMenu from './SideMenu';
 
 export default function TopBar({ onOpenSearch }) {
@@ -14,30 +12,44 @@ export default function TopBar({ onOpenSearch }) {
   const count = Object.values(cart).reduce((a, b) => a + b, 0);
 
   return (
-    <div className="relative -mx-0 overflow-hidden" style={{ height: 168 }}>
-      {/* Full-bleed festival backdrop — the panoramic elephant/fireworks
-          scene split down the middle so each elephant anchors its own
-          screen edge (like a pair of ornamental "guardians" framing the
-          header) while the fireworks sky reads as one continuous scene
-          across the seam. No side padding/border so it runs edge to edge. */}
-      <div className="absolute inset-0 z-0 flex">
-        <div
-          className="h-full w-1/2 bg-cover bg-no-repeat"
-          style={{ backgroundImage: `url(${headerBgLeft})`, backgroundPosition: 'left top' }}
-        />
-        <div
-          className="h-full w-1/2 bg-cover bg-no-repeat"
-          style={{ backgroundImage: `url(${headerBgRight})`, backgroundPosition: 'right top' }}
-        />
-      </div>
-      {/* Gentle scrim so the logo/icons stay legible over the busy photo */}
+    <div className="relative -mx-0 overflow-hidden" style={{ height: 150 }}>
+      {/* Peach header — cream-to-peach wash with soft coral / gold glows and
+          a little firework doodle in each corner (Theme 5: Clean Light & Peach). */}
       <div
-        className="absolute inset-0 z-[1]"
+        className="absolute inset-0 z-0"
         style={{
           background:
-            'linear-gradient(180deg, rgba(10,0,2,.55) 0%, rgba(10,0,2,.15) 32%, rgba(10,0,2,.1) 62%, rgba(10,0,2,.7) 100%)',
+            'radial-gradient(circle at 12% 0%, rgba(255,179,71,.35) 0, transparent 45%), radial-gradient(circle at 92% 10%, rgba(255,138,101,.38) 0, transparent 48%), linear-gradient(180deg, #ffe9d0 0%, #fff7e8 100%)',
         }}
       />
+      <svg className="pointer-events-none absolute left-1 top-3 z-0 opacity-60" width="70" height="70" viewBox="0 0 70 70" fill="none" stroke="#ff8a65" strokeWidth="1.6" strokeLinecap="round">
+        {Array.from({ length: 12 }).map((_, i) => {
+          const a = (i * Math.PI * 2) / 12;
+          return <line key={i} x1={35 + Math.cos(a) * 8} y1={35 + Math.sin(a) * 8} x2={35 + Math.cos(a) * 28} y2={35 + Math.sin(a) * 28} />;
+        })}
+        <circle cx="35" cy="35" r="3" fill="#ffb347" stroke="none" />
+      </svg>
+      <svg className="pointer-events-none absolute right-1 top-9 z-0 opacity-60" width="56" height="56" viewBox="0 0 70 70" fill="none" stroke="#f04452" strokeWidth="1.6" strokeLinecap="round">
+        {Array.from({ length: 10 }).map((_, i) => {
+          const a = (i * Math.PI * 2) / 10;
+          return <line key={i} x1={35 + Math.cos(a) * 8} y1={35 + Math.sin(a) * 8} x2={35 + Math.cos(a) * 28} y2={35 + Math.sin(a) * 28} />;
+        })}
+        <circle cx="35" cy="35" r="3" fill="#ff8a65" stroke="none" />
+      </svg>
+      {/* bunting */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-[1] flex justify-between px-1">
+        {Array.from({ length: 14 }).map((_, i) => (
+          <span
+            key={i}
+            className="h-3 w-3"
+            style={{
+              clipPath: 'polygon(0 0, 100% 0, 50% 100%)',
+              background: ['#ff8a65', '#ffb347', '#f04452'][i % 3],
+              opacity: 0.85,
+            }}
+          />
+        ))}
+      </div>
 
       <div className="relative z-10 flex h-full items-start justify-between px-4 pb-2 pt-3">
         <button
@@ -51,7 +63,6 @@ export default function TopBar({ onOpenSearch }) {
         <div className="flex flex-1 flex-col items-center text-center">
           <span
             className="text-[9.5px] font-bold tracking-[2.5px] text-orange"
-            style={{ textShadow: '0 2px 8px rgba(0,0,0,.85)' }}
           >
             DHEERAN ENTERPRISES
           </span>
@@ -59,11 +70,10 @@ export default function TopBar({ onOpenSearch }) {
             src={absLogo}
             alt="ABS Crackers World"
             className="mt-0.5 w-[104px]"
-            style={{ filter: 'drop-shadow(0 0 14px rgba(255,122,0,.65)) drop-shadow(0 2px 10px rgba(0,0,0,.8))' }}
+            style={{ filter: 'drop-shadow(0 0 14px rgba(255,122,0,.65)) drop-shadow(0 2px 10px rgba(113,50,31,0.22))' }}
           />
           <div
-            className="mt-0.5 flex items-center gap-2 text-[8.5px] font-semibold tracking-[1px] text-[#f2e9da]"
-            style={{ textShadow: '0 1px 6px rgba(0,0,0,.9)' }}
+            className="mt-0.5 flex items-center gap-2 text-[8.5px] font-semibold tracking-[1px] text-brown"
           >
             <span className="h-px w-4 bg-gradient-to-r from-transparent to-orange/70" />
             Festival Fireworks Store
@@ -93,8 +103,8 @@ export default function TopBar({ onOpenSearch }) {
             <span
               className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-[3px] text-[10px] font-extrabold text-white"
               style={{
-                background: 'linear-gradient(180deg,#ff8a5c,#e35226)',
-                boxShadow: '0 1px 0 rgba(255,255,255,.4) inset, 0 0 8px rgba(255,87,34,.7)',
+                background: 'linear-gradient(135deg,#ff8a65,#f04452)',
+                boxShadow: '0 0 0 1.5px #fff, 0 2px 6px rgba(240,68,82,.5)',
               }}
             >
               {count}

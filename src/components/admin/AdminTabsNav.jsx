@@ -17,6 +17,7 @@ import {
   Users,
   BarChart3,
   CircleDollarSign,
+  Gift,
 } from 'lucide-react';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { FINAL_STATUSES } from '../../constants/orderActions';
@@ -36,6 +37,7 @@ const MORE_GROUPS = [
   {
     title: 'Catalog & Pricing',
     links: [
+      { to: '/admin/combos', label: 'Combos', icon: Gift, color: '#F04452' },
       { to: '/admin/products', label: 'Products', icon: PackageSearch, color: '#4FC3F7' },
       { to: '/admin/price-update', label: 'Price Update', icon: BadgePercent, color: '#FFB74D' },
       { to: '/admin/inventory', label: 'Inventory', icon: Boxes, color: '#66BB6A' },
@@ -101,8 +103,8 @@ export default function AdminTabsNav() {
   return (
     <>
       <div
-        className="panel-3d fixed bottom-3 left-1/2 z-40 flex w-[96%] max-w-[460px] -translate-x-1/2 items-center justify-between rounded-[24px] bg-[#0c0906] px-2 py-2"
-        style={{ boxShadow: '0 10px 30px -10px rgba(0,0,0,.75), 0 0 0 1px rgba(255,154,0,.12)' }}
+        className="panel-3d fixed bottom-3 left-1/2 z-40 flex w-[96%] max-w-[460px] -translate-x-1/2 items-center justify-between rounded-[24px] bg-white px-2 py-2"
+        style={{ boxShadow: '0 12px 30px -12px rgba(240,100,70,.5)' }}
       >
         <NavItem icon={ClipboardList} label="Orders" active={active === 'orders'} onClick={() => navigate('/admin/orders')} badge={pendingOrders} />
         <NavItem icon={CircleDollarSign} label="Payment" active={active === 'payment'} onClick={() => navigate('/admin/payment-confirmation')} badge={awaitingPayment} />
@@ -111,20 +113,20 @@ export default function AdminTabsNav() {
         <button
           onClick={() => navigate('/admin')}
           className="relative -mt-9 flex h-16 w-16 shrink-0 items-center justify-center rounded-full"
-          style={{ background: 'radial-gradient(circle at 40% 30%, #241a10 0%, #100b07 65%, #060403 100%)' }}
+          style={{ background: 'radial-gradient(circle at 40% 30%, #ff8a65 0%, #f04452 75%, #c42a38 100%)' }}
         >
           <span
             className="absolute inset-0 rounded-full"
             style={{
-              border: '2px solid var(--color-orange)',
+              border: '3px solid #ffffff',
               boxShadow: active === 'overview'
-                ? '0 0 0 1px rgba(255,122,0,.35), 0 0 14px 2px rgba(255,122,0,.65), 0 0 30px 6px rgba(255,122,0,.35), 0 6px 16px -4px rgba(0,0,0,.7)'
-                : '0 0 0 1px rgba(255,122,0,.2), 0 6px 16px -4px rgba(0,0,0,.7)',
+                ? '0 0 0 2px rgba(240,68,82,.7), 0 10px 22px -6px rgba(240,68,82,.7)'
+                : '0 0 0 2px rgba(240,68,82,.35), 0 8px 16px -6px rgba(240,68,82,.5)',
             }}
           />
           <span className="flex flex-col items-center">
-            <img src={absLogo} alt="ABS Crackers World" className="h-6 w-6 object-contain" style={{ filter: 'drop-shadow(0 0 6px rgba(255,150,0,.8))' }} />
-            <span className="mt-0.5 text-[7px] font-black leading-none tracking-[1px] text-orange" style={{ textShadow: '0 0 6px rgba(255,122,0,.8)' }}>
+            <img src={absLogo} alt="ABS Crackers World" className="h-6 w-6 rounded-full bg-white object-contain p-[2px]" />
+            <span className="mt-0.5 text-[7px] font-black leading-none tracking-[1px] text-white">
               OVERVIEW
             </span>
           </span>
@@ -189,11 +191,11 @@ function MoreSheet({ open, onClose }) {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', stiffness: 380, damping: 34 }}
-            className="fixed inset-x-0 bottom-0 z-[60] mx-auto max-h-[80vh] max-w-[520px] overflow-y-auto rounded-t-[28px] border-t border-orange/25 bg-[#0c0906] px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3 sm:px-6"
-            style={{ boxShadow: '0 -14px 40px -12px rgba(0,0,0,.8)' }}
+            className="fixed inset-x-0 bottom-0 z-[60] mx-auto max-h-[80vh] max-w-[520px] overflow-y-auto rounded-t-[28px] border-t border-orange/25 bg-white px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3 sm:px-6"
+            style={{ boxShadow: '0 -14px 40px -12px rgba(113,50,31,0.22)' }}
           >
-            <div className="sticky top-0 z-10 -mx-4 bg-[#0c0906] px-4 pb-3 sm:-mx-6 sm:px-6">
-              <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/15" />
+            <div className="sticky top-0 z-10 -mx-4 bg-white px-4 pb-3 sm:-mx-6 sm:px-6">
+              <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-brown/16" />
               <div className="flex items-center justify-between">
                 <h2 className="text-[13.5px] font-extrabold tracking-wide text-gradient-gold">More Tools</h2>
                 <button
@@ -221,7 +223,7 @@ function MoreSheet({ open, onClose }) {
                         className={({ isActive }) =>
                           cn(
                             'flex flex-col items-center gap-1.5 rounded-2xl border px-2 py-3.5 text-center text-[10px] font-bold leading-tight transition-transform active:scale-95',
-                            isActive ? 'text-[#f2ece2]' : 'text-muted hover:text-[#f2ece2]'
+                            isActive ? 'text-brown' : 'text-muted hover:text-brown'
                           )
                         }
                         style={({ isActive }) => ({

@@ -44,9 +44,9 @@ export default function OrderStatusFilterTabs({ activeStatus, onChange, counts }
             style={{
               borderColor: active ? `${color}b0` : `${color}40`,
               background: active
-                ? `linear-gradient(160deg, ${color}38, ${color}18)`
+                ? color
                 : `${color}14`,
-              color: active ? '#fbf6ee' : color,
+              color: active ? '#ffffff' : color,
               boxShadow: active ? `0 0 0 1px ${color}55, 0 4px 14px -6px ${color}90` : 'none',
             }}
           >
@@ -56,8 +56,8 @@ export default function OrderStatusFilterTabs({ activeStatus, onChange, counts }
               <span
                 className="rounded-full px-1.5 py-px text-[9.5px] font-extrabold"
                 style={{
-                  background: active ? 'rgba(0,0,0,0.28)' : `${color}22`,
-                  color: active ? '#fbf6ee' : color,
+                  background: active ? 'rgba(0,0,0,0.22)' : `${color}22`,
+                  color: active ? '#ffffff' : color,
                 }}
               >
                 {count}

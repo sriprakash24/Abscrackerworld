@@ -12,8 +12,8 @@ const TONE_STYLES = {
     confirmBtn: 'bg-gradient-to-b from-gold to-orange shadow-[0_8px_18px_-8px_rgba(230,178,60,0.5)]',
   },
   success: {
-    icon: 'border-[#8fe3a0]/40 bg-[#8fe3a0]/10 text-[#8fe3a0]',
-    confirmBtn: 'bg-gradient-to-b from-[#8fe3a0] to-[#3fae5c] text-black shadow-[0_8px_18px_-8px_rgba(63,174,92,0.6)]',
+    icon: 'border-[#1E8E4A]/40 bg-[#1E8E4A]/10 text-[#1E8E4A]',
+    confirmBtn: 'bg-gradient-to-b from-[#1E8E4A] to-[#3fae5c] text-black shadow-[0_8px_18px_-8px_rgba(63,174,92,0.6)]',
   },
 };
 
@@ -37,7 +37,7 @@ export default function ConfirmDeleteDialog({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4"
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-brown/60 px-4"
           onClick={onCancel}
         >
           <motion.div
@@ -52,7 +52,7 @@ export default function ConfirmDeleteDialog({
               <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border ${toneStyle.icon}`}>
                 {tone === 'warning' ? <Undo2 size={16} /> : tone === 'success' ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
               </span>
-              <h3 className="text-[14px] font-extrabold text-[#f2ece2]">{title}</h3>
+              <h3 className="text-[14px] font-extrabold text-brown">{title}</h3>
             </div>
             <p className={`text-[12px] font-medium leading-relaxed text-muted ${children ? 'mb-3' : 'mb-5'}`}>
               {description}
@@ -62,7 +62,7 @@ export default function ConfirmDeleteDialog({
               <button
                 onClick={onCancel}
                 disabled={busy}
-                className="btn-3d-outline flex-1 rounded-xl py-2.5 text-[12px] font-bold text-[#f2ece2] disabled:opacity-50"
+                className="btn-3d-outline flex-1 rounded-xl py-2.5 text-[12px] font-bold text-brown disabled:opacity-50"
               >
                 Cancel
               </button>

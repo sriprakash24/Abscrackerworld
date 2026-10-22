@@ -99,13 +99,13 @@ export default function HeroSlider() {
       {/* Slide counter chip — small glass pill, quietly premium, doesn't
           compete with the artwork's own baked-in headline/CTA. */}
       <div
-        className="absolute right-3 top-3 z-10 rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wide text-[#f7ead0]"
+        className="absolute right-3 top-3 z-10 rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wide text-brown"
         style={{
           background: 'rgba(20,2,4,.45)',
           backdropFilter: 'blur(10px) saturate(160%)',
           WebkitBackdropFilter: 'blur(10px) saturate(160%)',
           border: '1px solid rgba(255,213,79,.35)',
-          boxShadow: '0 4px 14px -4px rgba(0,0,0,.6)',
+          boxShadow: '0 4px 14px -4px rgba(113,50,31,0.17)',
         }}
       >
         {active + 1} / {HERO_SLIDES.length}

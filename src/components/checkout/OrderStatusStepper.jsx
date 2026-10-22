@@ -44,7 +44,7 @@ export default function OrderStatusStepper({ currentStageId = 'CONTACT', complet
               {i > 0 && (
                 <div
                   className={`absolute right-1/2 top-4 h-px w-full border-t border-dashed transition-colors duration-500 ${
-                    i <= currentIndex ? 'border-orange/60' : 'border-white/10'
+                    i <= currentIndex ? 'border-orange/60' : 'border-brown/12'
                   }`}
                 />
               )}
@@ -55,7 +55,7 @@ export default function OrderStatusStepper({ currentStageId = 'CONTACT', complet
                 transition={{ duration: 0.45, ease: 'easeOut' }}
                 className={`orb-3d relative z-10 flex h-8 w-8 shrink-0 items-center justify-center !rounded-full ${
                   done
-                    ? 'border-[#8fe3a0]/50 text-[#8fe3a0]'
+                    ? 'border-[#1E8E4A]/50 text-[#1E8E4A]'
                     : active
                       ? 'surface-3d-open animate-glow-pulse text-orange'
                       : 'text-muted opacity-45'
@@ -66,7 +66,7 @@ export default function OrderStatusStepper({ currentStageId = 'CONTACT', complet
 
               <span
                 className={`text-center text-[8.5px] font-bold leading-tight ${
-                  active ? 'text-gold' : done ? 'text-[#cfc7bd]' : 'text-muted'
+                  active ? 'text-gold' : done ? 'text-muted' : 'text-muted'
                 }`}
               >
                 {ORDER_STAGE_LABELS[stageId]}

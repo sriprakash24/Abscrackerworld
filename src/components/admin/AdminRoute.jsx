@@ -8,7 +8,7 @@ export default function AdminRoute({ children }) {
 
   if (loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-[#050505]">
+      <div className="flex h-screen w-full items-center justify-center bg-bg">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-orange/30 border-t-orange" />
       </div>
     );

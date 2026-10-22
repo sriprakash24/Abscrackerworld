@@ -57,7 +57,7 @@ function Dropdown({ label, icon: Icon, active, options, value, onChange }) {
                     setOpen(false);
                   }}
                   className={cn(
-                    'flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[12px] font-semibold text-[#ddd4c8] transition-colors',
+                    'flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[12px] font-semibold text-brown transition-colors',
                     opt.value === value && 'bg-orange/15 text-orange'
                   )}
                 >

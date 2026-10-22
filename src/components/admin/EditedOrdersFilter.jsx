@@ -1,6 +1,6 @@
 const OPTIONS = [
   { value: 'ALL', label: 'All', color: '#FF9A3C' },
-  { value: 'EDITED', label: 'Edited', emoji: '✏️', color: '#5AC8FA' },
+  { value: 'EDITED', label: 'Edited', emoji: '✏️', color: '#0B7FBF' },
 ];
 
 /**
@@ -26,9 +26,9 @@ export default function EditedOrdersFilter({ active, onChange, counts }) {
             style={{
               borderColor: isActive ? `${color}b0` : `${color}40`,
               background: isActive
-                ? `linear-gradient(160deg, ${color}38, ${color}18)`
+                ? color
                 : `${color}14`,
-              color: isActive ? '#fbf6ee' : color,
+              color: isActive ? '#ffffff' : color,
               boxShadow: isActive ? `0 0 0 1px ${color}55, 0 4px 14px -6px ${color}90` : 'none',
             }}
           >
@@ -38,8 +38,8 @@ export default function EditedOrdersFilter({ active, onChange, counts }) {
               <span
                 className="rounded-full px-1.5 py-px text-[9.5px] font-extrabold"
                 style={{
-                  background: isActive ? 'rgba(0,0,0,0.28)' : `${color}22`,
-                  color: isActive ? '#fbf6ee' : color,
+                  background: isActive ? 'rgba(0,0,0,0.22)' : `${color}22`,
+                  color: isActive ? '#ffffff' : color,
                 }}
               >
                 {count}

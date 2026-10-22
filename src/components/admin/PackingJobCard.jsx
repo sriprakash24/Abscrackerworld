@@ -55,7 +55,7 @@ export default function PackingJobCard({
                 {slot.label}
               </span>
             )}
-            <span className="truncate text-[11.5px] font-extrabold text-[#f2ece2]">
+            <span className="truncate text-[11.5px] font-extrabold text-brown">
               {job.merged ? "Merged box" : job.orderLabels[0]}
             </span>
           </div>
@@ -67,7 +67,7 @@ export default function PackingJobCard({
           {job.merged && (
             <span
               title={job.orderLabels.join(", ")}
-              className="flex items-center gap-1 rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-[10px] font-bold text-muted"
+              className="flex items-center gap-1 rounded-full border border-brown/16 bg-brown/6 px-2 py-0.5 text-[10px] font-bold text-muted"
             >
               <Layers size={10} />
               {job.orderLabels.length} orders
@@ -76,7 +76,7 @@ export default function PackingJobCard({
           <span
             className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold ${
               fullyPacked
-                ? "border-[#8fe3a0]/35 bg-[#8fe3a0]/10 text-[#8fe3a0]"
+                ? "border-[#1E8E4A]/35 bg-[#1E8E4A]/10 text-[#1E8E4A]"
                 : "border-gold/35 bg-gold/10 text-gold"
             }`}
           >
@@ -89,7 +89,7 @@ export default function PackingJobCard({
               downloadPackingListPdf(job);
             }}
             title="Download packing list (items & quantity only)"
-            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-muted hover:text-[#f2ece2]"
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-brown/16 bg-brown/6 text-muted hover:text-brown"
           >
             <Download size={11} />
           </button>
@@ -124,7 +124,7 @@ export default function PackingJobCard({
             onClick={onQuickMarkPacked}
             disabled={quickMarking}
             title="Already packed manually — mark packed without the checklist"
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#8fe3a0]/45 bg-[#8fe3a0]/10 py-2.5 text-[11px] font-extrabold text-[#8fe3a0] disabled:opacity-60"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#1E8E4A]/45 bg-[#1E8E4A]/10 py-2.5 text-[11px] font-extrabold text-[#1E8E4A] disabled:opacity-60"
           >
             {quickMarking ? <Loader2 size={13} className="animate-spin" /> : <PackageCheck size={13} />}
             Mark Packed

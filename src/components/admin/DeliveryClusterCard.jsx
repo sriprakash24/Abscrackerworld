@@ -56,7 +56,7 @@ export default function DeliveryClusterCard({
             {(cluster.customerName || "?").trim().charAt(0).toUpperCase()}
           </span>
           <div className="min-w-0">
-            <div className="truncate text-[12.5px] font-extrabold text-[#f2ece2]">
+            <div className="truncate text-[12.5px] font-extrabold text-brown">
               {cluster.customerName}
             </div>
             <div className="text-[10px] text-muted">
@@ -106,7 +106,7 @@ export default function DeliveryClusterCard({
             <button
               onClick={() => onActionAll(cluster)}
               disabled={markingKey === `cluster:${cluster.mobile}`}
-              className="flex items-center justify-center gap-1.5 self-start rounded-full border border-[#8fe3a0]/45 bg-[#8fe3a0]/10 px-3 py-1.5 text-[10.5px] font-extrabold text-[#8fe3a0] disabled:opacity-60"
+              className="flex items-center justify-center gap-1.5 self-start rounded-full border border-[#1E8E4A]/45 bg-[#1E8E4A]/10 px-3 py-1.5 text-[10.5px] font-extrabold text-[#1E8E4A] disabled:opacity-60"
             >
               {markingKey === `cluster:${cluster.mobile}` ? (
                 <Loader2 size={12} className="animate-spin" />
@@ -141,11 +141,11 @@ export default function DeliveryClusterCard({
           return (
             <div
               key={order.id}
-              className="flex flex-col gap-2.5 rounded-xl border border-white/[0.06] bg-black/20 p-3.5"
+              className="flex flex-col gap-2.5 rounded-xl border border-white/[0.06] bg-brown/8 p-3.5"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="min-w-0">
-                  <div className="truncate text-[11.5px] font-extrabold text-[#f2ece2]">
+                  <div className="truncate text-[11.5px] font-extrabold text-brown">
                     {order.orderId || order.id}
                   </div>
                   <div className="text-[10px] text-muted">{getOrderStatusMeta(order.status).label}</div>

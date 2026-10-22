@@ -141,13 +141,13 @@ export default function AdminPaymentConfirmation() {
   }, [tab, filteredOrders, orderMergeProgress]);
 
   return (
-    <div className="min-h-screen w-full bg-[#050505] pb-28 text-white">
+    <div className="min-h-screen w-full bg-bg pb-28 text-brown">
       <AdminOrdersHeader email={user?.email} orderCount={orders.length} onLogout={handleLogout} />
       <AdminTabsNav />
 
       <div className="mx-auto flex max-w-5xl flex-col gap-3 px-4 py-3 sm:px-6 sm:py-5">
         <div className="flex flex-col gap-1">
-          <h2 className="text-[15px] font-extrabold text-[#f2ece2]">Payment Confirmation</h2>
+          <h2 className="text-[15px] font-extrabold text-brown">Payment Confirmation</h2>
           <p className="text-[11px] text-muted">
             Confirm payment as soon as it lands — or revoke one approved by mistake, right here.
           </p>
@@ -166,13 +166,13 @@ export default function AdminPaymentConfirmation() {
         >
           <span className="flex items-center gap-2">
             <Download size={14} className={autoDownloadInvoice ? "text-gold" : "text-muted"} />
-            <span className="text-[11.5px] font-bold text-[#f2ece2]">
+            <span className="text-[11.5px] font-bold text-brown">
               Auto-download invoice &amp; open WhatsApp on Confirm Payment
             </span>
           </span>
           <span
             className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
-              autoDownloadInvoice ? "bg-gradient-to-r from-orange to-gold" : "bg-white/10"
+              autoDownloadInvoice ? "bg-gradient-to-r from-orange to-gold" : "bg-brown/12"
             }`}
           >
             <span
@@ -197,7 +197,7 @@ export default function AdminPaymentConfirmation() {
               {label}
               <span
                 className={`rounded-full px-1.5 text-[9.5px] font-extrabold ${
-                  tab === key ? "bg-black/20 text-black" : "bg-white/10 text-muted"
+                  tab === key ? "bg-brown/8 text-black" : "bg-brown/12 text-muted"
                 }`}
               >
                 {counts[key]}
@@ -225,7 +225,7 @@ export default function AdminPaymentConfirmation() {
           ) : filteredOrders.length === 0 ? (
             <div className="surface-3d flex flex-col items-center gap-2 rounded-2xl px-4 py-10 text-center">
               <CircleDollarSign size={22} className="text-muted" />
-              <div className="text-[12px] font-bold text-[#f2ece2]">
+              <div className="text-[12px] font-bold text-brown">
                 {isFiltered
                   ? "No matching orders"
                   : tab === "AWAITING_ADMIN_CONFIRMATION"

@@ -19,7 +19,7 @@ export default function ProductBadges({ product }) {
     badges.push({
       key: 'new',
       label: 'New Arrival',
-      className: 'bg-gradient-to-b from-[#ffe9a8] to-gold text-[#1a0d00]',
+      className: 'bg-gradient-to-b from-[#ffe9a8] to-gold-bright text-[#4a1d10]',
     });
   }
 
@@ -39,7 +39,7 @@ export default function ProductBadges({ product }) {
         <span
           key={b.key}
           className={`rounded-md px-1.5 py-0.5 text-[9px] font-bold leading-none ${b.className}`}
-          style={{ boxShadow: '0 2px 6px rgba(0,0,0,.5), 0 0 10px rgba(255,87,34,.35)' }}
+          style={{ boxShadow: '0 2px 6px rgba(113,50,31,0.14), 0 0 10px rgba(255,87,34,.35)' }}
         >
           {b.label}
         </span>

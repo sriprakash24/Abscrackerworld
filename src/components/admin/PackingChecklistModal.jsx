@@ -40,15 +40,15 @@ function TallyControl({ quantity, count, onChange }) {
               aria-label={`Unit ${i + 1} of ${quantity}${filled ? ", packed" : ""}`}
               className={`flex ${isLong ? "h-6 w-6" : "h-7 w-7"} shrink-0 items-center justify-center rounded-full border text-[9.5px] font-extrabold transition-all ${
                 filled
-                  ? "border-[#8fe3a0] bg-[#8fe3a0] text-black"
-                  : "border-gold/50 bg-white/10 text-[#f2ece2]"
+                  ? "border-[#1E8E4A] bg-[#1E8E4A] text-black"
+                  : "border-gold/50 bg-brown/12 text-brown"
               }`}
             >
               {filled ? <Check size={11} strokeWidth={3} /> : i + 1}
             </button>
           );
         })}
-        <span className={`ml-1 text-[10.5px] font-extrabold ${complete ? "text-[#8fe3a0]" : "text-gold"}`}>
+        <span className={`ml-1 text-[10.5px] font-extrabold ${complete ? "text-[#1E8E4A]" : "text-gold"}`}>
           {count}/{quantity}
         </span>
       </div>
@@ -73,7 +73,7 @@ function TallyControl({ quantity, count, onChange }) {
             onKeyDown={(e) => {
               if (e.key === "Enter") e.currentTarget.blur();
             }}
-            className="w-16 rounded-lg border border-white/15 bg-white/5 px-2 py-1 text-center text-[11px] font-bold text-[#f2ece2] focus:border-gold/50 focus:outline-none"
+            className="w-16 rounded-lg border border-brown/16 bg-brown/6 px-2 py-1 text-center text-[11px] font-bold text-brown focus:border-gold/50 focus:outline-none"
           />
           {!complete && (
             <button
@@ -188,7 +188,7 @@ export default function PackingChecklistModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[70] flex items-end justify-center bg-black/70 sm:items-center sm:px-4"
+          className="fixed inset-0 z-[70] flex items-end justify-center bg-brown/60 sm:items-center sm:px-4"
           onClick={onClose}
         >
           <motion.div
@@ -200,9 +200,9 @@ export default function PackingChecklistModal({
             className="surface-packing-modal flex max-h-[85vh] w-full flex-col rounded-t-2xl sm:max-w-md sm:rounded-2xl"
           >
             {/* Header */}
-            <div className="flex items-center justify-between gap-3 border-b border-dashed border-white/10 px-4 py-3.5">
+            <div className="flex items-center justify-between gap-3 border-b border-dashed border-brown/12 px-4 py-3.5">
               <div className="min-w-0">
-                <div className="truncate text-[13px] font-extrabold text-[#f2ece2]">
+                <div className="truncate text-[13px] font-extrabold text-brown">
                   {job.customerName}
                 </div>
                 <div className="text-[10px] text-muted">
@@ -223,13 +223,13 @@ export default function PackingChecklistModal({
             {/* Progress */}
             <div className="flex items-center justify-between gap-2 px-4 pt-3 text-[10.5px] font-bold text-muted">
               <span>Packing checklist</span>
-              <span className={allPacked ? "text-[#8fe3a0]" : "text-gold"}>
+              <span className={allPacked ? "text-[#1E8E4A]" : "text-gold"}>
                 {packedCount}/{items.length} packed
               </span>
             </div>
             <div className="mx-4 mt-1.5 h-1.5 overflow-hidden rounded-full bg-black/30">
               <div
-                className={`h-full rounded-full transition-all ${allPacked ? "bg-[#8fe3a0]" : "bg-orange"}`}
+                className={`h-full rounded-full transition-all ${allPacked ? "bg-[#1E8E4A]" : "bg-orange"}`}
                 style={{
                   width: `${items.length ? (packedCount / items.length) * 100 : 0}%`,
                 }}
@@ -249,10 +249,10 @@ export default function PackingChecklistModal({
                   return (
                     <Fragment key={item.key}>
                     {firstPacked && (
-                      <div className="mt-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-wide text-[#8fe3a0]">
-                        <span className="h-px flex-1 bg-[#8fe3a0]/30" />
+                      <div className="mt-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-wide text-[#1E8E4A]">
+                        <span className="h-px flex-1 bg-[#1E8E4A]/30" />
                         Packed ({donePackedItems.length})
-                        <span className="h-px flex-1 bg-[#8fe3a0]/30" />
+                        <span className="h-px flex-1 bg-[#1E8E4A]/30" />
                       </div>
                     )}
                     <motion.div
@@ -260,7 +260,7 @@ export default function PackingChecklistModal({
                       transition={{ duration: 0.2 }}
                       className={`flex flex-col gap-2.5 rounded-xl border px-2.5 py-2.5 ${
                         isChecked
-                          ? "border-[#8fe3a0]/40 bg-[#8fe3a0]/10"
+                          ? "border-[#1E8E4A]/40 bg-[#1E8E4A]/10"
                           : "border-white/[0.06] bg-white/[0.02]"
                       }`}
                     >
@@ -283,7 +283,7 @@ export default function PackingChecklistModal({
                         </div>
                         <div className="min-w-0 flex-1">
                           <div
-                            className={`line-clamp-1 text-[11.5px] font-bold ${isChecked ? "text-muted line-through" : "text-[#f2ece2]"}`}
+                            className={`line-clamp-1 text-[11.5px] font-bold ${isChecked ? "text-muted line-through" : "text-brown"}`}
                           >
                             {item.name}
                           </div>
@@ -299,8 +299,8 @@ export default function PackingChecklistModal({
                             <span
                               className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
                                 isChecked
-                                  ? "border-[#8fe3a0] bg-[#8fe3a0] text-black"
-                                  : "border-gold/50 bg-white/10 text-transparent"
+                                  ? "border-[#1E8E4A] bg-[#1E8E4A] text-black"
+                                  : "border-gold/50 bg-brown/12 text-transparent"
                               }`}
                             >
                               <Check size={14} strokeWidth={3} />
@@ -326,7 +326,7 @@ export default function PackingChecklistModal({
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-2 border-t border-dashed border-white/10 p-4">
+            <div className="flex items-center gap-2 border-t border-dashed border-brown/12 p-4">
               <button
                 onClick={handleSave}
                 disabled={saving || marking || !dirty}

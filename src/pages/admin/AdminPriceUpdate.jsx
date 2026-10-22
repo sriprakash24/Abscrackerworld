@@ -108,7 +108,7 @@ export default function AdminPriceUpdate() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#050505] pb-44 text-white">
+    <div className="min-h-screen w-full bg-bg pb-44 text-brown">
       <AdminSectionHeader
         icon={BadgePercent}
         title="Price Update"
@@ -141,7 +141,7 @@ export default function AdminPriceUpdate() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={categoryFilter ? `Search in ${categoryFilter}…` : 'Search…'}
-            className="w-full bg-transparent text-[12.5px] font-semibold text-[#f2ece2] outline-none placeholder:text-muted placeholder:font-normal"
+            className="w-full bg-transparent text-[12.5px] font-semibold text-brown outline-none placeholder:text-muted placeholder:font-normal"
           />
         </div>
 
@@ -173,9 +173,9 @@ export default function AdminPriceUpdate() {
 
       {/* Sticky save bar */}
       {changedCount > 0 && (
-        <div className="fixed inset-x-0 bottom-20 z-40 border-t border-orange/30 bg-[#050505]/95 px-4 py-3 backdrop-blur-sm sm:px-6">
+        <div className="fixed inset-x-0 bottom-20 z-40 border-t border-orange/30 bg-bg/95 px-4 py-3 backdrop-blur-sm sm:px-6">
           <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
-            <p className="text-[12px] font-semibold text-[#f2ece2]">
+            <p className="text-[12px] font-semibold text-brown">
               <span className="font-extrabold text-orange">{changedCount}</span>{' '}
               {changedCount === 1 ? 'product' : 'products'} changed
             </p>
@@ -183,7 +183,7 @@ export default function AdminPriceUpdate() {
               <button
                 onClick={() => setEdits({})}
                 disabled={saving}
-                className="btn-3d-outline rounded-xl px-4 py-2.5 text-[12px] font-bold text-[#f2ece2] disabled:opacity-50"
+                className="btn-3d-outline rounded-xl px-4 py-2.5 text-[12px] font-bold text-brown disabled:opacity-50"
               >
                 Discard
               </button>
@@ -208,7 +208,7 @@ function FilterChip({ active, onClick, label }) {
     <button
       onClick={onClick}
       className={`shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-bold tracking-wide transition-colors ${
-        active ? 'border-orange/50 bg-orange/15 text-orange' : 'border-white/10 bg-[#0c0906] text-muted'
+        active ? 'border-orange/50 bg-orange/15 text-orange' : 'border-brown/12 bg-white text-muted'
       }`}
     >
       {label}
@@ -238,7 +238,7 @@ function PriceRow({ product, edit, onChange, onRevert }) {
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[12.5px] font-bold text-[#f2ece2]">{product.name}</p>
+        <p className="truncate text-[12.5px] font-bold text-brown">{product.name}</p>
         {product.subcategory && (
           <p className="truncate text-[10.5px] font-semibold text-muted">{product.subcategory}</p>
         )}
@@ -273,10 +273,10 @@ function PriceInput({ label, value, onChange, highlight }) {
           step="0.01"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className={`w-[68px] rounded-lg border bg-[#0c0906] px-2 py-1.5 text-[12px] font-bold outline-none ${
+          className={`w-[68px] rounded-lg border bg-white px-2 py-1.5 text-[12px] font-bold outline-none ${
             highlight
-              ? 'border-white/10 text-orange focus:border-orange/70'
-              : 'border-white/10 text-[#f2ece2] focus:border-orange/70'
+              ? 'border-brown/12 text-orange focus:border-orange/70'
+              : 'border-brown/12 text-brown focus:border-orange/70'
           }`}
         />
       </div>
@@ -287,13 +287,13 @@ function PriceInput({ label, value, onChange, highlight }) {
 function RowSkeleton() {
   return (
     <div className="surface-3d flex animate-pulse items-center gap-3 rounded-2xl p-3">
-      <div className="h-12 w-12 shrink-0 rounded-xl bg-white/5" />
+      <div className="h-12 w-12 shrink-0 rounded-xl bg-brown/6" />
       <div className="flex-1 space-y-2">
-        <div className="h-3 w-2/3 rounded bg-white/5" />
-        <div className="h-2.5 w-1/3 rounded bg-white/5" />
+        <div className="h-3 w-2/3 rounded bg-brown/6" />
+        <div className="h-2.5 w-1/3 rounded bg-brown/6" />
       </div>
-      <div className="h-9 w-16 rounded-lg bg-white/5" />
-      <div className="h-9 w-16 rounded-lg bg-white/5" />
+      <div className="h-9 w-16 rounded-lg bg-brown/6" />
+      <div className="h-9 w-16 rounded-lg bg-brown/6" />
     </div>
   );
 }

@@ -16,23 +16,23 @@ export default function OrderSummary({ pricing }) {
   return (
     <div className="px-4 pt-3">
       <div className="surface-3d rounded-2xl px-4 py-3.5">
-        <h3 className="text-[12.5px] font-extrabold tracking-wide text-[#f2ece2]">Order Summary</h3>
+        <h3 className="text-[12.5px] font-extrabold tracking-wide text-brown">Order Summary</h3>
 
         <div className="mt-2 divide-y divide-white/[0.06]">
           <Row label="Item Total" value={`₹${subtotalSale}`} />
           {discountPercentage > 0 && (
-            <Row label="You Save" value={`${discountPercentage}% OFF`} valueClassName="text-[#8fe3a0]" />
+            <Row label="You Save" value={`${discountPercentage}% OFF`} valueClassName="text-[#1E8E4A]" />
           )}
           <div className="py-0.5">
             <PackingChargesCard amount={packingCharges} />
           </div>
           {coupon && couponDiscount > 0 && (
-            <Row label={`Coupon (${coupon.code})`} value={`− ₹${couponDiscount}`} valueClassName="text-[#8fe3a0]" />
+            <Row label={`Coupon (${coupon.code})`} value={`− ₹${couponDiscount}`} valueClassName="text-[#1E8E4A]" />
           )}
         </div>
 
-        <div className="mt-2 flex items-center justify-between border-t border-dashed border-white/15 pt-3">
-          <span className="text-[13px] font-extrabold text-[#f2ece2]">Grand Total</span>
+        <div className="mt-2 flex items-center justify-between border-t border-dashed border-brown/16 pt-3">
+          <span className="text-[13px] font-extrabold text-brown">Grand Total</span>
           <motion.span
             key={grandTotal}
             initial={{ scale: 1.12, opacity: 0.6 }}
@@ -58,8 +58,8 @@ export default function OrderSummary({ pricing }) {
 function Row({ label, value, valueClassName }) {
   return (
     <div className="flex items-center justify-between py-1.5 text-[11.5px]">
-      <span className="text-[#cfc7bd]">{label}</span>
-      <span className={valueClassName || 'font-bold text-[#f2ece2]'}>{value}</span>
+      <span className="text-muted">{label}</span>
+      <span className={valueClassName || 'font-bold text-brown'}>{value}</span>
     </div>
   );
 }

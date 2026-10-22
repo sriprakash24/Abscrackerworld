@@ -185,7 +185,7 @@ export default function PaymentOrderCard({ order, index = 0, delay = 0, autoDown
             {(order.customer?.name || "?").trim().charAt(0).toUpperCase()}
           </span>
           <div className="min-w-0">
-            <div className="truncate text-[12.5px] font-extrabold text-[#f2ece2]">
+            <div className="truncate text-[12.5px] font-extrabold text-brown">
               {order.customer?.name || "Unnamed customer"}
             </div>
             <div className="truncate text-[10px] text-muted">
@@ -240,10 +240,10 @@ export default function PaymentOrderCard({ order, index = 0, delay = 0, autoDown
       </div>
 
       {open && (
-        <div className="relative z-[1] flex flex-col gap-1.5 rounded-xl border border-white/[0.06] bg-black/20 p-3 pl-1.5">
+        <div className="relative z-[1] flex flex-col gap-1.5 rounded-xl border border-white/[0.06] bg-brown/8 p-3 pl-1.5">
           {items.map((item, i) => (
             <div key={item.productId || i} className="flex items-center justify-between gap-2 text-[10.5px]">
-              <span className="min-w-0 truncate text-[#f2ece2]">
+              <span className="min-w-0 truncate text-brown">
                 {item.name} <span className="text-muted">× {item.quantity}</span>
               </span>
               <span className="shrink-0 font-bold text-muted">

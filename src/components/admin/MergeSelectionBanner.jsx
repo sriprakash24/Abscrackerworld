@@ -69,7 +69,7 @@ export default function MergeSelectionBanner({
           return (
             <label
               key={o.id}
-              className="flex cursor-pointer items-center gap-2.5 rounded-xl bg-black/20 px-3 py-2 text-[11px]"
+              className="flex cursor-pointer items-center gap-2.5 rounded-xl bg-brown/8 px-3 py-2 text-[11px]"
             >
               <span
                 onClick={(e) => {
@@ -77,12 +77,12 @@ export default function MergeSelectionBanner({
                   toggle(o.id);
                 }}
                 className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors ${
-                  checked ? "border-orange bg-orange text-black" : "border-white/20 bg-black/20 text-transparent"
+                  checked ? "border-orange bg-orange text-black" : "border-brown/22 bg-brown/8 text-transparent"
                 }`}
               >
                 <Check size={11} strokeWidth={3} />
               </span>
-              <span className="flex-1 font-bold text-[#f2ece2]">{o.orderId || o.id}</span>
+              <span className="flex-1 font-bold text-brown">{o.orderId || o.id}</span>
               <span className="text-muted">₹{(o.grandTotal ?? 0).toLocaleString("en-IN")}</span>
             </label>
           );

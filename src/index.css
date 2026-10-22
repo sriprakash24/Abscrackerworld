@@ -1,17 +1,32 @@
 @import "tailwindcss";
 
+/* ===================== THEME 5 — CLEAN LIGHT & PEACH =====================
+   Cream #FFF7E8 · Peach #FFD4AF · Coral #FF8A65 · Red #F04452
+   Brown #71321F · Gold #FFB347
+   Every colour in the app resolves to these tokens — change them here to
+   re-theme the whole storefront + admin. */
 @theme {
-  --color-bg: #150007;
-  --color-orange: #ff7a00;
-  --color-gold: #ffd54f;
-  --color-glow: #ff8c00;
-  --color-accent: #ff5722;
-  --color-card: #22060a;
-  --color-card-2: #2b070c;
-  --color-muted: #cdb39f;
-  --color-maroon: #3a0a0e;
-  --color-maroon-deep: #1a0305;
-  --color-crimson: #d81c2b;
+  --color-bg: #fff7e8;
+  --color-cream: #fff7e8;
+  --color-peach: #ffd4af;
+  --color-peach-light: #ffe9d0;
+  --color-coral: #ff8a65;
+  --color-red: #f04452;
+  --color-brown: #71321f;
+  --color-gold-bright: #ffb347;
+
+  /* legacy token names kept so existing utilities (text-orange, text-gold…)
+     keep working — now tuned for readable text on a light background */
+  --color-orange: #de4a2c;
+  --color-gold: #c46a00;
+  --color-glow: #ff8a65;
+  --color-accent: #f04452;
+  --color-card: #ffffff;
+  --color-card-2: #fff1e0;
+  --color-muted: #8e5b45;
+  --color-maroon: #ffe3cc;
+  --color-maroon-deep: #ffd4af;
+  --color-crimson: #f04452;
 
   --font-display: "Poppins", "Segoe UI", system-ui, sans-serif;
   --font-sans:
@@ -151,10 +166,10 @@
 @keyframes glowPulse {
   0%,
   100% {
-    box-shadow: 0 0 18px 2px rgba(255, 122, 0, 0.35);
+    box-shadow: 0 0 18px 2px rgba(255, 138, 101, 0.30);
   }
   50% {
-    box-shadow: 0 0 32px 6px rgba(255, 122, 0, 0.6);
+    box-shadow: 0 0 32px 6px rgba(240, 68, 82, 0.35);
   }
 }
 @keyframes mergeAvailablePulse {
@@ -203,14 +218,12 @@ body {
   margin: 0;
   padding: 0;
   height: 100%;
-  background: #220000;
+  background: #fff7e8;
   overflow: hidden;
   overscroll-behavior-y: none;
 }
 
-/* ===================== FESTIVE STRING LIGHTS ===================== */
-/* A row of small alternating gold/red bulbs that blink out of phase —
-   the marquee-light strip seen along the top/bottom of a Diwali storefront. */
+/* Small festive string lights — warm gold / coral on the light theme */
 .festive-lights {
   position: relative;
   display: flex;
@@ -225,12 +238,7 @@ body {
   position: absolute;
   inset: 6px 4px auto 4px;
   height: 2px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 200, 120, 0.35),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, rgba(255, 138, 101, 0.4), transparent);
 }
 .festive-bulb {
   position: relative;
@@ -240,25 +248,23 @@ body {
   animation: bulbBlink 1.6s ease-in-out infinite;
 }
 .festive-bulb--gold {
-  background: radial-gradient(circle at 35% 30%, #fff3c4, #ffb300 65%, #a35a00);
-  box-shadow: 0 0 6px 1px rgba(255, 179, 0, 0.85);
+  background: radial-gradient(circle at 35% 30%, #fff3c4, #ffb347 65%, #d98a1f);
+  box-shadow: 0 0 6px 1px rgba(255, 179, 71, 0.8);
 }
 .festive-bulb--red {
-  background: radial-gradient(circle at 35% 30%, #ff9e8a, #e5304a 65%, #7a0d1a);
-  box-shadow: 0 0 6px 1px rgba(229, 48, 74, 0.85);
+  background: radial-gradient(circle at 35% 30%, #ffb4ba, #f04452 65%, #b3202e);
+  box-shadow: 0 0 6px 1px rgba(240, 68, 82, 0.6);
 }
 
-/* Small flickering diya (oil-lamp) glyph — pure CSS, used as a quiet
-   festival accent near headers/hero corners. */
 .diya-flame {
   display: inline-block;
   transform-origin: 50% 100%;
   animation: flameFlicker 2.2s ease-in-out infinite;
-  filter: drop-shadow(0 0 6px rgba(255, 170, 40, 0.85));
+  filter: drop-shadow(0 0 6px rgba(255, 170, 40, 0.7));
 }
 
 body {
-  color: #fff;
+  color: #71321f;
   font-family: var(--font-sans);
 }
 
@@ -284,33 +290,31 @@ button {
   cursor: pointer;
 }
 
+/* Gradient text — coral -> red (primary gradient) */
 .text-gradient-gold {
-  background: linear-gradient(180deg, var(--color-gold), var(--color-orange));
+  background: linear-gradient(90deg, #ff8a65, #f04452);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
 .glass {
-  background: rgba(17, 14, 12, 0.55);
+  background: rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(16px) saturate(140%);
   -webkit-backdrop-filter: blur(16px) saturate(140%);
 }
 
-/* ===================== PREMIUM 3D SURFACES ===================== */
+/* ===================== SURFACES ===================== */
 
-/* Elevated card: layered depth (ambient + key shadow), inner top highlight,
-   soft bevel border, warm rim glow. Used for product/category/promo cards. */
+/* Elevated white card with a soft peach border + warm coral shadow */
 .surface-3d {
   position: relative;
-  background: linear-gradient(160deg, #300604 0%, #1c0201 55%, #100000 100%);
-  border: 1px solid rgba(255, 178, 90, 0.28);
+  background: linear-gradient(160deg, #ffffff 0%, #fffaf3 60%, #fff3e3 100%);
+  border: 1px solid rgba(255, 138, 101, 0.32);
   box-shadow:
-    0 1px 0 0 rgba(255, 200, 130, 0.14) inset,
-    0 -18px 30px -22px rgba(255, 122, 0, 0.35) inset,
-    0 14px 28px -10px rgba(0, 0, 0, 0.65),
-    0 3px 8px rgba(0, 0, 0, 0.45),
-    0 0 0 1px rgba(0, 0, 0, 0.4);
+    0 1px 0 0 rgba(255, 255, 255, 0.9) inset,
+    0 10px 24px -12px rgba(240, 100, 70, 0.35),
+    0 2px 6px rgba(113, 50, 31, 0.07);
   transition:
     transform 0.25s cubic-bezier(0.2, 0.8, 0.3, 1),
     box-shadow 0.25s ease,
@@ -321,65 +325,47 @@ button {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(
-    115deg,
-    rgba(255, 255, 255, 0.06) 0%,
-    transparent 30%
-  );
+  background: linear-gradient(115deg, rgba(255, 212, 175, 0.18) 0%, transparent 32%);
   pointer-events: none;
 }
 .surface-3d:active {
   transform: translateY(1px) scale(0.985);
-  box-shadow:
-    0 1px 0 0 rgba(255, 200, 130, 0.1) inset,
-    0 -10px 18px -16px rgba(255, 122, 0, 0.3) inset,
-    0 6px 14px -6px rgba(0, 0, 0, 0.6);
 }
 .surface-3d-open {
-  border-color: rgba(255, 154, 0, 0.65);
+  border-color: rgba(240, 68, 82, 0.55);
   box-shadow:
-    0 1px 0 0 rgba(255, 210, 150, 0.22) inset,
-    0 -18px 30px -22px rgba(255, 150, 0, 0.5) inset,
-    0 0 0 1px rgba(255, 122, 0, 0.35),
-    0 0 24px rgba(255, 122, 0, 0.3),
-    0 14px 28px -10px rgba(0, 0, 0, 0.65);
+    0 0 0 1px rgba(240, 68, 82, 0.2),
+    0 12px 26px -10px rgba(240, 68, 82, 0.4);
 }
 
-/* Distinct surface for the packing checklist modal — deliberately a cool
-   slate/graphite tone rather than the warm dark-maroon used everywhere
-   else, specifically so it doesn't read as "one more dark reddish
-   panel" and so the tally checkboxes (which need to sit ON TOP of this
-   surface) have enough contrast to actually be legible. */
+/* Packing checklist modal — a slightly deeper peach so the tally boxes
+   (which sit on top of it) still stand out on the light theme. */
 .surface-packing-modal {
   position: relative;
-  background: linear-gradient(165deg, #202a33 0%, #161d24 55%, #0e1318 100%);
-  border: 1px solid rgba(120, 170, 200, 0.28);
+  background: linear-gradient(165deg, #fff1e0 0%, #ffe6cc 100%);
+  border: 1px solid rgba(240, 100, 70, 0.3);
   box-shadow:
-    0 1px 0 0 rgba(180, 220, 255, 0.1) inset,
-    0 -18px 30px -22px rgba(80, 160, 200, 0.3) inset,
-    0 14px 28px -10px rgba(0, 0, 0, 0.65),
-    0 3px 8px rgba(0, 0, 0, 0.45),
-    0 0 0 1px rgba(0, 0, 0, 0.4);
+    0 1px 0 0 rgba(255, 255, 255, 0.8) inset,
+    0 14px 28px -12px rgba(113, 50, 31, 0.3);
 }
 .surface-packing-modal::before {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(115deg, rgba(255, 255, 255, 0.05) 0%, transparent 30%);
+  background: linear-gradient(115deg, rgba(255, 255, 255, 0.4) 0%, transparent 30%);
   pointer-events: none;
 }
 
-/* Glossy 3D button: gradient body + top glass highlight strip + deep shadow,
-   presses down convincingly on tap. */
+/* Primary button — coral -> red gradient (white text) */
 .btn-3d {
   position: relative;
-  background: linear-gradient(180deg, #ff9a2e 0%, #ff7a00 45%, #e35f00 100%);
+  color: #fff;
+  background: linear-gradient(135deg, #ff8a65 0%, #f04452 100%);
   box-shadow:
-    0 1px 0 rgba(255, 224, 178, 0.8) inset,
-    0 -3px 6px rgba(0, 0, 0, 0.25) inset,
-    0 10px 20px -6px rgba(255, 122, 0, 0.55),
-    0 3px 6px rgba(0, 0, 0, 0.35);
+    0 1px 0 rgba(255, 255, 255, 0.45) inset,
+    0 10px 20px -8px rgba(240, 68, 82, 0.55),
+    0 2px 5px rgba(113, 50, 31, 0.12);
   transition:
     transform 0.15s ease,
     box-shadow 0.15s ease,
@@ -391,29 +377,21 @@ button {
   inset: 1px 1px auto 1px;
   height: 42%;
   border-radius: inherit;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.35),
-    rgba(255, 255, 255, 0)
-  );
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0));
   pointer-events: none;
 }
 .btn-3d:active {
   transform: translateY(2px) scale(0.97);
-  filter: brightness(0.94);
-  box-shadow:
-    0 1px 0 rgba(255, 224, 178, 0.5) inset,
-    0 -2px 4px rgba(0, 0, 0, 0.3) inset,
-    0 4px 10px -4px rgba(255, 122, 0, 0.4);
+  filter: brightness(0.95);
 }
+
+/* Secondary / outline button */
 .btn-3d-outline {
   position: relative;
-  background: linear-gradient(180deg, #2a0a0c, #1a0508);
-  border: 1px solid rgba(255, 154, 0, 0.55);
-  box-shadow:
-    0 1px 0 rgba(255, 200, 130, 0.15) inset,
-    0 8px 18px -8px rgba(255, 122, 0, 0.3),
-    0 2px 4px rgba(0, 0, 0, 0.4);
+  color: #71321f;
+  background: #ffffff;
+  border: 1.5px solid rgba(240, 100, 70, 0.55);
+  box-shadow: 0 6px 14px -8px rgba(240, 100, 70, 0.35);
   transition:
     transform 0.15s ease,
     box-shadow 0.15s ease;
@@ -422,75 +400,43 @@ button {
   transform: translateY(2px) scale(0.97);
 }
 
-/* Neumorphic-glossy icon orb: used for category circles, trust icons,
-   floating action buttons. Convex sphere illusion. */
+/* Round icon orb — white with a peach ring */
 .orb-3d {
-  background: radial-gradient(
-    circle at 32% 26%,
-    #3a0d10 0%,
-    #22060a 55%,
-    #120304 100%
-  );
-  border: 1px solid rgba(255, 154, 0, 0.35);
+  background: radial-gradient(circle at 32% 26%, #ffffff 0%, #fff4e6 60%, #ffe3cc 100%);
+  border: 1px solid rgba(255, 138, 101, 0.4);
   box-shadow:
-    0 1px 0 rgba(255, 210, 150, 0.18) inset,
-    0 -6px 10px -4px rgba(255, 122, 0, 0.25) inset,
-    0 8px 16px -6px rgba(0, 0, 0, 0.6),
-    0 2px 4px rgba(0, 0, 0, 0.4);
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 6px 12px -6px rgba(240, 100, 70, 0.4),
+    0 1px 3px rgba(113, 50, 31, 0.08);
   transition:
     transform 0.18s ease,
     box-shadow 0.25s ease,
     border-color 0.25s ease;
 }
 .orb-3d:active {
-  transform: scale(0.9);
-  box-shadow:
-    0 1px 0 rgba(255, 210, 150, 0.25) inset,
-    0 0 18px rgba(255, 122, 0, 0.55),
-    0 4px 10px -4px rgba(0, 0, 0, 0.6);
-  border-color: var(--color-gold);
+  transform: scale(0.92);
+  border-color: var(--color-red);
 }
 
-/* Cream/peach product-photo panel — the warm ivory backdrop the
-   reference design uses behind product photography, sitting inside an
-   otherwise dark maroon card. Layered on top of .orb-3d (keep both
-   classes) so it inherits the shape/transition, only the surface swaps. */
+/* Peach product-photo panel */
 .orb-3d.orb-cream {
-  background: linear-gradient(135deg, #fbe6c8 0%, #edbd7f 55%, #d99a5c 100%);
-  border: 1px solid rgba(120, 40, 10, 0.3);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.55) inset,
-    0 -10px 16px -10px rgba(120, 40, 10, 0.35) inset,
-    0 8px 18px -8px rgba(0, 0, 0, 0.55);
-}
-.orb-3d.orb-cream:active {
-  border-color: rgba(120, 40, 10, 0.5);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.6) inset,
-    0 0 14px rgba(255, 154, 0, 0.4),
-    0 4px 10px -4px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(135deg, #fff7e8 0%, #ffe9d0 60%, #ffd4af 100%);
+  border: 1px solid rgba(255, 138, 101, 0.3);
 }
 
-/* Raised glass panel for nav bars / floating headers */
+/* Frosted nav / header panels */
 .panel-3d {
-  background: linear-gradient(
-    160deg,
-    rgba(28, 22, 17, 0.85),
-    rgba(10, 8, 6, 0.85)
-  );
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.94), rgba(255, 244, 230, 0.94));
   backdrop-filter: blur(20px) saturate(150%);
   -webkit-backdrop-filter: blur(20px) saturate(150%);
-  border: 1px solid rgba(255, 154, 0, 0.22);
+  border: 1px solid rgba(255, 138, 101, 0.35);
   box-shadow:
-    0 1px 0 rgba(255, 210, 150, 0.15) inset,
-    0 16px 34px -12px rgba(0, 0, 0, 0.7),
-    0 0 24px rgba(255, 122, 0, 0.12);
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 16px 34px -14px rgba(240, 100, 70, 0.45);
 }
 
-/* Floating hero art: depth via drop shadow + subtle bob animation */
 .art-float {
-  filter: drop-shadow(0 14px 18px rgba(0, 0, 0, 0.55))
-    drop-shadow(0 0 22px rgba(255, 150, 0, 0.35));
+  filter: drop-shadow(0 8px 10px rgba(240, 100, 70, 0.25));
   animation: bob 4.5s ease-in-out infinite;
 }
 @keyframes bob {
@@ -503,38 +449,29 @@ button {
   }
 }
 
-/* Embossed premium heading text */
 .text-embossed {
-  text-shadow:
-    0 1px 0 rgba(255, 220, 170, 0.35),
-    0 2px 6px rgba(0, 0, 0, 0.6),
-    0 0 24px rgba(255, 122, 0, 0.35);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
-/* Momentary highlight pulse — used to draw the eye to a product card that
-   a search result jumped to, so landing on it doesn't feel abrupt. */
 .search-highlight {
   animation: searchHighlight 1.8s ease-out;
 }
 @keyframes searchHighlight {
   0% {
     box-shadow:
-      0 0 0 2px rgba(255, 154, 0, 0.9),
-      0 0 34px 10px rgba(255, 122, 0, 0.55);
+      0 0 0 2px rgba(240, 68, 82, 0.9),
+      0 0 30px 8px rgba(255, 138, 101, 0.55);
   }
   70% {
     box-shadow:
-      0 0 0 2px rgba(255, 154, 0, 0.5),
-      0 0 22px 6px rgba(255, 122, 0, 0.3);
+      0 0 0 2px rgba(240, 68, 82, 0.5),
+      0 0 20px 5px rgba(255, 138, 101, 0.3);
   }
   100% {
     box-shadow: none;
   }
 }
 
-/* ===================== HERO SLIDER — PREMIUM GLASS TREATMENT ===================== */
-/* Custom glass progress rail (one segment per slide, filled by JS-driven
-   inline animation — see HeroSlider.jsx) instead of plain dot pagination. */
 @keyframes heroBarFill {
   from {
     width: 0%;
@@ -543,30 +480,17 @@ button {
     width: 100%;
   }
 }
-/* Keeps the same dark-glass base as every other orb on the site (so it
-   belongs to the UI instead of fighting it), but stands out through a
-   vivid gold rim + breathing outer glow — highlighted by light, not by a
-   flat block of bright color. */
+
+/* Brand-circle accent (bottom-nav emblem, etc.) */
 .beacon-3d {
   position: relative;
-  background: radial-gradient(
-    circle at 32% 26%,
-    #3f0e12 0%,
-    #26070a 55%,
-    #120304 100%
-  );
-  border: 1.5px solid rgba(255, 186, 90, 0.8);
+  background: radial-gradient(circle at 32% 26%, #ff8a65 0%, #f04452 70%, #c42a38 100%);
+  border: 2px solid #ffffff;
   box-shadow:
-    0 1px 0 rgba(255, 214, 160, 0.28) inset,
-    0 -6px 12px -4px rgba(255, 140, 0, 0.32) inset,
-    0 10px 22px -8px rgba(0, 0, 0, 0.65),
-    0 0 0 1px rgba(255, 140, 0, 0.22),
-    0 0 20px 2px rgba(255, 150, 20, 0.5),
-    0 0 38px 8px rgba(255, 122, 0, 0.22);
+    0 0 0 2px rgba(240, 68, 82, 0.55),
+    0 12px 22px -8px rgba(240, 68, 82, 0.6);
   animation: beaconBreathe 2.6s ease-in-out infinite;
-  transition:
-    transform 0.18s ease,
-    box-shadow 0.25s ease;
+  transition: transform 0.18s ease;
 }
 .beacon-3d:active {
   transform: scale(0.92);
@@ -575,28 +499,17 @@ button {
   0%,
   100% {
     box-shadow:
-      0 1px 0 rgba(255, 214, 160, 0.28) inset,
-      0 -6px 12px -4px rgba(255, 140, 0, 0.32) inset,
-      0 10px 22px -8px rgba(0, 0, 0, 0.65),
-      0 0 0 1px rgba(255, 140, 0, 0.22),
-      0 0 20px 2px rgba(255, 150, 20, 0.5),
-      0 0 38px 8px rgba(255, 122, 0, 0.22);
+      0 0 0 2px rgba(240, 68, 82, 0.5),
+      0 12px 22px -8px rgba(240, 68, 82, 0.55);
   }
   50% {
     box-shadow:
-      0 1px 0 rgba(255, 214, 160, 0.4) inset,
-      0 -6px 12px -4px rgba(255, 140, 0, 0.4) inset,
-      0 12px 26px -8px rgba(0, 0, 0, 0.65),
-      0 0 0 1px rgba(255, 150, 0, 0.32),
-      0 0 28px 4px rgba(255, 160, 20, 0.65),
-      0 0 50px 12px rgba(255, 130, 0, 0.32);
+      0 0 0 4px rgba(240, 68, 82, 0.3),
+      0 14px 28px -8px rgba(240, 68, 82, 0.7);
   }
 }
 
-/* ===================== PREMIUM CRACKER TOASTS ===================== */
-/* Replaces the plain default sonner toast look with a lit, glassy panel
-   that matches the site's dark/gold 3D language, plus a small spark burst
-   around the status icon. */
+/* ===================== TOASTS ===================== */
 .toast-3d {
   position: relative;
   display: flex;
@@ -606,24 +519,16 @@ button {
   min-width: 224px;
   padding: 11px 14px;
   border-radius: 16px;
-  background: linear-gradient(160deg, #2c0a0d 0%, #1e0608 55%, #120304 100%);
-  border: 1px solid rgba(255, 178, 90, 0.32);
-  box-shadow:
-    0 1px 0 0 rgba(255, 210, 150, 0.16) inset,
-    0 16px 32px -14px rgba(0, 0, 0, 0.75),
-    0 3px 8px rgba(0, 0, 0, 0.5),
-    0 0 22px rgba(255, 122, 0, 0.16);
+  color: #71321f;
+  background: linear-gradient(160deg, #ffffff 0%, #fff4e6 100%);
+  border: 1px solid rgba(255, 138, 101, 0.45);
+  box-shadow: 0 16px 30px -14px rgba(240, 100, 70, 0.5), 0 3px 8px rgba(113, 50, 31, 0.1);
 }
 .toast-3d::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    100deg,
-    transparent 15%,
-    rgba(255, 200, 120, 0.14) 45%,
-    transparent 65%
-  );
+  background: linear-gradient(100deg, transparent 15%, rgba(255, 179, 71, 0.2) 45%, transparent 65%);
   background-size: 220% 100%;
   animation: toastShimmer 1.4s ease-out 1;
   pointer-events: none;
@@ -645,46 +550,27 @@ button {
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  background: radial-gradient(
-    circle at 32% 26%,
-    #ffcf7a 0%,
-    #ff7a00 55%,
-    #ab3c00 100%
-  );
-  box-shadow:
-    0 0 0 1px rgba(255, 214, 140, 0.55),
-    0 0 16px rgba(255, 140, 20, 0.6);
-  color: #180f06;
+  background: linear-gradient(135deg, #ff8a65, #f04452);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.7), 0 6px 14px -4px rgba(240, 68, 82, 0.6);
+  color: #fff;
 }
 .toast-icon-orb--muted {
-  background: radial-gradient(
-    circle at 32% 26%,
-    #8a8078 0%,
-    #3a342d 60%,
-    #171310 100%
-  );
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
-  color: #f2ece2;
+  background: linear-gradient(135deg, #c9a58f, #8e5b45);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6);
+  color: #fff;
 }
 .toast-icon-orb--warn {
-  background: radial-gradient(
-    circle at 32% 26%,
-    #ffe08a 0%,
-    #ffb300 55%,
-    #a35a00 100%
-  );
-  box-shadow:
-    0 0 0 1px rgba(255, 224, 150, 0.55),
-    0 0 16px rgba(255, 180, 20, 0.55);
-  color: #180f06;
+  background: linear-gradient(135deg, #ffd669, #ff8a00);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.7), 0 6px 14px -4px rgba(255, 138, 0, 0.6);
+  color: #4a1d10;
 }
 .toast-spark {
   position: absolute;
   height: 4px;
   width: 4px;
   border-radius: 999px;
-  background: #ffcf7a;
-  box-shadow: 0 0 6px #ffb238;
+  background: #ffb347;
+  box-shadow: 0 0 6px #ff8a65;
   animation: toastSparkPop 0.9s ease-out 1;
   opacity: 0;
 }
@@ -702,23 +588,13 @@ button {
   }
 }
 
-/* ===================== GLOBAL FESTIVE FX (site-wide burst) ===================== */
-/* Brief rocket-launch or ground-fountain burst, triggered occasionally
-   while scrolling (see GlobalFestiveFX.jsx). Pure CSS keyframes, same
-   "cheap enough to run behind interactive content" approach as the
-   ember particles on the home page — each burst mounts, plays once,
-   and fully unmounts, so nothing keeps animating between bursts. */
+/* ===================== GLOBAL FESTIVE FX ===================== */
 .fx-rocket-trail {
   position: absolute;
   width: 4px;
   border-radius: 999px;
-  background: linear-gradient(
-    180deg,
-    #fff6d8,
-    var(--color-gold) 45%,
-    var(--color-orange) 100%
-  );
-  box-shadow: 0 0 12px 3px rgba(255, 180, 20, 0.85);
+  background: linear-gradient(180deg, #fff6d8, #ffb347 45%, #f04452 100%);
+  box-shadow: 0 0 10px 2px rgba(255, 138, 101, 0.7);
   animation: fxRocketRise 0.62s cubic-bezier(0.3, 0, 0.2, 1) forwards;
 }
 @keyframes fxRocketRise {
@@ -736,20 +612,11 @@ button {
     transform: translateY(-150px);
   }
 }
-/* Bright expanding flash at the moment a rocket bursts — this is what
-   sells "something just happened here" at a glance, before the eye even
-   has time to track the individual sparks flying outward. */
 .fx-burst-flash {
   position: absolute;
   border-radius: 999px;
   opacity: 0;
-  background: radial-gradient(
-    circle,
-    #fffdf3 0%,
-    #ffe49a 32%,
-    rgba(255, 154, 0, 0.55) 62%,
-    transparent 78%
-  );
+  background: radial-gradient(circle, #ffffff 0%, #ffe3a8 32%, rgba(255, 138, 101, 0.5) 62%, transparent 78%);
   animation: fxBurstFlash 0.55s ease-out forwards;
   animation-delay: var(--fx-delay, 0s);
 }

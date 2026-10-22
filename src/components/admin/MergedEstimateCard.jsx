@@ -267,7 +267,7 @@ function MergedEstimateCard({ mobile, orders, allSiblings, delay = 0 }) {
               <div className="flex items-center gap-1.5 text-[10px] font-bold text-orange">
                 <Layers size={12} /> Merged · {orders.length} orders
               </div>
-              <div className="truncate text-[12.5px] font-extrabold text-[#f2ece2]">
+              <div className="truncate text-[12.5px] font-extrabold text-brown">
                 {first.customer?.name || "Customer"}
               </div>
               <div className="text-[10px] text-muted">{first.customer?.mobile}</div>
@@ -315,7 +315,7 @@ function MergedEstimateCard({ mobile, orders, allSiblings, delay = 0 }) {
             {orders.map((o) => (
               <span
                 key={o.id}
-                className="rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[10px] font-bold text-[#cfc7bd]"
+                className="rounded-full border border-brown/12 bg-brown/8 px-2 py-0.5 text-[10px] font-bold text-muted"
               >
                 {o.orderId || o.id}
               </span>
@@ -323,7 +323,7 @@ function MergedEstimateCard({ mobile, orders, allSiblings, delay = 0 }) {
           </div>
 
           {/* Combined totals */}
-          <div className="flex flex-col gap-1 rounded-xl bg-black/20 px-3 py-2.5 text-[10.5px] text-[#cfc7bd]">
+          <div className="flex flex-col gap-1 rounded-xl bg-brown/8 px-3 py-2.5 text-[10.5px] text-muted">
             <div className="flex justify-between">
               <span>Subtotal (MRP)</span>
               <span>₹{(mergedOrder.subtotal ?? 0).toLocaleString("en-IN")}</span>
@@ -336,7 +336,7 @@ function MergedEstimateCard({ mobile, orders, allSiblings, delay = 0 }) {
               <span>Packing charges</span>
               <span>₹{(mergedOrder.packingCharges ?? 0).toLocaleString("en-IN")}</span>
             </div>
-            <div className="mt-1 flex justify-between border-t border-dashed border-white/10 pt-1.5 text-[11.5px] font-extrabold text-[#f2ece2]">
+            <div className="mt-1 flex justify-between border-t border-dashed border-brown/12 pt-1.5 text-[11.5px] font-extrabold text-brown">
               <span>Merged Grand Total</span>
               <span>₹{(mergedOrder.grandTotal ?? 0).toLocaleString("en-IN")}</span>
             </div>
@@ -358,7 +358,7 @@ function MergedEstimateCard({ mobile, orders, allSiblings, delay = 0 }) {
           </button>
 
           {/* Single estimate bill for the whole merged group */}
-          <div className="flex flex-col gap-2 rounded-xl bg-black/20 px-3 py-2.5">
+          <div className="flex flex-col gap-2 rounded-xl bg-brown/8 px-3 py-2.5">
             <div className="text-[10px] font-bold text-muted">Merged Estimate Bill</div>
             <div className="flex flex-wrap items-center gap-2">
               <button
@@ -401,7 +401,7 @@ function MergedEstimateCard({ mobile, orders, allSiblings, delay = 0 }) {
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-white/10 py-2 text-[10.5px] font-bold text-muted hover:text-[#f2ece2]"
+            className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-brown/12 py-2 text-[10.5px] font-bold text-muted hover:text-brown"
           >
             <ChevronDown size={13} className={`transition-transform ${expanded ? "rotate-180" : ""}`} />
             {expanded ? "Hide child orders" : `Manage ${orders.length} child orders`}

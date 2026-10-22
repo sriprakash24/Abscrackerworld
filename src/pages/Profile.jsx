@@ -8,6 +8,8 @@ import { Lock, UserRound } from 'lucide-react';
 
 import { useCustomerStore } from '../store/useCustomerStore';
 import { useCustomerGateStore } from '../store/useCustomerGateStore';
+import { useLogout } from '../hooks/useLogout';
+import LogoutConfirmDialog from '../components/customer/LogoutConfirmDialog';
 import { profileSchema, profileDefaultValues } from '../schemas/profileSchema';
 import { db } from '../firebase/config';
 import { getUserProfile, saveUserAddress } from '../services/usersFirestore';
@@ -27,6 +29,8 @@ export default function Profile() {
 
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [logoutOpen, setLogoutOpen] = useState(false);
+  const logout = useLogout();
   const [activeSection, setActiveSection] = useState(null);
 
   const {
@@ -140,7 +144,7 @@ export default function Profile() {
           <div className="orb-3d flex h-20 w-20 items-center justify-center !rounded-full text-orange">
             <UserRound size={30} className="art-float" />
           </div>
-          <h3 className="mt-4 text-[14px] font-extrabold text-[#f2ece2]">Tell us who's asking</h3>
+          <h3 className="mt-4 text-[14px] font-extrabold text-brown">Tell us who's asking</h3>
           <p className="mt-1 max-w-[240px] text-[12px] leading-snug text-muted">
             Share your name &amp; mobile number so we can pull up your saved address.
           </p>
@@ -158,7 +162,7 @@ export default function Profile() {
   return (
     <div className="relative min-h-screen w-full pb-4">
       <FestiveBackdrop />
-      <ProfileHeader onBack={() => navigate(-1)} />
+      <ProfileHeader onBack={() => navigate(-1)} onLogout={() => setLogoutOpen(true)} />
 
       {loadingProfile ? (
         <div className="mt-3 flex flex-col gap-3 px-4">
@@ -181,7 +185,7 @@ export default function Profile() {
                   <span className="orb-3d flex h-7 w-7 shrink-0 items-center justify-center !rounded-full text-orange">
                     <UserRound size={13} />
                   </span>
-                  <h3 className="text-[12.5px] font-extrabold tracking-wide text-[#f2ece2]">Your Details</h3>
+                  <h3 className="text-[12.5px] font-extrabold tracking-wide text-brown">Your Details</h3>
                 </div>
 
                 <div className="flex flex-col gap-3">
@@ -194,10 +198,10 @@ export default function Profile() {
                   />
 
                   <label className="block">
-                    <span className="mb-1.5 flex items-center gap-1 text-[11px] font-bold tracking-wide text-[#cfc7bd]">
+                    <span className="mb-1.5 flex items-center gap-1 text-[11px] font-bold tracking-wide text-muted">
                       Mobile Number
                     </span>
-                    <div className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-[#0c0906]/60 px-3.5 py-2.5 text-[12.5px] font-semibold text-muted">
+                    <div className="flex w-full items-center justify-between rounded-xl border border-brown/12 bg-brown/60 px-3.5 py-2.5 text-[12.5px] font-semibold text-muted">
                       <span>+91 {customer.mobile}</span>
                       <Lock size={12} />
                     </div>
@@ -217,6 +221,15 @@ export default function Profile() {
           <SaveProfileButton loading={isSaving} />
         </form>
       )}
+
+      <LogoutConfirmDialog
+        open={logoutOpen}
+        onCancel={() => setLogoutOpen(false)}
+        onConfirm={() => {
+          setLogoutOpen(false);
+          logout();
+        }}
+      />
     </div>
   );
 }

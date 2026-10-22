@@ -8,7 +8,7 @@ export default function AdminOrderSearchBar({ value, onChange }) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search by order ID, name, mobile, or address…"
-        className="w-full min-w-0 bg-transparent text-[12px] font-medium text-[#f2ece2] placeholder:text-muted focus:outline-none"
+        className="w-full min-w-0 bg-transparent text-[12px] font-medium text-brown placeholder:text-muted focus:outline-none"
       />
       {value && (
         <button onClick={() => onChange('')} className="shrink-0 text-muted transition-colors hover:text-orange">

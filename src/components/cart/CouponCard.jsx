@@ -26,7 +26,7 @@ export default function CouponCard() {
           onClick={() => setOpen((o) => !o)}
           className="flex w-full items-center justify-between gap-2 px-4 py-3"
         >
-          <span className="flex items-center gap-2 text-[12px] font-extrabold text-[#f2ece2]">
+          <span className="flex items-center gap-2 text-[12px] font-extrabold text-brown">
             <Tag size={14} className="text-orange" />
             {couponCode ? `Coupon "${couponCode}" applied` : 'Apply Coupon'}
           </span>
@@ -49,16 +49,16 @@ export default function CouponCard() {
                   <motion.div
                     initial={{ scale: 0.96, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="flex items-center justify-between rounded-lg border border-[#8fe3a0]/30 bg-[#8fe3a0]/10 px-3 py-2"
+                    className="flex items-center justify-between rounded-lg border border-[#1E8E4A]/30 bg-[#1E8E4A]/10 px-3 py-2"
                   >
-                    <span className="flex items-center gap-1.5 text-[11px] font-bold text-[#8fe3a0]">
+                    <span className="flex items-center gap-1.5 text-[11px] font-bold text-[#1E8E4A]">
                       <CheckCircle2 size={14} />
                       {couponMessage}
                     </span>
                     <button
                       onClick={removeCoupon}
                       aria-label="Remove coupon"
-                      className="text-[#8fe3a0]/80 transition-transform active:scale-90"
+                      className="text-[#1E8E4A]/80 transition-transform active:scale-90"
                     >
                       <X size={14} />
                     </button>
@@ -70,7 +70,7 @@ export default function CouponCard() {
                         value={value}
                         onChange={(e) => setValue(e.target.value.toUpperCase())}
                         placeholder="Enter coupon code"
-                        className="min-w-0 flex-1 rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-[12px] font-bold uppercase tracking-wide text-[#f2ece2] outline-none placeholder:text-muted placeholder:tracking-normal placeholder:font-normal focus:border-orange/50"
+                        className="min-w-0 flex-1 rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-[12px] font-bold uppercase tracking-wide text-brown outline-none placeholder:text-muted placeholder:tracking-normal placeholder:font-normal focus:border-orange/50"
                       />
                       <button
                         onClick={handleApply}

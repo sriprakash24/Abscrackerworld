@@ -14,7 +14,7 @@ export default function PackingStatsStrip({ pending, inProgress, completed }) {
   const stats = [
     { label: "Pending", value: pending, icon: PackageOpen, className: "text-gold" },
     { label: "In Progress", value: inProgress, icon: Loader, className: "text-orange" },
-    { label: "Completed", value: completed, icon: PackageCheck, className: "text-[#8fe3a0]" },
+    { label: "Completed", value: completed, icon: PackageCheck, className: "text-[#1E8E4A]" },
   ];
 
   return (
@@ -25,7 +25,7 @@ export default function PackingStatsStrip({ pending, inProgress, completed }) {
             <Icon size={13} />
           </span>
           <div className="min-w-0">
-            <div className="truncate text-[13px] font-extrabold text-[#f2ece2]">{value}</div>
+            <div className="truncate text-[13px] font-extrabold text-brown">{value}</div>
             <div className="truncate text-[9px] font-semibold text-muted">{label}</div>
           </div>
         </div>

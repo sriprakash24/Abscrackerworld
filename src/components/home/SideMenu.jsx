@@ -1,7 +1,11 @@
 import { AnimatePresence, motion } from 'framer-motion';
+import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { X, Home, LayoutGrid, Truck, ClipboardList, ShoppingCart, UserRound, MessageCircleMore, PhoneCall } from 'lucide-react';
+import { X, Home, LayoutGrid, Truck, ClipboardList, ShoppingCart, UserRound, MessageCircleMore, PhoneCall, LogOut } from 'lucide-react';
 import absLogo from '../../assets/abs-logo.png';
+import { useCustomerStore } from '../../store/useCustomerStore';
+import { useLogout } from '../../hooks/useLogout';
+import LogoutConfirmDialog from '../customer/LogoutConfirmDialog';
 
 const NAV_LINKS = [
   { key: 'home', label: 'Home', icon: Home },
@@ -15,6 +19,9 @@ const NAV_LINKS = [
 export default function SideMenu({ open, onClose }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const customer = useCustomerStore((s) => s.customer);
+  const logout = useLogout();
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const handleNav = (key) => {
     onClose();
@@ -36,6 +43,16 @@ export default function SideMenu({ open, onClose }) {
   };
 
   return (
+    <>
+    <LogoutConfirmDialog
+      open={confirmOpen}
+      onCancel={() => setConfirmOpen(false)}
+      onConfirm={() => {
+        setConfirmOpen(false);
+        onClose();
+        logout();
+      }}
+    />
     <AnimatePresence>
       {open && (
         <>
@@ -76,15 +93,34 @@ export default function SideMenu({ open, onClose }) {
                     onClick={() => handleNav(link.key)}
                     whileTap={{ scale: 0.97 }}
                     whileHover={{ x: 2 }}
-                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-white/5"
+                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-brown/6"
                   >
                     <span className="orb-3d flex h-9 w-9 shrink-0 items-center justify-center !rounded-lg text-orange">
                       <Icon size={16} strokeWidth={2.2} />
                     </span>
-                    <span className="text-[12.5px] font-bold text-[#f2ece2]">{link.label}</span>
+                    <span className="text-[12.5px] font-bold text-brown">{link.label}</span>
                   </motion.button>
                 );
               })}
+            {customer?.mobile && (
+              <button
+                onClick={() => setConfirmOpen(true)}
+                className="mt-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-red/8"
+              >
+                <span
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-red"
+                  style={{ background: 'rgba(240,68,82,.10)', border: '1px solid rgba(240,68,82,.28)' }}
+                >
+                  <LogOut size={16} strokeWidth={2.2} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-[12.5px] font-bold text-red">Log out</span>
+                  <span className="block truncate text-[10px] font-semibold text-muted">
+                    {customer.name} · +91 {customer.mobile}
+                  </span>
+                </span>
+              </button>
+            )}
             </nav>
 
             <div className="mx-4 my-2 h-px bg-gradient-to-r from-transparent via-orange/30 to-transparent" />
@@ -95,7 +131,7 @@ export default function SideMenu({ open, onClose }) {
                 target="_blank"
                 rel="noreferrer"
                 onClick={onClose}
-                className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-white/5"
+                className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-brown/6"
               >
                 <span
                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#25d366]"
@@ -103,17 +139,17 @@ export default function SideMenu({ open, onClose }) {
                 >
                   <MessageCircleMore size={16} strokeWidth={2.2} />
                 </span>
-                <span className="text-[12.5px] font-bold text-[#f2ece2]">WhatsApp Support</span>
+                <span className="text-[12.5px] font-bold text-brown">WhatsApp Support</span>
               </a>
               <a
                 href="tel:+919597189599"
                 onClick={onClose}
-                className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-white/5"
+                className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-brown/6"
               >
                 <span className="orb-3d flex h-9 w-9 shrink-0 items-center justify-center !rounded-lg text-orange">
                   <PhoneCall size={16} strokeWidth={2.2} />
                 </span>
-                <span className="text-[12.5px] font-bold text-[#f2ece2]">Call Us</span>
+                <span className="text-[12.5px] font-bold text-brown">Call Us</span>
               </a>
             </div>
 
@@ -124,5 +160,6 @@ export default function SideMenu({ open, onClose }) {
         </>
       )}
     </AnimatePresence>
+    </>
   );
 }

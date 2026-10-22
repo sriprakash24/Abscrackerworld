@@ -206,7 +206,7 @@ export default function AdminInvoices() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#050505] pb-28 text-white">
+    <div className="min-h-screen w-full bg-bg pb-28 text-brown">
       <AdminSectionHeader
         icon={Receipt}
         title="Invoices"
@@ -224,7 +224,7 @@ export default function AdminInvoices() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search invoice no., order id, customer…"
-              className="w-full bg-transparent text-[12.5px] font-semibold text-[#f2ece2] outline-none placeholder:text-muted placeholder:font-normal"
+              className="w-full bg-transparent text-[12.5px] font-semibold text-brown outline-none placeholder:text-muted placeholder:font-normal"
             />
           </div>
           <button
@@ -242,7 +242,7 @@ export default function AdminInvoices() {
               key={f}
               onClick={() => setSourceFilter(f)}
               className={`shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-bold tracking-wide transition-colors ${
-                sourceFilter === f ? 'border-orange/50 bg-orange/15 text-orange' : 'border-white/10 bg-[#0c0906] text-muted'
+                sourceFilter === f ? 'border-orange/50 bg-orange/15 text-orange' : 'border-brown/12 bg-white text-muted'
               }`}
             >
               {f === 'ALL' ? `All (${invoices.length})` : f === 'ORDER' ? 'From Orders' : 'Manual'}
@@ -266,7 +266,7 @@ export default function AdminInvoices() {
 
         {dateFilter.length > 0 && (
           <div className="surface-3d flex flex-wrap items-center gap-2 rounded-xl border border-orange/30 px-3 py-2.5">
-            <span className="mr-1 shrink-0 text-[11px] font-extrabold text-[#f2ece2]">
+            <span className="mr-1 shrink-0 text-[11px] font-extrabold text-brown">
               {filteredInvoices.length} invoice{filteredInvoices.length === 1 ? '' : 's'} · {bulkOrderIds.length} order
               {bulkOrderIds.length === 1 ? '' : 's'}
             </span>
@@ -286,7 +286,7 @@ export default function AdminInvoices() {
               type="button"
               onClick={() => setDateFilter([])}
               title="Clear date filter"
-              className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted hover:text-[#f2ece2]"
+              className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted hover:text-brown"
             >
               <X size={14} />
             </button>
@@ -370,10 +370,10 @@ function InvoiceRow({ invoice, linkedOrders = [], onView, onEdit, onDelete }) {
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <p className="truncate text-[12.5px] font-bold text-[#f2ece2]">{invoice.invoiceNo}</p>
+          <p className="truncate text-[12.5px] font-bold text-brown">{invoice.invoiceNo}</p>
           <span
             className={`flex shrink-0 items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${
-              invoice.source === 'ORDER' ? 'border-gold/35 bg-gold/10 text-gold' : 'border-white/15 bg-white/5 text-muted'
+              invoice.source === 'ORDER' ? 'border-gold/35 bg-gold/10 text-gold' : 'border-brown/16 bg-brown/6 text-muted'
             }`}
           >
             {invoice.source === 'ORDER' ? <Link2 size={9} /> : <PenSquare size={9} />}
@@ -390,15 +390,15 @@ function InvoiceRow({ invoice, linkedOrders = [], onView, onEdit, onDelete }) {
       </div>
 
       <div className="flex shrink-0 flex-col gap-1.5">
-        <button onClick={onView} className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-[#f2ece2] hover:text-orange">
+        <button onClick={onView} className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-brown hover:text-orange">
           <Eye size={13} />
         </button>
-        <button onClick={onEdit} className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-[#f2ece2] hover:text-orange">
+        <button onClick={onEdit} className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-brown hover:text-orange">
           <Pencil size={13} />
         </button>
         <button
           onClick={() => generateInvoicePdf(invoice)}
-          className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-[#f2ece2] hover:text-orange"
+          className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-brown hover:text-orange"
         >
           <Download size={13} />
         </button>
@@ -412,7 +412,7 @@ function InvoiceRow({ invoice, linkedOrders = [], onView, onEdit, onDelete }) {
         </button>
         <button
           onClick={onDelete}
-          className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-[#f2ece2] hover:text-[#e35226]"
+          className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-brown hover:text-[#e35226]"
         >
           <Trash2 size={13} />
         </button>
@@ -426,7 +426,7 @@ function StatusBadge({ orders }) {
   const statuses = new Set(orders.map((o) => o.status));
   if (statuses.size > 1) {
     return (
-      <span className="rounded-full border border-white/15 bg-white/5 px-1.5 py-0.5 text-[9px] font-bold text-muted">Mixed status</span>
+      <span className="rounded-full border border-brown/16 bg-brown/6 px-1.5 py-0.5 text-[9px] font-bold text-muted">Mixed status</span>
     );
   }
   const meta = getOrderStatusMeta(orders[0].status);
@@ -440,11 +440,11 @@ function StatusBadge({ orders }) {
 function InvoiceRowSkeleton() {
   return (
     <div className="surface-3d flex animate-pulse items-center gap-3 rounded-2xl p-3">
-      <div className="h-12 w-12 shrink-0 rounded-xl bg-white/5" />
+      <div className="h-12 w-12 shrink-0 rounded-xl bg-brown/6" />
       <div className="flex-1 space-y-2">
-        <div className="h-3 w-1/3 rounded bg-white/5" />
-        <div className="h-2.5 w-1/2 rounded bg-white/5" />
-        <div className="h-2.5 w-1/4 rounded bg-white/5" />
+        <div className="h-3 w-1/3 rounded bg-brown/6" />
+        <div className="h-2.5 w-1/2 rounded bg-brown/6" />
+        <div className="h-2.5 w-1/4 rounded bg-brown/6" />
       </div>
     </div>
   );

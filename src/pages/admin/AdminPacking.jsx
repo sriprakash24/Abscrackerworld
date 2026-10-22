@@ -470,7 +470,7 @@ export default function AdminPacking() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#050505] pb-28 text-white">
+    <div className="min-h-screen w-full bg-bg pb-28 text-brown">
       <AdminOrdersHeader
         email={user?.email}
         orderCount={confirmedOrders.length}
@@ -481,7 +481,7 @@ export default function AdminPacking() {
       <div className="mx-auto flex max-w-5xl flex-col gap-3 px-4 py-3 sm:px-6 sm:py-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex flex-col gap-1">
-            <h2 className="text-[15px] font-extrabold text-[#f2ece2]">Packing</h2>
+            <h2 className="text-[15px] font-extrabold text-brown">Packing</h2>
             <p className="text-[11px] text-muted">
               Confirmed orders only, sorted by actual payment-confirmed date —
               oldest first.
@@ -507,7 +507,7 @@ export default function AdminPacking() {
             Ready to Pack
             <span
               className={`rounded-full px-1.5 text-[9.5px] font-extrabold ${
-                tab === "CONFIRMED" ? "bg-black/20 text-black" : "bg-white/10 text-muted"
+                tab === "CONFIRMED" ? "bg-brown/8 text-black" : "bg-brown/12 text-muted"
               }`}
             >
               {confirmedOrders.length}
@@ -523,7 +523,7 @@ export default function AdminPacking() {
             Packed
             <span
               className={`rounded-full px-1.5 text-[9.5px] font-extrabold ${
-                tab === "PACKED" ? "bg-black/20 text-black" : "bg-white/10 text-muted"
+                tab === "PACKED" ? "bg-brown/8 text-black" : "bg-brown/12 text-muted"
               }`}
             >
               {packedOrders.length}
@@ -564,7 +564,7 @@ export default function AdminPacking() {
             ) : clusters.length === 0 ? (
               <div className="surface-3d flex flex-col items-center gap-2 rounded-2xl px-4 py-10 text-center">
                 <PackageSearch size={22} className="text-muted" />
-                <div className="text-[12px] font-bold text-[#f2ece2]">
+                <div className="text-[12px] font-bold text-brown">
                   {isFiltered ? "No matching orders" : "Nothing to pack right now"}
                 </div>
                 <div className="text-[10.5px] text-muted">
@@ -619,7 +619,7 @@ export default function AdminPacking() {
             ) : packedClusters.length === 0 ? (
               <div className="surface-3d flex flex-col items-center gap-2 rounded-2xl px-4 py-10 text-center">
                 <PackageCheck size={22} className="text-muted" />
-                <div className="text-[12px] font-bold text-[#f2ece2]">Nothing packed yet</div>
+                <div className="text-[12px] font-bold text-brown">Nothing packed yet</div>
                 <div className="text-[10.5px] text-muted">
                   Orders you mark packed will show up here — in case one needs a revoke.
                 </div>

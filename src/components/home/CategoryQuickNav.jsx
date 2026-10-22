@@ -92,7 +92,7 @@ export default function CategoryQuickNav({ categories, activeSlug, onJump }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setOpen(false)}
-            className="fixed inset-0 z-40 bg-black/55 backdrop-blur-[2px]"
+            className="fixed inset-0 z-40 bg-brown/40 backdrop-blur-[2px]"
           />
         )}
       </AnimatePresence>
@@ -115,10 +115,10 @@ export default function CategoryQuickNav({ categories, activeSlug, onJump }) {
                   className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-bold"
                   style={{
                     background:
-                      "linear-gradient(160deg, rgba(28,22,17,0.92), rgba(10,8,6,0.92))",
+                      "#ffffff",
                     border: `1px solid ${previewTheme.solid}70`,
-                    boxShadow: `0 8px 18px -8px rgba(0,0,0,.6), 0 0 16px ${previewTheme.solid}40`,
-                    color: previewTheme.from,
+                    boxShadow: `0 8px 18px -8px rgba(113,50,31,0.17), 0 0 16px ${previewTheme.solid}40`,
+                    color: previewTheme.ink,
                   }}
                 >
                   <CategoryIcon
@@ -193,7 +193,7 @@ export default function CategoryQuickNav({ categories, activeSlug, onJump }) {
                     onClick={() => handlePick(cat.slug)}
                     whileTap={{ scale: 0.95 }}
                     whileHover={{ x: -2 }}
-                    className="mb-1.5 flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left transition-colors hover:bg-white/5"
+                    className="mb-1.5 flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left transition-colors hover:bg-brown/6"
                     style={
                       isActive
                         ? {
@@ -217,7 +217,7 @@ export default function CategoryQuickNav({ categories, activeSlug, onJump }) {
                     </span>
                     <span
                       className="line-clamp-2 text-[10.5px] font-bold leading-tight"
-                      style={{ color: isActive ? catTheme.from : "#f2ece2" }}
+                      style={{ color: isActive ? catTheme.ink : "#71321f" }}
                     >
                       {cat.name}
                     </span>

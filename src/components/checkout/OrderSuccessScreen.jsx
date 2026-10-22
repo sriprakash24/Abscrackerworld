@@ -83,7 +83,7 @@ export default function OrderSuccessScreen({
           </button>
         </div>
         {typeof grandTotal === "number" && (
-          <div className="mt-2.5 flex items-center justify-between border-t border-dashed border-white/15 pt-2.5 text-[11px]">
+          <div className="mt-2.5 flex items-center justify-between border-t border-dashed border-brown/16 pt-2.5 text-[11px]">
             <span className="text-muted">Order Amount</span>
             <span className="text-embossed text-[15px] font-extrabold text-gradient-gold">
               ₹{grandTotal.toLocaleString("en-IN")}
@@ -91,7 +91,7 @@ export default function OrderSuccessScreen({
           </div>
         )}
 
-        <div className="mt-2.5 flex items-center justify-between border-t border-dashed border-white/15 pt-2.5 text-[11px]">
+        <div className="mt-2.5 flex items-center justify-between border-t border-dashed border-brown/16 pt-2.5 text-[11px]">
           <span className="text-muted">Current Status</span>
           <span className="flex items-center gap-1.5 rounded-full border border-gold/35 bg-gold/10 px-2 py-0.5 text-[10px] font-bold text-gold">
             🟡 Awaiting Admin Confirmation
@@ -103,10 +103,10 @@ export default function OrderSuccessScreen({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.55, duration: 0.4 }}
-        className="relative z-10 mt-5 max-w-xs text-[15px] font-medium leading-relaxed text-[#cfc7bd]"
+        className="relative z-10 mt-5 max-w-xs text-[15px] font-medium leading-relaxed text-muted"
       >
         Thank you for shopping with{" "}
-        <span className="font-bold text-[#f2ece2]">ABS Crackers World</span>.
+        <span className="font-bold text-brown">ABS Crackers World</span>.
         Your order has been placed successfully.
       </motion.p>
 
@@ -119,7 +119,7 @@ export default function OrderSuccessScreen({
         <span className="orb-3d flex h-8 w-8 shrink-0 items-center justify-center !rounded-full text-orange">
           <MessageCircleMore size={15} />
         </span>
-        <p className="text-[10.5px] leading-relaxed text-[#cfc7bd]">
+        <p className="text-[10.5px] leading-relaxed text-muted">
           <span className="font-bold text-gold">Payment on confirmation —</span>{" "}
           our team will call or WhatsApp you shortly to confirm your order and
           guide you through payment. Your status updates automatically once

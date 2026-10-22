@@ -109,7 +109,7 @@ function SentCheckbox({ checked, onClick, title }) {
       className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors ${
         checked
           ? "border-[#25D366] bg-[#25D366] text-black"
-          : "border-white/20 bg-black/20 text-transparent hover:border-white/40"
+          : "border-brown/22 bg-brown/8 text-transparent hover:border-brown/40"
       }`}
     >
       <Check size={12} strokeWidth={3} />
@@ -140,7 +140,7 @@ const PAYMENT_META = {
   },
   RECEIVED: {
     label: "Payment Received",
-    className: "border-[#8fe3a0]/35 bg-[#8fe3a0]/10 text-[#8fe3a0]",
+    className: "border-[#1E8E4A]/35 bg-[#1E8E4A]/10 text-[#1E8E4A]",
   },
 };
 
@@ -269,7 +269,7 @@ function AdminOrderCard({ order, delay = 0, index = 0, mergedGroupHint = null })
         ? {
             tint: "rgba(102, 187, 106, 0.08)",
             edge: "rgba(102, 187, 106, 0.5)",
-            badgeClass: "text-[#8fe3a0] border-[#8fe3a0]/40 bg-[#8fe3a0]/10",
+            badgeClass: "text-[#1E8E4A] border-[#1E8E4A]/40 bg-[#1E8E4A]/10",
           }
         : { tint: orderSlot.tint, edge: orderSlot.edge, badgeClass: orderSlot.badge };
 
@@ -685,7 +685,7 @@ function AdminOrderCard({ order, delay = 0, index = 0, mergedGroupHint = null })
           {/* Row 1 — order id/date, status badges, overflow actions menu */}
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="min-w-0">
-              <div className="truncate text-[12.5px] font-extrabold text-[#f2ece2]">
+              <div className="truncate text-[12.5px] font-extrabold text-brown">
                 {order.orderId || order.id}
               </div>
               <div className="text-[10px] text-muted">
@@ -711,7 +711,7 @@ function AdminOrderCard({ order, delay = 0, index = 0, mergedGroupHint = null })
                     e.stopPropagation();
                     setShowEditHistory(true);
                   }}
-                  className="flex shrink-0 items-center gap-1 rounded-full border border-[#5AC8FA]/40 bg-[#5AC8FA]/10 px-2 py-0.5 text-[10px] font-bold text-[#5AC8FA]"
+                  className="flex shrink-0 items-center gap-1 rounded-full border border-[#0B7FBF]/40 bg-[#0B7FBF]/10 px-2 py-0.5 text-[10px] font-bold text-[#0B7FBF]"
                 >
                   <Pencil size={10} /> Edited
                 </button>
@@ -750,7 +750,7 @@ function AdminOrderCard({ order, delay = 0, index = 0, mergedGroupHint = null })
                       setActionsOpen((v) => !v);
                     }}
                     title="More actions"
-                    className="orb-3d flex h-7 w-7 shrink-0 items-center justify-center !rounded-full text-muted hover:text-[#f2ece2]"
+                    className="orb-3d flex h-7 w-7 shrink-0 items-center justify-center !rounded-full text-muted hover:text-brown"
                   >
                     <MoreVertical size={14} />
                   </button>
@@ -762,7 +762,7 @@ function AdminOrderCard({ order, delay = 0, index = 0, mergedGroupHint = null })
                         exit={{ opacity: 0, y: -4 }}
                         transition={{ duration: 0.15 }}
                         onClick={(e) => e.stopPropagation()}
-                        className="absolute right-0 top-[calc(100%+6px)] z-30 w-48 overflow-hidden rounded-xl border border-white/10 bg-[#150007] py-1 shadow-xl"
+                        className="absolute right-0 top-[calc(100%+6px)] z-30 w-48 overflow-hidden rounded-xl border border-brown/12 bg-bg py-1 shadow-xl"
                       >
                         {revokeAction && (
                           <button
@@ -770,7 +770,7 @@ function AdminOrderCard({ order, delay = 0, index = 0, mergedGroupHint = null })
                               setActionsOpen(false);
                               setConfirmingRevoke(true);
                             }}
-                            className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[11.5px] font-bold text-gold hover:bg-white/5"
+                            className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[11.5px] font-bold text-gold hover:bg-brown/6"
                           >
                             <Undo2 size={13} /> {revokeAction.label}
                           </button>
@@ -781,7 +781,7 @@ function AdminOrderCard({ order, delay = 0, index = 0, mergedGroupHint = null })
                               setActionsOpen(false);
                               setConfirmingCancel(true);
                             }}
-                            className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[11.5px] font-bold text-[#ff8a63] hover:bg-white/5"
+                            className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[11.5px] font-bold text-[#ff8a63] hover:bg-brown/6"
                           >
                             <Ban size={13} /> Cancel Order
                           </button>
@@ -791,7 +791,7 @@ function AdminOrderCard({ order, delay = 0, index = 0, mergedGroupHint = null })
                             setActionsOpen(false);
                             setConfirmingDelete(true);
                           }}
-                          className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[11.5px] font-bold text-[#e35226] hover:bg-white/5"
+                          className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[11.5px] font-bold text-[#e35226] hover:bg-brown/6"
                         >
                           <Trash2 size={13} /> Delete Order
                         </button>
@@ -841,9 +841,9 @@ function AdminOrderCard({ order, delay = 0, index = 0, mergedGroupHint = null })
                 title={advanceBlockedByMerge ? (mergedGroupHint || 'Update this from the merged card above instead.') : undefined}
                 className={`flex shrink-0 items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 text-[11px] font-extrabold transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
                   advanceBlockedByMerge
-                    ? "border border-white/10 bg-white/5 text-muted"
+                    ? "border border-brown/12 bg-brown/6 text-muted"
                     : nextAction.patch.status === "CONFIRMED"
-                      ? "bg-gradient-to-b from-[#8fe3a0] to-[#3fae5c] text-black shadow-[0_6px_14px_-8px_rgba(63,174,92,0.6)]"
+                      ? "bg-gradient-to-b from-[#1E8E4A] to-[#3fae5c] text-black shadow-[0_6px_14px_-8px_rgba(63,174,92,0.6)]"
                       : "btn-3d text-black"
                 }`}
               >
@@ -929,7 +929,7 @@ function AdminOrderCard({ order, delay = 0, index = 0, mergedGroupHint = null })
           {/* Row 3 — customer + total (no item photos — see Items list below when expanded) */}
           <div className="flex items-center gap-2">
             <div className="min-w-0 flex-1">
-              <div className="truncate text-[12px] font-bold text-[#f2ece2]">
+              <div className="truncate text-[12px] font-bold text-brown">
                 {order.customer?.name || "Unnamed customer"}
               </div>
               <div className="text-[10px] font-semibold text-muted">
@@ -956,7 +956,7 @@ function AdminOrderCard({ order, delay = 0, index = 0, mergedGroupHint = null })
           {/* Row 4 — address, district/city highlighted like the Packing screen */}
           {order.address &&
             (order.address.city || order.address.district || formatStreetLine(order.address)) && (
-              <div className="flex flex-wrap items-center gap-1.5 border-t border-dashed border-white/10 pt-2.5">
+              <div className="flex flex-wrap items-center gap-1.5 border-t border-dashed border-brown/12 pt-2.5">
                 <MapPin size={12} className="shrink-0 text-muted" />
                 {formatStreetLine(order.address) && (
                   <span className="text-[10.5px] text-muted">
@@ -988,7 +988,7 @@ function AdminOrderCard({ order, delay = 0, index = 0, mergedGroupHint = null })
               transition={{ duration: 0.3, ease: "easeInOut" }}
               className="overflow-hidden"
             >
-              <div className="flex flex-col gap-3 border-t border-dashed border-white/10 px-4 pb-4 pt-3.5">
+              <div className="flex flex-col gap-3 border-t border-dashed border-brown/12 px-4 pb-4 pt-3.5">
                 {/* Contact row */}
                 <div className="flex flex-wrap items-center gap-2">
                   <a
@@ -1025,7 +1025,7 @@ function AdminOrderCard({ order, delay = 0, index = 0, mergedGroupHint = null })
                     <div
                       key={item.productId || i}
                       className={`flex items-center gap-3 py-2 first:pt-0 last:pb-0 ${
-                        wasEdited ? "-mx-2 rounded-lg border border-[#5AC8FA]/30 bg-[#5AC8FA]/[0.06] px-2" : ""
+                        wasEdited ? "-mx-2 rounded-lg border border-[#0B7FBF]/30 bg-[#0B7FBF]/[0.06] px-2" : ""
                       }`}
                     >
                       <div className="orb-3d flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden !rounded-lg">
@@ -1041,9 +1041,9 @@ function AdminOrderCard({ order, delay = 0, index = 0, mergedGroupHint = null })
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="line-clamp-1 flex items-center gap-1.5 text-[11.5px] font-bold text-[#f2ece2]">
+                        <div className="line-clamp-1 flex items-center gap-1.5 text-[11.5px] font-bold text-brown">
                           {item.name}
-                          {wasEdited && <Pencil size={10} className="shrink-0 text-[#5AC8FA]" />}
+                          {wasEdited && <Pencil size={10} className="shrink-0 text-[#0B7FBF]" />}
                         </div>
                         {(item.nameTa || nameTaById[item.productId]) && (
                           <div className="line-clamp-1 text-[10px] font-semibold text-gold">
@@ -1069,7 +1069,7 @@ function AdminOrderCard({ order, delay = 0, index = 0, mergedGroupHint = null })
                 )}
 
                 {/* Price breakdown */}
-                <div className="flex flex-col gap-1 rounded-xl bg-black/20 px-3 py-2.5 text-[10.5px] text-[#cfc7bd]">
+                <div className="flex flex-col gap-1 rounded-xl bg-brown/8 px-3 py-2.5 text-[10.5px] text-muted">
                   <div className="flex justify-between">
                     <span>Subtotal (MRP)</span>
                     <span>
@@ -1094,14 +1094,14 @@ function AdminOrderCard({ order, delay = 0, index = 0, mergedGroupHint = null })
                       ₹{(pricedOrder.deliveryCharges ?? 0).toLocaleString("en-IN")}
                     </span>
                   </div>
-                  <div className="mt-1 flex justify-between border-t border-dashed border-white/10 pt-1.5 text-[11.5px] font-extrabold text-[#f2ece2]">
+                  <div className="mt-1 flex justify-between border-t border-dashed border-brown/12 pt-1.5 text-[11.5px] font-extrabold text-brown">
                     <span>Grand Total</span>
                     <span>
                       ₹{(pricedOrder.grandTotal ?? 0).toLocaleString("en-IN")}
                     </span>
                   </div>
                   {hasPriceChange && (
-                    <div className="mt-1 flex flex-col gap-1.5 border-t border-dashed border-white/10 pt-1.5">
+                    <div className="mt-1 flex flex-col gap-1.5 border-t border-dashed border-brown/12 pt-1.5">
                       <div className="text-[9.5px] font-semibold text-gold">
                         {useOriginalPrice
                           ? `Using original price (today's price is ₹${(liveRepricedOrder.grandTotal ?? 0).toLocaleString("en-IN")})`
@@ -1142,7 +1142,7 @@ function AdminOrderCard({ order, delay = 0, index = 0, mergedGroupHint = null })
 
                 {/* Address */}
                 {order.address && (
-                  <div className="flex items-start gap-2 rounded-xl bg-black/20 px-3 py-2.5 text-[10.5px] leading-relaxed text-[#cfc7bd]">
+                  <div className="flex items-start gap-2 rounded-xl bg-brown/8 px-3 py-2.5 text-[10.5px] leading-relaxed text-muted">
                     <MapPin size={13} className="mt-0.5 shrink-0 text-orange" />
                     <span>
                       {[
@@ -1165,7 +1165,7 @@ function AdminOrderCard({ order, delay = 0, index = 0, mergedGroupHint = null })
 
                 {/* Notes */}
                 {order.orderNotes && (
-                  <div className="flex items-start gap-2 rounded-xl bg-black/20 px-3 py-2.5 text-[10.5px] leading-relaxed text-[#cfc7bd]">
+                  <div className="flex items-start gap-2 rounded-xl bg-brown/8 px-3 py-2.5 text-[10.5px] leading-relaxed text-muted">
                     <StickyNote
                       size={13}
                       className="mt-0.5 shrink-0 text-orange"
@@ -1178,7 +1178,7 @@ function AdminOrderCard({ order, delay = 0, index = 0, mergedGroupHint = null })
                   an invoice exists. Once an invoice exists, the bill has done
                   its job and the Invoice section below takes over. */}
                 {!order.invoiceId && (
-                  <div className="flex flex-col gap-2 rounded-xl bg-black/20 px-3 py-2.5">
+                  <div className="flex flex-col gap-2 rounded-xl bg-brown/8 px-3 py-2.5">
                     <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted">
                       <FileText size={12} className="text-orange" />
                       Estimate Bill · Payment Pending

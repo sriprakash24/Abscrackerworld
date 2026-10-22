@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { X, Loader2, UploadCloud, ImageOff } from 'lucide-react';
 import FormField from '../checkout/FormField';
+import { COMBO_CATEGORY_NAME } from '../../constants/catalog';
 import {
   adminProductSchema,
   adminProductDefaultValues,
@@ -26,8 +27,10 @@ const TOGGLES = [
  * category dropdown — categories are managed on the separate /admin/categories
  * screen, this form only lets you pick one.
  */
-export default function ProductFormModal({ open, product, categories, onClose }) {
+export default function ProductFormModal({ open, product, categories: allCategories, onClose }) {
   const isEdit = !!product;
+  // The pinned combo category is managed from Admin → Combos, not here.
+  const categories = allCategories.filter((c) => c.categoryName !== COMBO_CATEGORY_NAME);
   const fileInputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -128,7 +131,7 @@ export default function ProductFormModal({ open, product, categories, onClose })
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-black/70 px-4 py-6 sm:items-center"
+          className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-brown/60 px-4 py-6 sm:items-center"
           onClick={onClose}
         >
           <motion.div
@@ -156,15 +159,15 @@ export default function ProductFormModal({ open, product, categories, onClose })
 
               <div className="grid grid-cols-2 gap-3">
                 <label className="block">
-                  <span className="mb-1.5 flex items-center gap-1 text-[11px] font-bold tracking-wide text-[#cfc7bd]">
+                  <span className="mb-1.5 flex items-center gap-1 text-[11px] font-bold tracking-wide text-muted">
                     Category <span className="text-orange">*</span>
                   </span>
                   <select
                     {...register('category')}
-                    className={`w-full rounded-xl border bg-[#0c0906] px-3.5 py-2.5 text-[12.5px] font-semibold text-[#f2ece2] outline-none transition-all duration-200 ${
+                    className={`w-full rounded-xl border bg-white px-3.5 py-2.5 text-[12.5px] font-semibold text-brown outline-none transition-all duration-200 ${
                       errors.category
                         ? 'border-[#e35226] shadow-[0_0_0_3px_rgba(227,82,38,0.15)]'
-                        : 'border-white/10 focus:border-orange/70'
+                        : 'border-brown/12 focus:border-orange/70'
                     }`}
                   >
                     <option value="" disabled>
@@ -209,7 +212,7 @@ export default function ProductFormModal({ open, product, categories, onClose })
               />
 
               <div>
-                <span className="mb-1.5 flex items-center gap-1 text-[11px] font-bold tracking-wide text-[#cfc7bd]">
+                <span className="mb-1.5 flex items-center gap-1 text-[11px] font-bold tracking-wide text-muted">
                   Product image
                 </span>
                 <div className="flex items-center gap-3">
@@ -232,7 +235,7 @@ export default function ProductFormModal({ open, product, categories, onClose })
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={uploading}
-                      className="btn-3d-outline flex items-center justify-center gap-1.5 self-start rounded-lg px-3 py-1.5 text-[11px] font-bold text-[#f2ece2] disabled:opacity-50"
+                      className="btn-3d-outline flex items-center justify-center gap-1.5 self-start rounded-lg px-3 py-1.5 text-[11px] font-bold text-brown disabled:opacity-50"
                     >
                       {uploading ? <Loader2 size={12} className="animate-spin" /> : <UploadCloud size={12} />}
                       {uploading ? 'Uploading…' : 'Upload image'}
@@ -243,7 +246,7 @@ export default function ProductFormModal({ open, product, categories, onClose })
               </div>
 
               <div>
-                <span className="mb-1.5 block text-[11px] font-bold tracking-wide text-[#cfc7bd]">Tags</span>
+                <span className="mb-1.5 block text-[11px] font-bold tracking-wide text-muted">Tags</span>
                 <div className="flex flex-wrap gap-2">
                   {TOGGLES.map(({ key, label }) => (
                     <ToggleChip key={key} label={label} registration={register(key)} watchValue={watch(key)} />
@@ -255,7 +258,7 @@ export default function ProductFormModal({ open, product, categories, onClose })
                 <button
                   type="button"
                   onClick={onClose}
-                  className="btn-3d-outline flex-1 rounded-xl py-2.5 text-[12.5px] font-bold text-[#f2ece2]"
+                  className="btn-3d-outline flex-1 rounded-xl py-2.5 text-[12.5px] font-bold text-brown"
                 >
                   Cancel
                 </button>
@@ -282,7 +285,7 @@ function ToggleChip({ label, registration, watchValue }) {
       className={`flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold transition-colors ${
         watchValue
           ? 'border-orange/50 bg-orange/15 text-orange'
-          : 'border-white/10 bg-[#0c0906] text-muted'
+          : 'border-brown/12 bg-white text-muted'
       }`}
     >
       <input type="checkbox" {...registration} className="hidden" />

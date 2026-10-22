@@ -32,7 +32,7 @@ export default function TermsCheckbox({ checked, error, registration }) {
             </AnimatePresence>
           </motion.span>
         </span>
-        <span className="text-[11.5px] leading-snug text-[#cfc7bd]">
+        <span className="text-[11.5px] leading-snug text-muted">
           I have reviewed my order details and agree to the{' '}
           <span className="font-bold text-gold">Terms &amp; Conditions</span>.
         </span>

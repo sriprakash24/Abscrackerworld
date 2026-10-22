@@ -26,7 +26,7 @@ export default function EmptyCart() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.15, ease: 'easeOut' }}
-        className="text-embossed relative z-10 mt-5 text-[16px] font-extrabold text-[#f2ece2]"
+        className="text-embossed relative z-10 mt-5 text-[16px] font-extrabold text-brown"
       >
         Your cart is empty
       </motion.h2>

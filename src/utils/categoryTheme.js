@@ -1,12 +1,13 @@
 // Per-category color identity — used to make each category visually
 // distinct (header accents, badges, product-card edges, the quick-nav
 // launcher) instead of every section reading as the same dark/orange
-// surface. Colors are chosen to still feel premium against the dark
-// theme (used as accents/glows, never as full backgrounds) while nodding
+// surface. Colors are used as accents (edges, badges, tints) on the light
+// Peach theme — `ink` is a darkened variant for readable text while nodding
 // at what the category actually is — gold for sparklers, electric
 // yellow-green for bijili, deep red for bombs, a rainbow sweep for
 // multi-colour sky shots, etc.
 const CATEGORY_THEME = {
+  'COMBO ABS': { from: '#FF8A65', to: '#F04452', solid: '#FF6F61' },
   SPARKLERS: { from: '#FFE082', to: '#FFA000', solid: '#FFC107' },
   'GROUND CHAKKARAS': { from: '#CBA6FF', to: '#7C4DFF', solid: '#9575FF' },
   'FLOWER POT': { from: '#FFCC80', to: '#F57C00', solid: '#FFA726' },
@@ -43,9 +44,28 @@ function hashString(str) {
   return hash;
 }
 
+/** Darkens a #rrggbb colour by `amt` (0-1) — used to derive readable text
+ * ("ink") colours from each category's bright accent on the light theme. */
+function darken(hex, amt = 0.35) {
+  const n = parseInt(hex.slice(1), 16);
+  const c = (v) => Math.max(0, Math.round(v * (1 - amt)));
+  const r = c((n >> 16) & 255);
+  const g = c((n >> 8) & 255);
+  const b = c(n & 255);
+  return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
+}
+
+function withInk(theme) {
+  return { ...theme, ink: darken(theme.to, 0.3) };
+}
+
+const THEME_CACHE = new Map();
+
 export function getCategoryTheme(categoryName = '') {
   const key = categoryName.trim().toUpperCase();
-  if (CATEGORY_THEME[key]) return CATEGORY_THEME[key];
-  const idx = hashString(key) % FALLBACK_PALETTE.length;
-  return FALLBACK_PALETTE[idx];
+  if (THEME_CACHE.has(key)) return THEME_CACHE.get(key);
+  const base = CATEGORY_THEME[key] || FALLBACK_PALETTE[hashString(key) % FALLBACK_PALETTE.length];
+  const theme = withInk(base);
+  THEME_CACHE.set(key, theme);
+  return theme;
 }

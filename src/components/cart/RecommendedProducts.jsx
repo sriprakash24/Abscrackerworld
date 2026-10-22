@@ -6,7 +6,7 @@ export default function RecommendedProducts({ title, products }) {
   return (
     <div className="pt-4">
       <div className="flex items-center justify-between px-4">
-        <h3 className="text-[12.5px] font-extrabold tracking-wide text-[#f2ece2]">{title}</h3>
+        <h3 className="text-[12.5px] font-extrabold tracking-wide text-brown">{title}</h3>
       </div>
       <div className="mt-2.5 flex gap-3 overflow-x-auto px-4 pb-1" style={{ scrollSnapType: 'x proximity' }}>
         {products.map((product) => (

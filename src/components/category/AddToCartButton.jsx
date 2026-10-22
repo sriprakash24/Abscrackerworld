@@ -326,7 +326,7 @@ export default function AddToCartButton({
             onClick={() => applyQuantity(n)}
             disabled={chipDisabled}
             className={cn(
-              "flex-1 rounded-md border border-white/10 bg-black/25 py-1 text-[9.5px] font-extrabold text-[#f2ece2] transition-colors active:scale-95",
+              "flex-1 rounded-md border border-white/10 bg-white py-1 text-[9.5px] font-extrabold text-brown transition-colors active:scale-95",
               inCart === n && "border-accent/70 bg-accent/25 text-accent",
               chipDisabled && "cursor-not-allowed opacity-30",
             )}

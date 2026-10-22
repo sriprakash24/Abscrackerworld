@@ -23,7 +23,15 @@ export function useCartFirestoreSync() {
   // diff against it instead of re-sending everything every time.
   const lastSyncedRef = useRef(new Map());
 
+  // A different customer (or a logout) means the "last synced" snapshot no
+  // longer describes the new user's Firestore cart — start the diff fresh.
+  const lastMobileRef = useRef(mobile);
+
   useEffect(() => {
+    if (lastMobileRef.current !== mobile) {
+      lastMobileRef.current = mobile;
+      lastSyncedRef.current = new Map();
+    }
     if (!mobile) return;
 
     const items = getCartItems();

@@ -12,7 +12,7 @@ export default function FooterStrip() {
           return (
             <div key={item.label} className="flex items-center gap-2.5">
               <Icon size={20} strokeWidth={1.8} className="shrink-0 text-orange" />
-              <span className="flex flex-col text-[11px] font-semibold text-[#ddd4c8]">
+              <span className="flex flex-col text-[11px] font-semibold text-brown">
                 {item.label}
                 <small className="text-[9.5px] font-normal text-muted">{item.sub}</small>
               </span>

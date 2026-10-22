@@ -16,7 +16,7 @@ const cardVariants = {
 };
 
 const STOCK_META = {
-  in: { text: 'In Stock', className: 'text-[#8fe3a0]' },
+  in: { text: 'In Stock', className: 'text-[#1E8E4A]' },
   out: { text: 'Sold Out', className: 'text-[#e35226]' },
 };
 
@@ -100,7 +100,7 @@ export default function ProductCard({ product, theme }) {
         </div>
       </div>
 
-      <div className="mt-2 line-clamp-2 min-h-[30px] text-[12px] font-bold leading-snug text-[#f2ece2]">
+      <div className="mt-2 line-clamp-2 min-h-[30px] text-[12px] font-bold leading-snug text-brown">
         {product.name}
       </div>
       {product.nameTa && (

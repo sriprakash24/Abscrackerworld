@@ -23,7 +23,7 @@ export default function QuickCategoryStrip({ onJump }) {
                 className="art-float flex h-full w-full items-center justify-center leading-none"
               />
             </div>
-            <span className="whitespace-nowrap text-[11px] font-semibold text-[#ddd4c8]">
+            <span className="whitespace-nowrap text-[11px] font-semibold text-brown">
               {cat.name.charAt(0) + cat.name.slice(1).toLowerCase()}
             </span>
           </button>

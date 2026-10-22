@@ -17,8 +17,8 @@ export default function CategoryHeader({
     <div
       className="glass sticky top-0 z-30 flex items-center gap-2.5 px-3 py-3"
       style={{
-        borderBottom: '1px solid rgba(255,154,0,.22)',
-        boxShadow: '0 10px 26px -14px rgba(0,0,0,.7), 0 0 20px rgba(255,122,0,.1)',
+        borderBottom: '1px solid rgba(255,138,101,.35)',
+        boxShadow: '0 10px 26px -16px rgba(240,100,70,.45)',
       }}
     >
       <button
@@ -30,7 +30,7 @@ export default function CategoryHeader({
       </button>
 
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5 truncate text-[13.5px] font-extrabold leading-tight text-[#f2ece2]">
+        <div className="flex items-center gap-1.5 truncate text-[13.5px] font-extrabold leading-tight text-brown">
           <CategoryIcon
             image={categoryImage}
             icon={categoryIcon}
@@ -60,9 +60,9 @@ export default function CategoryHeader({
         onClick={onToggleSearch}
         className={cn(
           'orb-3d flex h-9 w-9 shrink-0 items-center justify-center !rounded-full text-orange transition-colors',
-          searchOpen && 'border-gold text-[#1a0d00]'
+          searchOpen && 'border-red text-white'
         )}
-        style={searchOpen ? { background: 'linear-gradient(180deg,#ffcf6b,#ff7a00)' } : undefined}
+        style={searchOpen ? { background: 'linear-gradient(135deg,#ff8a65,#f04452)' } : undefined}
         aria-label="Search in category"
       >
         <Search size={17} strokeWidth={2.4} />

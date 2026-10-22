@@ -8,12 +8,15 @@ import AdminSectionHeader from '../../components/admin/AdminSectionHeader';
 import AdminTabsNav from '../../components/admin/AdminTabsNav';
 import ProductFormModal from '../../components/admin/ProductFormModal';
 import ConfirmDeleteDialog from '../../components/admin/ConfirmDeleteDialog';
+import { COMBO_CATEGORY_NAME } from '../../constants/catalog';
 import { subscribeToCategoryDocs, deleteProductDoc, deleteProductImageIfOwned, setProductHidden } from '../../services/products';
 
 export default function AdminProducts() {
   const { user, logout } = useAdminAuth();
   const navigate = useNavigate();
-  const { products, loading } = useProducts();
+  const { products: allProducts, loading } = useProducts();
+  // Combo packs are managed on Admin → Combos (they have their own fields).
+  const products = useMemo(() => allProducts.filter((p) => !p.isCombo), [allProducts]);
 
   const [categories, setCategories] = useState([]);
   const [search, setSearch] = useState('');
@@ -95,7 +98,7 @@ export default function AdminProducts() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#050505] pb-28 text-white">
+    <div className="min-h-screen w-full bg-bg pb-28 text-brown">
       <AdminSectionHeader
         icon={PackageSearch}
         title="Product Management"
@@ -113,7 +116,7 @@ export default function AdminProducts() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search products…"
-              className="w-full bg-transparent text-[12.5px] font-semibold text-[#f2ece2] outline-none placeholder:text-muted placeholder:font-normal"
+              className="w-full bg-transparent text-[12.5px] font-semibold text-brown outline-none placeholder:text-muted placeholder:font-normal"
             />
           </div>
           <button
@@ -125,9 +128,17 @@ export default function AdminProducts() {
           </button>
         </div>
 
+        <p className="rounded-xl border border-coral/30 bg-peach-light/70 px-3.5 py-2 text-[11.5px] font-medium text-brown">
+          Looking for combo packs? They live in{' '}
+          <button onClick={() => navigate('/admin/combos')} className="font-extrabold text-red underline">
+            Combos
+          </button>
+          .
+        </p>
+
         <div className="flex gap-1.5 overflow-x-auto pb-1">
           <FilterChip active={categoryFilter === 'ALL'} onClick={() => setCategoryFilter('ALL')} label={`All (${products.length})`} />
-          {categories.map((c) => (
+          {categories.filter((c) => c.categoryName !== COMBO_CATEGORY_NAME).map((c) => (
             <FilterChip
               key={c.id}
               active={categoryFilter === c.categoryName}
@@ -183,7 +194,7 @@ function FilterChip({ active, onClick, label }) {
     <button
       onClick={onClick}
       className={`shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-bold tracking-wide transition-colors ${
-        active ? 'border-orange/50 bg-orange/15 text-orange' : 'border-white/10 bg-[#0c0906] text-muted'
+        active ? 'border-orange/50 bg-orange/15 text-orange' : 'border-brown/12 bg-white text-muted'
       }`}
     >
       {label}
@@ -193,7 +204,7 @@ function FilterChip({ active, onClick, label }) {
 
 function ProductRow({ product, onEdit, onDelete, onToggleHidden, toggling }) {
   const stockMeta = {
-    in: { label: 'In stock', className: 'border-[#8fe3a0]/35 bg-[#8fe3a0]/10 text-[#8fe3a0]' },
+    in: { label: 'In stock', className: 'border-[#1E8E4A]/35 bg-[#1E8E4A]/10 text-[#1E8E4A]' },
     low: { label: 'Low stock', className: 'border-gold/35 bg-gold/10 text-gold' },
     out: { label: 'Out of stock', className: 'border-[#e35226]/35 bg-[#e35226]/10 text-[#e35226]' },
   }[product.stock];
@@ -210,9 +221,9 @@ function ProductRow({ product, onEdit, onDelete, onToggleHidden, toggling }) {
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <p className="truncate text-[12.5px] font-bold text-[#f2ece2]">{product.name}</p>
+          <p className="truncate text-[12.5px] font-bold text-brown">{product.name}</p>
           {product.hidden && (
-            <span className="shrink-0 rounded-full border border-white/15 bg-white/5 px-1.5 py-0.5 text-[8.5px] font-bold tracking-wide text-muted">
+            <span className="shrink-0 rounded-full border border-brown/16 bg-brown/6 px-1.5 py-0.5 text-[8.5px] font-bold tracking-wide text-muted">
               HIDDEN
             </span>
           )}
@@ -243,20 +254,20 @@ function ProductRow({ product, onEdit, onDelete, onToggleHidden, toggling }) {
           aria-label={product.hidden ? 'Show product' : 'Hide product'}
           aria-pressed={!product.hidden}
           className={`orb-3d flex h-8 w-8 items-center justify-center !rounded-full transition-colors disabled:opacity-50 ${
-            product.hidden ? 'text-muted hover:text-[#f2ece2]' : 'text-[#8fe3a0] hover:text-[#8fe3a0]'
+            product.hidden ? 'text-muted hover:text-brown' : 'text-[#1E8E4A] hover:text-[#1E8E4A]'
           }`}
         >
           {toggling ? <Loader2 size={13} className="animate-spin" /> : product.hidden ? <EyeOff size={13} /> : <Eye size={13} />}
         </button>
         <button
           onClick={onEdit}
-          className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-[#f2ece2] hover:text-orange"
+          className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-brown hover:text-orange"
         >
           <Pencil size={13} />
         </button>
         <button
           onClick={onDelete}
-          className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-[#f2ece2] hover:text-[#e35226]"
+          className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-brown hover:text-[#e35226]"
         >
           <Trash2 size={13} />
         </button>
@@ -268,11 +279,11 @@ function ProductRow({ product, onEdit, onDelete, onToggleHidden, toggling }) {
 function ProductRowSkeleton() {
   return (
     <div className="surface-3d flex animate-pulse items-center gap-3 rounded-2xl p-3">
-      <div className="h-14 w-14 shrink-0 rounded-xl bg-white/5" />
+      <div className="h-14 w-14 shrink-0 rounded-xl bg-brown/6" />
       <div className="flex-1 space-y-2">
-        <div className="h-3 w-2/3 rounded bg-white/5" />
-        <div className="h-2.5 w-1/2 rounded bg-white/5" />
-        <div className="h-2.5 w-1/3 rounded bg-white/5" />
+        <div className="h-3 w-2/3 rounded bg-brown/6" />
+        <div className="h-2.5 w-1/2 rounded bg-brown/6" />
+        <div className="h-2.5 w-1/3 rounded bg-brown/6" />
       </div>
     </div>
   );

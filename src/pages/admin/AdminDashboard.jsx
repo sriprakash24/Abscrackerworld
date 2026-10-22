@@ -295,7 +295,7 @@ export default function AdminDashboard() {
     search.trim().length > 0;
 
   return (
-    <div className="min-h-screen w-full bg-[#050505] pb-28 text-white">
+    <div className="min-h-screen w-full bg-bg pb-28 text-brown">
       <AdminOrdersHeader
         email={user?.email}
         orderCount={orders.length}
@@ -308,7 +308,7 @@ export default function AdminDashboard() {
 
         {/* Sticky so the admin can always search/filter without scrolling
             back up, even deep into a long order list. */}
-        <div className="sticky top-16 z-20 -mx-4 flex flex-col gap-2 bg-[#050505]/95 px-4 pb-2 pt-1 backdrop-blur-sm sm:-mx-6 sm:px-6">
+        <div className="sticky top-16 z-20 -mx-4 flex flex-col gap-2 bg-bg/95 px-4 pb-2 pt-1 backdrop-blur-sm sm:-mx-6 sm:px-6">
           <div className="flex items-center gap-2">
             <div className="flex-1">
               <AdminOrderSearchBar value={search} onChange={setSearch} />
@@ -320,7 +320,7 @@ export default function AdminDashboard() {
               className={`flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-2.5 text-[10.5px] font-bold transition-colors ${
                 bulkMode
                   ? "border-orange/50 bg-orange/15 text-orange"
-                  : "border-white/10 bg-white/5 text-muted hover:text-[#f2ece2]"
+                  : "border-brown/12 bg-brown/6 text-muted hover:text-brown"
               }`}
             >
               <ListChecks size={14} />
@@ -332,7 +332,7 @@ export default function AdminDashboard() {
               is deliberately not offered here, see isBulkEligible above. */}
           {bulkMode && selectedIds.size > 0 && (
             <div className="surface-3d flex flex-wrap items-center gap-2 rounded-xl border border-orange/30 px-3 py-2.5">
-              <span className="mr-1 shrink-0 text-[11px] font-extrabold text-[#f2ece2]">
+              <span className="mr-1 shrink-0 text-[11px] font-extrabold text-brown">
                 {selectedIds.size} selected
               </span>
               {BULK_TARGETS.map((target) => (
@@ -350,7 +350,7 @@ export default function AdminDashboard() {
                 type="button"
                 onClick={() => setSelectedIds(new Set())}
                 title="Clear selection"
-                className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted hover:text-[#f2ece2]"
+                className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted hover:text-brown"
               >
                 <X size={14} />
               </button>
@@ -554,7 +554,7 @@ function BulkSelectRow({ eligible, selected, onToggle, children }) {
             type="button"
             onClick={onToggle}
             className={
-              selected ? "text-orange" : "text-muted hover:text-[#f2ece2]"
+              selected ? "text-orange" : "text-muted hover:text-brown"
             }
           >
             {selected ? <CheckSquare size={19} /> : <Square size={19} />}

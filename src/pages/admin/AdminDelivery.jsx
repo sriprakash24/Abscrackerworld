@@ -244,7 +244,7 @@ export default function AdminDelivery() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#050505] pb-28 text-white">
+    <div className="min-h-screen w-full bg-bg pb-28 text-brown">
       <AdminOrdersHeader
         email={user?.email}
         orderCount={packedCount + outForDeliveryCount}
@@ -254,7 +254,7 @@ export default function AdminDelivery() {
 
       <div className="mx-auto flex max-w-5xl flex-col gap-3 px-4 py-3 sm:px-6 sm:py-5">
         <div className="flex flex-col gap-1">
-          <h2 className="text-[15px] font-extrabold text-[#f2ece2]">Delivery</h2>
+          <h2 className="text-[15px] font-extrabold text-brown">Delivery</h2>
           <p className="text-[11px] text-muted">
             Sorted by actual payment-confirmed date — oldest first. "Delivered" here means
             dispatched to the transport office.
@@ -272,7 +272,7 @@ export default function AdminDelivery() {
             Ready to Dispatch
             <span
               className={`rounded-full px-1.5 text-[9.5px] font-extrabold ${
-                stage === "PACKED" ? "bg-black/20 text-black" : "bg-white/10 text-muted"
+                stage === "PACKED" ? "bg-brown/8 text-black" : "bg-brown/12 text-muted"
               }`}
             >
               {packedCount}
@@ -288,7 +288,7 @@ export default function AdminDelivery() {
             Out for Delivery
             <span
               className={`rounded-full px-1.5 text-[9.5px] font-extrabold ${
-                stage === "OUT_FOR_DELIVERY" ? "bg-black/20 text-black" : "bg-white/10 text-muted"
+                stage === "OUT_FOR_DELIVERY" ? "bg-brown/8 text-black" : "bg-brown/12 text-muted"
               }`}
             >
               {outForDeliveryCount}
@@ -328,7 +328,7 @@ export default function AdminDelivery() {
           ) : clusters.length === 0 ? (
             <div className="surface-3d flex flex-col items-center gap-2 rounded-2xl px-4 py-10 text-center">
               <PackageSearch size={22} className="text-muted" />
-              <div className="text-[12px] font-bold text-[#f2ece2]">
+              <div className="text-[12px] font-bold text-brown">
                 {isFiltered ? "No matching orders" : config.emptyTitle}
               </div>
               <div className="text-[10.5px] text-muted">

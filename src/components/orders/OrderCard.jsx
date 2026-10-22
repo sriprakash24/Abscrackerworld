@@ -174,7 +174,7 @@ export default function OrderCard({ order, delay = 0 }) {
       <div className="flex flex-col gap-3 p-4">
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <div className="truncate text-[12.5px] font-extrabold text-[#f2ece2]">{order.orderId || order.id}</div>
+            <div className="truncate text-[12.5px] font-extrabold text-brown">{order.orderId || order.id}</div>
             <div className="text-[10px] text-muted">{formatOrderDate(order.createdAt)}</div>
           </div>
           <span
@@ -269,7 +269,7 @@ export default function OrderCard({ order, delay = 0 }) {
                 onClick={handleDownloadInvoice}
                 disabled={!order.invoiceId || downloadingInvoice}
                 style={{ borderColor: 'rgba(143, 227, 160, 0.55)' }}
-                className="btn-3d-outline flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[11.5px] font-extrabold text-[#8fe3a0] disabled:opacity-50"
+                className="btn-3d-outline flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[11.5px] font-extrabold text-[#1E8E4A] disabled:opacity-50"
               >
                 {downloadingInvoice ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
                 Download Invoice
@@ -289,7 +289,7 @@ export default function OrderCard({ order, delay = 0 }) {
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <div className="flex flex-col gap-3 border-t border-dashed border-white/10 px-4 pb-4 pt-3.5">
+            <div className="flex flex-col gap-3 border-t border-dashed border-brown/12 px-4 pb-4 pt-3.5">
               <div className="flex flex-col divide-y divide-white/[0.06]">
                 {items.map((item, i) => {
                   const priceChange = priceChangeByProductId.get(item.productId);
@@ -308,7 +308,7 @@ export default function OrderCard({ order, delay = 0 }) {
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="line-clamp-1 text-[11.5px] font-bold text-[#f2ece2]">{item.name}</div>
+                      <div className="line-clamp-1 text-[11.5px] font-bold text-brown">{item.name}</div>
                       {(item.nameTa || nameTaById[item.productId]) && (
                         <div className="line-clamp-1 text-[10px] font-semibold text-gold">
                           {item.nameTa || nameTaById[item.productId]}
@@ -335,7 +335,7 @@ export default function OrderCard({ order, delay = 0 }) {
               )}
 
               {order.address && (
-                <div className="flex items-start gap-2 rounded-xl bg-black/20 px-3 py-2.5 text-[10.5px] leading-relaxed text-[#cfc7bd]">
+                <div className="flex items-start gap-2 rounded-xl bg-brown/8 px-3 py-2.5 text-[10.5px] leading-relaxed text-muted">
                   <MapPin size={13} className="mt-0.5 shrink-0 text-orange" />
                   <span>
                     {[order.address.houseNumber, order.address.street, order.address.area, order.address.city, order.address.district, order.address.state, order.address.pincode]
@@ -351,7 +351,7 @@ export default function OrderCard({ order, delay = 0 }) {
                 </div>
               )}
 
-              <div className="flex items-center gap-2 border-t border-dashed border-white/10 pt-3">
+              <div className="flex items-center gap-2 border-t border-dashed border-brown/12 pt-3">
                 <button
                   onClick={copyOrderId}
                   className="btn-3d-outline flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-[11px] font-bold text-gold"

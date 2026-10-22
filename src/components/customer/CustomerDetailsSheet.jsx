@@ -14,13 +14,13 @@ import { useCustomerGateStore } from "../../store/useCustomerGateStore";
 import { useCustomerStore } from "../../store/useCustomerStore";
 import { db } from "../../firebase/config";
 import { saveUserProfile, getUserProfile } from "../../services/usersFirestore";
-import customerGateArt from "../../assets/customer/customer-gate-bg.png";
+import customerGateArt from "../../assets/customer/customer-gate-bg.jpg";
 
 // Native pixel size of customerGateArt — used only to size the wrapper's
 // aspect-ratio so the % based overlay positions below always land inside
 // the blank cream card painted into the artwork, at any screen width.
-const ART_W = 1144;
-const ART_H = 1375;
+const ART_W = 1211;
+const ART_H = 1299;
 
 // How long to wait after the visitor stops typing the mobile number before
 // checking Firestore for an existing users/{mobile} profile.
@@ -40,10 +40,10 @@ const LOOKUP_DEBOUNCE_MS = 350;
  * own address prefill then takes it from there for repeat orders). If the
  * mobile number is new, Name stays mandatory, same as before.
  *
- * The whole card IS the festive family photo-frame artwork (ABS Crackers
- * World branded), with the Name / Mobile / Continue mini-form dropped
- * directly into the blank cream space the artwork was designed with —
- * no separate dark modal chrome layered on top of it.
+ * The whole card IS the festive family artwork (Dheeran Enterprises
+ * branded), with the Name / Mobile / Continue mini-form dropped directly
+ * into the blank cream board painted into the artwork — no separate modal
+ * chrome layered on top of it.
  */
 export default function CustomerDetailsSheet() {
   const isOpen = useCustomerGateStore((s) => s.isOpen);
@@ -152,7 +152,7 @@ export default function CustomerDetailsSheet() {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto p-4 py-6">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto p-3 py-6">
           {/* Backdrop */}
           <motion.div
             key="backdrop"
@@ -161,27 +161,26 @@ export default function CustomerDetailsSheet() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
             onClick={handleClose}
-            className="absolute inset-0"
-            style={{
-              background:
-                "radial-gradient(120% 90% at 50% 40%, rgba(20,4,5,0.72) 0%, rgba(10,2,3,0.88) 60%, rgba(6,1,1,0.95) 100%)",
-            }}
+            className="absolute inset-0 bg-brown/55 backdrop-blur-[3px]"
           />
 
           {/* Card — the artwork itself, full bleed, at its native aspect ratio
               so the % positioned form overlay below always lands exactly in
-              the blank cream space the art was designed with. */}
+              the blank cream board the art was designed with. */}
           <motion.div
             key="card"
             initial={{ opacity: 0, scale: 0.92, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 10 }}
             transition={{ type: "spring", damping: 24, stiffness: 300 }}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Quick details"
             className="relative z-10 w-full"
             style={{
-              maxWidth: "min(90vw, 390px)",
+              maxWidth: "min(96vw, 440px)",
               aspectRatio: `${ART_W} / ${ART_H}`,
-              boxShadow: "0 24px 70px -18px rgba(0,0,0,0.85), 0 0 46px rgba(216,28,43,0.2)",
+              boxShadow: "0 24px 70px -18px rgba(113,50,31,0.45)",
             }}
           >
             <img
@@ -191,57 +190,43 @@ export default function CustomerDetailsSheet() {
               draggable={false}
             />
 
-            <button
-              onClick={handleClose}
-              aria-label="Close"
-              className="absolute flex items-center justify-center rounded-full bg-black/45 text-white/90 backdrop-blur-sm transition-colors hover:bg-black/65"
-              style={{ top: "1.6%", right: "1.6%", width: "7.5%", aspectRatio: "1 / 1" }}
-            >
-              <X size={14} />
-            </button>
-
             {/* Form overlay — positioned by % so it always sits inside the
-                blank cream card painted into the artwork. */}
+                blank cream board painted into the artwork. */}
             <div
-              className="absolute flex flex-col justify-center gap-[3%] px-[3%]"
-              style={{ left: "18%", right: "18%", top: "32%", bottom: "21%" }}
+              className="absolute flex flex-col justify-center gap-[1.6%]"
+              style={{ left: "23%", right: "23%", top: "36.5%", bottom: "22.5%" }}
             >
-              <div className="text-center">
-                <p className="text-[13px] font-extrabold leading-tight text-[#3a2410]">
-                  Quick Details
-                </p>
-                <p className="text-[9.5px] font-bold leading-tight text-[#8a5a2b]">
-                  உங்கள் விவரங்களை பதிவு செய்யுங்கள்
-                </p>
-              </div>
+              <p className="text-center text-[13px] font-extrabold leading-none text-[#5a2a14]">
+                Quick Details
+              </p>
 
-              <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-[6%]">
+              <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-[3.5%]">
                 {matchedProfile ? (
                   // Returning customer — mobile matched an existing profile,
                   // so we skip asking for the name entirely.
-                  <div className="flex items-center justify-center gap-1.5 rounded-[10px] border border-[#c99a5b]/50 bg-white/80 px-2.5 py-[7px] text-center">
+                  <div className="flex items-center justify-center gap-1.5 rounded-[10px] border border-[#e8b98a] bg-white/85 px-2.5 py-[5px] text-center">
                     <Check size={12} className="shrink-0 text-[#2f7a3a]" />
-                    <span className="text-[11px] font-extrabold text-[#3a2410]">
+                    <span className="text-[11.5px] font-extrabold text-[#5a2a14]">
                       Welcome back, {matchedProfile.name}!
                     </span>
                   </div>
                 ) : (
                   <label className="block">
-                    <span className="mb-[3px] block text-[9.5px] font-bold tracking-wide text-[#6b4423]">
+                    <span className="mb-[2px] block text-[9.5px] font-bold tracking-wide text-[#71321f]">
                       Name / பெயர்
                     </span>
                     <input
                       {...register("name")}
                       placeholder="Your name"
                       autoComplete="name"
-                      className={`w-full rounded-[10px] border bg-white/85 px-2.5 py-[7px] text-[12px] font-bold text-[#3a2410] outline-none placeholder:font-medium placeholder:text-[#a9895f] ${
+                      className={`w-full rounded-[10px] border bg-white/90 px-2.5 py-[5px] text-[12.5px] font-bold text-[#5a2a14] outline-none placeholder:font-medium placeholder:text-[#b58a6a] ${
                         errors.name
-                          ? "border-[#c23b1f] shadow-[0_0_0_2px_rgba(194,59,31,0.15)]"
-                          : "border-[#c99a5b]/60 focus:border-[#c23b1f]/70"
+                          ? "border-[#f04452] shadow-[0_0_0_2px_rgba(240,68,82,0.15)]"
+                          : "border-[#efc59b] focus:border-[#ff8a65]"
                       }`}
                     />
                     {errors.name && (
-                      <span className="mt-[2px] block text-[8.5px] font-bold text-[#c23b1f]">
+                      <span className="mt-[2px] block text-[9px] font-bold text-[#f04452]">
                         {errors.name.message}
                       </span>
                     )}
@@ -249,17 +234,17 @@ export default function CustomerDetailsSheet() {
                 )}
 
                 <label className="block">
-                  <span className="mb-[3px] block text-[9.5px] font-bold tracking-wide text-[#6b4423]">
+                  <span className="mb-[2px] block text-[9.5px] font-bold tracking-wide text-[#71321f]">
                     Mobile / மொபைல்
                   </span>
                   <div
-                    className={`flex items-center overflow-hidden rounded-[10px] border bg-white/85 ${
+                    className={`flex items-center overflow-hidden rounded-[10px] border bg-white/90 ${
                       errors.mobile
-                        ? "border-[#c23b1f] shadow-[0_0_0_2px_rgba(194,59,31,0.15)]"
-                        : "border-[#c99a5b]/60 focus-within:border-[#c23b1f]/70"
+                        ? "border-[#f04452] shadow-[0_0_0_2px_rgba(240,68,82,0.15)]"
+                        : "border-[#efc59b] focus-within:border-[#ff8a65]"
                     }`}
                   >
-                    <span className="border-r border-[#c99a5b]/40 px-2 py-[7px] text-[11px] font-extrabold text-[#3a2410]">
+                    <span className="border-r border-[#efc59b] px-2 py-[5px] text-[11.5px] font-extrabold text-[#5a2a14]">
                       +91
                     </span>
                     <input
@@ -268,14 +253,14 @@ export default function CustomerDetailsSheet() {
                       inputMode="numeric"
                       maxLength={10}
                       autoComplete="tel"
-                      className="w-full bg-transparent px-2 py-[7px] text-[12px] font-bold text-[#3a2410] outline-none placeholder:font-medium placeholder:text-[#a9895f]"
+                      className="w-full bg-transparent px-2 py-[5px] text-[12.5px] font-bold text-[#5a2a14] outline-none placeholder:font-medium placeholder:text-[#b58a6a]"
                     />
                     {checkingMobile && (
-                      <Loader2 size={12} className="mr-2 shrink-0 animate-spin text-[#8a5a2b]" />
+                      <Loader2 size={12} className="mr-2 shrink-0 animate-spin text-[#c0481f]" />
                     )}
                   </div>
                   {errors.mobile && (
-                    <span className="mt-[2px] block text-[8.5px] font-bold text-[#c23b1f]">
+                    <span className="mt-[2px] block text-[9px] font-bold text-[#f04452]">
                       {errors.mobile.message}
                     </span>
                   )}
@@ -284,7 +269,7 @@ export default function CustomerDetailsSheet() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className={`mt-[1%] flex items-center justify-center gap-1.5 rounded-[10px] bg-gradient-to-b from-[#f2872e] to-[#c23b1f] py-[8px] text-[12px] font-extrabold text-white shadow-[0_8px_16px_-8px_rgba(194,59,31,0.6)] transition-transform active:scale-[0.97] ${
+                  className={`mt-[1%] flex items-center justify-center gap-1.5 rounded-[10px] bg-gradient-to-b from-[#ff8a65] to-[#f04452] py-[6px] text-[12.5px] font-extrabold text-white shadow-[0_8px_16px_-8px_rgba(240,68,82,0.7)] transition-transform active:scale-[0.97] ${
                     submitting ? "cursor-not-allowed opacity-70" : ""
                   }`}
                 >
@@ -302,12 +287,21 @@ export default function CustomerDetailsSheet() {
                 </button>
               </form>
 
-              <p className="flex items-center justify-center gap-1 text-center text-[8px] font-bold leading-tight text-[#8a5a2b]">
+              <p className="flex items-center justify-center gap-1 text-center text-[8.5px] font-bold leading-tight text-[#8a5a2b]">
                 <ShieldCheck size={9} className="shrink-0" />
-                No password, no OTP — just for order updates.
+                No password, no OTP needed
               </p>
             </div>
           </motion.div>
+
+          {/* Close — outside the art so it never collides with the artwork */}
+          <button
+            onClick={handleClose}
+            aria-label="Close"
+            className="absolute right-3 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-brown shadow transition-colors hover:bg-white"
+          >
+            <X size={16} />
+          </button>
         </div>
       )}
     </AnimatePresence>

@@ -3,7 +3,6 @@ import { Home, ClipboardList, Truck } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { useCartStore } from '../../store/useCartStore';
 import absLogo from '../../assets/abs-logo.png';
-import navElephants from '../../assets/backgrounds/bottomnav-elephants.jpg';
 
 const LEFT_TABS = [{ key: 'home', label: 'HOME', icon: Home }, { key: 'orders', label: 'ORDERS', icon: ClipboardList }];
 const RIGHT_TABS = [{ key: 'cart', label: 'CART', icon: null }, { key: 'track', label: 'TRACK', icon: Truck }];
@@ -47,12 +46,6 @@ export default function BottomNav() {
   return (
     <div
       className="panel-3d fixed bottom-3 left-1/2 z-50 flex w-[92%] max-w-[400px] -translate-x-1/2 items-center justify-between rounded-[24px] px-3 py-2"
-      style={{
-        backgroundImage: `linear-gradient(160deg, rgba(18,9,5,0.62), rgba(8,4,2,0.7)), url(${navElephants})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center 38%',
-        backgroundRepeat: 'no-repeat',
-      }}
     >
       {LEFT_TABS.map((tab) => (
         <NavItem key={tab.key} tab={tab} active={active} onClick={goTab} />
@@ -63,20 +56,19 @@ export default function BottomNav() {
         onClick={() => goTab('home')}
         className="relative -mt-9 flex h-16 w-16 shrink-0 items-center justify-center rounded-full"
         style={{
-          background: 'radial-gradient(circle at 40% 30%, #241a10 0%, #100b07 65%, #060403 100%)',
+          background: 'radial-gradient(circle at 40% 30%, #ff8a65 0%, #f04452 75%, #c42a38 100%)',
         }}
       >
         <span
           className="absolute inset-0 rounded-full"
           style={{
-            border: '2px solid var(--color-orange)',
-            boxShadow:
-              '0 0 0 1px rgba(255,122,0,.35), 0 0 14px 2px rgba(255,122,0,.65), 0 0 30px 6px rgba(255,122,0,.35), 0 6px 16px -4px rgba(0,0,0,.7)',
+            border: '3px solid #ffffff',
+            boxShadow: '0 0 0 2px rgba(240,68,82,.55), 0 10px 20px -6px rgba(240,68,82,.65)',
           }}
         />
         <span className="flex flex-col items-center">
-          <img src={absLogo} alt="" className="h-6 w-6 object-contain" style={{ filter: 'drop-shadow(0 0 6px rgba(255,150,0,.8))' }} />
-          <span className="mt-0.5 text-[7.5px] font-black leading-none tracking-[1px] text-orange" style={{ textShadow: '0 0 6px rgba(255,122,0,.8)' }}>
+          <img src={absLogo} alt="" className="h-6 w-6 rounded-full bg-white object-contain p-[2px]" />
+          <span className="mt-0.5 text-[7.5px] font-black leading-none tracking-[1px] text-white">
             ABS WORLD
           </span>
         </span>
@@ -99,7 +91,7 @@ export default function BottomNav() {
             {count > 0 && (
               <span
                 className="absolute -right-2 -top-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full px-[3px] text-[8.5px] font-extrabold text-white"
-                style={{ background: 'linear-gradient(180deg,#ff8a5c,#e35226)', boxShadow: '0 0 6px rgba(255,87,34,.7)' }}
+                style={{ background: 'linear-gradient(135deg,#ff8a65,#f04452)', boxShadow: '0 2px 6px rgba(240,68,82,.5)' }}
               >
                 {count}
               </span>
