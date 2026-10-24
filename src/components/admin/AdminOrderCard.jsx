@@ -96,6 +96,26 @@ function QuickWhatsappButton({ onClick, busy, icon: Icon, title, sent }) {
   );
 }
 
+// Tiny TA / EN switch that sits beside the "send bill message" icon —
+// Tamil by default, tap to send that customer the English message instead.
+function MessageLangToggle({ lang, onToggle }) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onToggle();
+      }}
+      title={lang === "ta" ? "Message language: Tamil (tap for English)" : "Message language: English (tap for Tamil)"}
+      className={`flex h-8 shrink-0 items-center rounded-full border px-2 text-[10px] font-extrabold tracking-wide transition-colors ${
+        lang === "en" ? "border-orange/50 bg-orange/15 text-orange" : "border-brown/15 bg-white text-muted"
+      }`}
+    >
+      {lang === "ta" ? "தமிழ்" : "EN"}
+    </button>
+  );
+}
+
 // Small manual-toggle checkbox used to track "did I actually send this on
 // WhatsApp" next to the Message / Bill buttons — separate tap target from
 // the button itself, so ticking/unticking never re-triggers a send.
@@ -156,6 +176,7 @@ const PAYMENT_META = {
 // shallow prop comparison here is safe and cheap.
 function AdminOrderCard({ order, delay = 0, index = 0, mergedGroupHint = null }) {
   const [open, setOpen] = useState(false);
+  const [msgLang, setMsgLang] = useState("ta"); // bill message language: Tamil by default
   const [busy, setBusy] = useState(false);
   const [confirmingPayment, setConfirmingPayment] = useState(false);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
@@ -513,7 +534,7 @@ function AdminOrderCard({ order, delay = 0, index = 0, mergedGroupHint = null })
     if (sendingBillMessage) return;
     setSendingBillMessage(true);
     try {
-      sendBillMessage(pricedOrder);
+      sendBillMessage(pricedOrder, msgLang);
       markBillWhatsappSent(db, order.id, { messageSent: true }).catch((err) =>
         console.error("Failed to mark message as sent", err),
       );
@@ -901,6 +922,7 @@ function AdminOrderCard({ order, delay = 0, index = 0, mergedGroupHint = null })
                 />
               ) : (
                 <>
+                  <MessageLangToggle lang={msgLang} onToggle={() => setMsgLang((l) => (l === "ta" ? "en" : "ta"))} />
                   <QuickWhatsappButton
                     onClick={(e) => {
                       e.stopPropagation();

@@ -18,6 +18,7 @@ import {
   BarChart3,
   CircleDollarSign,
   Gift,
+  Tags,
 } from 'lucide-react';
 import { useAdminData } from '../../contexts/AdminDataContext';
 import { FINAL_STATUSES } from '../../constants/orderActions';
@@ -41,6 +42,7 @@ const MORE_GROUPS = [
       { to: '/admin/products', label: 'Products', icon: PackageSearch, color: '#4FC3F7' },
       { to: '/admin/price-update', label: 'Price Update', icon: BadgePercent, color: '#FFB74D' },
       { to: '/admin/inventory', label: 'Inventory', icon: Boxes, color: '#66BB6A' },
+      { to: '/admin/keywords', label: 'Keywords', icon: Tags, color: '#26A69A' },
       { to: '/admin/categories', label: 'Categories', icon: LayoutGrid, color: '#F06292' },
       { to: '/admin/order-limits', label: 'Order Limits', icon: Gauge, color: '#4DB6AC' },
     ],

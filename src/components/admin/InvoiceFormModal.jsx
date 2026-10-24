@@ -3,9 +3,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { X, Loader2 } from 'lucide-react';
+import { X, Minus, Plus, Eye } from 'lucide-react';
 import FormField from '../checkout/FormField';
 import InvoiceItemsEditor from './InvoiceItemsEditor';
+import InvoicePreviewModal from './InvoicePreviewModal';
 import {
   invoiceSchema,
   invoiceDefaultValues,
@@ -14,7 +15,7 @@ import {
 } from '../../schemas/invoiceSchema';
 import { PAYMENT_MODES, PAYMENT_MODE_LABELS } from '../../constants/invoiceConstants';
 import { db } from '../../firebase/config';
-import { createManualInvoice, updateInvoice } from '../../services/invoicesFirestore';
+import { createManualInvoice, updateInvoice, computeInvoiceTotals } from '../../services/invoicesFirestore';
 import { useProducts } from '../../contexts/ProductsContext';
 
 /**
@@ -27,10 +28,44 @@ import { useProducts } from '../../contexts/ProductsContext';
  * Management and the customer's Order History / Track Order pages stay in
  * sync automatically.
  */
+// Internal "bump the bill" size for the +/- buttons. Intentionally not shown
+// anywhere in the UI or on the customer's invoice.
+const ADJUST_STEP = 300;
+
+// An unsaved NEW invoice is kept in localStorage as the admin types, so an
+// accidental close / refresh / tab switch never loses the products already
+// picked. Cleared once the invoice is created or the admin taps "Start fresh".
+export const INVOICE_DRAFT_KEY = 'abs.invoice.draft.v1';
+
+function loadSavedDraft() {
+  try {
+    const raw = window.localStorage.getItem(INVOICE_DRAFT_KEY);
+    if (!raw) return null;
+    const v = JSON.parse(raw);
+    const hasContent =
+      (v.items || []).some((it) => it.description || it.productId) ||
+      v.customerName || v.customerMobile || v.customerAddress || Number(v.adjustment);
+    return hasContent ? { ...invoiceDefaultValues, ...v } : null;
+  } catch {
+    return null;
+  }
+}
+
+function clearSavedDraft() {
+  try {
+    window.localStorage.removeItem(INVOICE_DRAFT_KEY);
+    window.localStorage.removeItem('abs.invoice.picker.v1');
+  } catch {
+    /* storage unavailable */
+  }
+}
+
 export default function InvoiceFormModal({ open, invoice, onClose }) {
   const isEdit = !!invoice;
   const { products } = useProducts();
   const [submitting, setSubmitting] = useState(false);
+  // Validated form values + built invoice, while the preview is showing.
+  const [draft, setDraft] = useState(null);
 
   const {
     register,
@@ -45,11 +80,41 @@ export default function InvoiceFormModal({ open, invoice, onClose }) {
     defaultValues: invoiceDefaultValues,
   });
 
+  const [restored, setRestored] = useState(false);
+
   useEffect(() => {
     if (!open) return;
-    reset(isEdit ? invoiceToFormValues(invoice) : invoiceDefaultValues);
+    setDraft(null);
+    if (isEdit) {
+      reset(invoiceToFormValues(invoice));
+      setRestored(false);
+      return;
+    }
+    const saved = loadSavedDraft();
+    reset(saved || invoiceDefaultValues);
+    setRestored(!!saved);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, invoice]);
+
+  // Keep the unsaved new-invoice draft in localStorage while the form is open.
+  useEffect(() => {
+    if (!open || isEdit) return undefined;
+    const sub = watch((values) => {
+      try {
+        window.localStorage.setItem(INVOICE_DRAFT_KEY, JSON.stringify(values));
+      } catch {
+        /* storage full/unavailable — draft just won't be kept */
+      }
+    });
+    return () => sub.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isEdit, watch]);
+
+  const startFresh = () => {
+    clearSavedDraft();
+    reset(invoiceDefaultValues);
+    setRestored(false);
+  };
 
   const items = watch('items');
   const packagePercent = Number(watch('packagePercent')) || 0;
@@ -59,9 +124,37 @@ export default function InvoiceFormModal({ open, invoice, onClose }) {
     0,
   );
   const packageAmount = Math.round((packableAmount * packagePercent) / 100);
-  const grandTotal = Math.max(subtotal + packageAmount, 0);
+  const adjustment = Math.round(Number(watch('adjustment')) || 0);
+  const grandTotal = Math.max(subtotal + packageAmount + adjustment, 0);
 
-  const onSubmit = async (values) => {
+  const bumpAdjustment = (direction) => {
+    setValue('adjustment', String(adjustment + direction * ADJUST_STEP), { shouldDirty: true });
+  };
+
+  // Validates the form, then shows the invoice exactly as it will print
+  // before anything is saved. "Create Invoice" lives on the preview.
+  const onPreview = (values) => {
+    const payload = formValuesToInvoicePayload(values);
+    const totals = computeInvoiceTotals({
+      items: payload.items,
+      packagePercent: payload.packagePercent,
+      adjustmentAmount: payload.adjustmentAmount,
+    });
+    setDraft({
+      values,
+      invoice: {
+        ...payload,
+        ...totals,
+        invoiceNo: '',
+        source: isEdit ? invoice.source : 'MANUAL',
+        orderId: isEdit ? invoice.orderId : null,
+        cartDiscountAmount: isEdit ? invoice.cartDiscountAmount : 0,
+        date: isEdit ? invoice.date : new Date(),
+      },
+    });
+  };
+
+  const doSave = async (values) => {
     setSubmitting(true);
     try {
       const payload = formValuesToInvoicePayload(values);
@@ -75,8 +168,10 @@ export default function InvoiceFormModal({ open, invoice, onClose }) {
         );
       } else {
         await createManualInvoice(db, payload);
+        clearSavedDraft();
         toast.success('Invoice created');
       }
+      setDraft(null);
       onClose();
     } catch (err) {
       console.error('Failed to save invoice', err);
@@ -87,6 +182,7 @@ export default function InvoiceFormModal({ open, invoice, onClose }) {
   };
 
   return (
+    <>
     <AnimatePresence>
       {open && (
         <motion.div
@@ -119,10 +215,33 @@ export default function InvoiceFormModal({ open, invoice, onClose }) {
               </div>
             )}
 
-            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3.5">
+            {restored && !isEdit && (
+              <div className="mb-3.5 flex items-center justify-between gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-[10.5px] font-semibold text-emerald-700">
+                <span>Restored your unsaved invoice.</span>
+                <button type="button" onClick={startFresh} className="shrink-0 font-extrabold underline">
+                  Start fresh
+                </button>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit(onPreview)} className="flex flex-col gap-3.5">
               <div className="grid grid-cols-2 gap-3">
-                <FormField label="Customer name" required registration={register('customerName')} error={errors.customerName} />
-                <FormField label="Mobile No." required registration={register('customerMobile')} error={errors.customerMobile} />
+                <FormField
+                  label="Customer name"
+                  placeholder="Walk-in Customer"
+                  autoComplete="off"
+                  registration={register('customerName')}
+                  error={errors.customerName}
+                />
+                <FormField
+                  label="Mobile No. (optional)"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="off"
+                  placeholder="Optional"
+                  registration={register('customerMobile')}
+                  error={errors.customerMobile}
+                />
               </div>
               <FormField label="Address" as="textarea" rows={2} registration={register('customerAddress')} error={errors.customerAddress} />
 
@@ -136,6 +255,7 @@ export default function InvoiceFormModal({ open, invoice, onClose }) {
               />
 
               <FormField label="Package %" type="number" step="0.5" registration={register('packagePercent')} error={errors.packagePercent} />
+              <input type="hidden" {...register('adjustment')} />
 
               {isEdit && invoice.source === 'ORDER' && invoice.cartDiscountAmount > 0 && (
                 <div className="rounded-xl border border-gold/25 bg-gold/10 px-3.5 py-2.5 text-[10.5px] font-semibold text-gold">
@@ -145,7 +265,7 @@ export default function InvoiceFormModal({ open, invoice, onClose }) {
               )}
 
               <div className="rounded-xl bg-brown/8 px-3.5 py-3 text-[10.5px] text-muted">
-                <div className="flex justify-between"><span>Total Amount</span><span>₹{subtotal.toLocaleString('en-IN')}</span></div>
+                <div className="flex justify-between"><span>Total Amount</span><span>₹{(subtotal + adjustment).toLocaleString('en-IN')}</span></div>
                 <div className="flex justify-between"><span>Packing Charge ({packagePercent}%)</span><span>₹{packageAmount.toLocaleString('en-IN')}</span></div>
                 <div className="mt-1 flex justify-between border-t border-dashed border-brown/12 pt-1.5 text-[12.5px] font-extrabold text-brown">
                   <span>Grand Total</span><span>₹{grandTotal.toLocaleString('en-IN')}</span>
@@ -172,23 +292,61 @@ export default function InvoiceFormModal({ open, invoice, onClose }) {
               <FormField label="Transaction / UTR No." registration={register('transactionRef')} error={errors.transactionRef} />
               <FormField label="Notes" as="textarea" rows={2} registration={register('notes')} error={errors.notes} />
 
-              <div className="mt-2 flex gap-2.5">
-                <button type="button" onClick={onClose} className="btn-3d-outline flex-1 rounded-xl py-2.5 text-[12.5px] font-bold text-brown">
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="btn-3d flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-[12.5px] font-bold text-white disabled:opacity-60"
-                >
-                  {submitting && <Loader2 size={13} className="animate-spin" />}
-                  {isEdit ? 'Save Changes' : 'Create Invoice'}
-                </button>
+              {/* Sticky action bar — grand total + "Adjust bill" stay on screen while scrolling a long item list */}
+              <div className="sticky bottom-0 -mx-5 -mb-5 mt-1 rounded-b-2xl border-t border-orange/25 bg-bg/95 px-5 pb-4 pt-3 shadow-[0_-10px_24px_-14px_rgba(80,40,10,0.35)] backdrop-blur-sm sm:-mx-6 sm:-mb-6 sm:px-6">
+                <div className="mb-2.5 flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="text-[9.5px] font-bold uppercase tracking-wide text-muted">Grand total</div>
+                    <div className="text-[18px] font-extrabold leading-tight text-gradient-gold">₹{grandTotal.toLocaleString('en-IN')}</div>
+                  </div>
+
+                  <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-orange/35 bg-orange/10 p-1">
+                    <button
+                      type="button"
+                      onClick={() => bumpAdjustment(-1)}
+                      aria-label="Decrease total"
+                      className="orb-3d flex h-9 w-9 items-center justify-center !rounded-full text-orange active:scale-95"
+                    >
+                      <Minus size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => bumpAdjustment(1)}
+                      aria-label="Increase total"
+                      className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-b from-[#ff8a3d] to-[#e35226] text-white shadow-[0_6px_14px_-6px_rgba(227,82,38,0.7)] active:scale-95"
+                    >
+                      <Plus size={16} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex gap-2.5">
+                  <button type="button" onClick={onClose} className="btn-3d-outline flex-1 rounded-xl py-2.5 text-[12.5px] font-bold text-brown">
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-3d flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-[12.5px] font-bold text-white"
+                  >
+                    <Eye size={13} />
+                    Preview
+                  </button>
+                </div>
               </div>
             </form>
           </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
+      <InvoicePreviewModal
+        open={!!draft}
+        draft
+        invoice={draft?.invoice}
+        confirming={submitting}
+        confirmLabel={isEdit ? 'Save Changes' : 'Create Invoice'}
+        onConfirm={() => doSave(draft.values)}
+        onClose={() => setDraft(null)}
+      />
+    </>
   );
 }

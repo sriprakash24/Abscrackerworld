@@ -34,6 +34,7 @@ import AdminCombos from "./pages/admin/AdminCombos";
 import AdminInvoices from "./pages/admin/AdminInvoices";
 import AdminEstimates from "./pages/admin/AdminEstimates";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminKeywords from "./pages/admin/AdminKeywords";
 
 const SPLASH_DURATION_MS = 4200;
 
@@ -207,6 +208,14 @@ function AdminApp() {
               element={
                 <AdminRoute>
                   <AdminEstimates />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="keywords"
+              element={
+                <AdminRoute>
+                  <AdminKeywords />
                 </AdminRoute>
               }
             />

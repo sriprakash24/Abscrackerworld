@@ -20,6 +20,8 @@ function getMobileDigits(invoice) {
 
 function openWhatsappChat(invoice) {
   const mobileDigits = getMobileDigits(invoice);
+  // Walk-in invoices may have no mobile number — nothing to open a chat to.
+  if (mobileDigits.length < 10) return;
   window.open(
     `https://wa.me/91${mobileDigits}`,
     "_blank",

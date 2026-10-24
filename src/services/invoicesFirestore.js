@@ -58,8 +58,14 @@ function reserveNextInvoiceNumber(db) {
  * calculation. No delivery charge here either — that's an order-time
  * concern, not an invoice line.
  */
-export function computeInvoiceTotals({ items, packagePercent = DEFAULT_PACKAGE_PERCENT }) {
-  const subtotal = items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+export function computeInvoiceTotals({ items, packagePercent = DEFAULT_PACKAGE_PERCENT, adjustmentAmount = 0 }) {
+  // Manual bill adjustment (admin-only "+/-" control on the invoice form):
+  // signed, and deliberately NOT shown anywhere on the customer's invoice.
+  // It's folded straight into the printed "Total Amount", so the totals box
+  // still adds up (Total Amount + Packing = Grand Total) while the item
+  // rates stay as entered. Packing is still worked out on the items alone.
+  const adjustment = Math.round(Number(adjustmentAmount) || 0);
+  const subtotal = items.reduce((sum, item) => sum + Number(item.amount || 0), 0) + adjustment;
   // Combo lines (item.isCombo) are exempt from packing.
   const packageAmount = Math.round((packableInvoiceAmount(items) * Number(packagePercent || 0)) / 100);
   const grandTotal = Math.max(subtotal + packageAmount, 0);
@@ -265,7 +271,11 @@ export async function addOrdersToInvoice(db, invoiceDocId, newOrders, opts = {})
     id: `${i + 1}`,
   }));
   const packagePercent = invoice.packagePercent ?? DEFAULT_PACKAGE_PERCENT;
-  const { subtotal, packageAmount, grandTotal } = computeInvoiceTotals({ items, packagePercent });
+  const { subtotal, packageAmount, grandTotal } = computeInvoiceTotals({
+    items,
+    packagePercent,
+    adjustmentAmount: invoice.adjustmentAmount || 0,
+  });
 
   const existingOrderDocIds = invoice.orderDocIds || (invoice.orderDocId ? [invoice.orderDocId] : []);
   const orderDocIds = Array.from(new Set([...existingOrderDocIds, ...newOrders.map((o) => o.id)]));
@@ -308,9 +318,11 @@ export async function addOrdersToInvoice(db, invoiceDocId, newOrders, opts = {})
 /** Creates a standalone invoice from the admin "New Invoice" form (phone-in orders, no website order behind it). */
 export async function createManualInvoice(db, values) {
   const packagePercent = values.packagePercent ?? DEFAULT_PACKAGE_PERCENT;
+  const adjustmentAmount = Math.round(Number(values.adjustmentAmount) || 0);
   const { subtotal, packageAmount, grandTotal } = computeInvoiceTotals({
     items: values.items,
     packagePercent,
+    adjustmentAmount,
   });
 
   const invoiceNo = await reserveNextInvoiceNumber(db);
@@ -326,6 +338,7 @@ export async function createManualInvoice(db, values) {
     packagePercent,
     subtotal,
     packageAmount,
+    adjustmentAmount,
     grandTotal,
     paymentMode: values.paymentMode || 'CASH',
     transactionRef: values.transactionRef || '',
@@ -384,9 +397,11 @@ function invoiceItemsToOrderCartItems(items, products = []) {
 export async function updateInvoice(db, invoiceDocId, values, opts = {}) {
   const { orderDocId = null, products = [] } = opts;
   const packagePercent = values.packagePercent ?? DEFAULT_PACKAGE_PERCENT;
+  const adjustmentAmount = Math.round(Number(values.adjustmentAmount) || 0);
   const { subtotal, packageAmount, grandTotal } = computeInvoiceTotals({
     items: values.items,
     packagePercent,
+    adjustmentAmount,
   });
 
   const patch = {
@@ -395,6 +410,7 @@ export async function updateInvoice(db, invoiceDocId, values, opts = {}) {
     packagePercent,
     subtotal,
     packageAmount,
+    adjustmentAmount,
     grandTotal,
     paymentMode: values.paymentMode || 'CASH',
     transactionRef: values.transactionRef || '',

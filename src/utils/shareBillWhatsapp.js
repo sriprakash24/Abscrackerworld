@@ -46,15 +46,9 @@ function openWhatsappChat(order, text = "") {
   );
 }
 
-// The delivery address's "state" field is free text (see AddressForm —
-// there's no dropdown, just a placeholder of "e.g. Tamil Nadu"), so admins
-// have typed it every which way: "Tamil Nadu", "TAMILNADU", "tamil nadu ",
-// "TN", etc. Normalize by lowercasing and stripping all whitespace before
-// comparing, and accept the common abbreviation too.
-function isTamilNaduOrder(order) {
-  const state = (order.address?.state || "").toLowerCase().replace(/\s+/g, "");
-  return state === "tamilnadu" || state === "tn";
-}
+// Message language is chosen by the admin per send (Tamil by default, English
+// via the TA/EN toggle on the order card) — the checkout address is now a
+// single free-text box, so it can no longer be used to guess the state.
 
 // function buildShareText(order) {
 //   return `Hi ${order.customer?.name || ''}, please find the estimate bill for your order ${
@@ -91,9 +85,8 @@ const BLANK = "\u200B";
 // it only auto-links a *raw* URL/URI sitting in the plain text, so whatever
 // link goes here will always be visible in full, not hidden behind a label.
 //
-// NOTE on language: the message below is Tamil. Orders whose delivery
-// address state isn't Tamil Nadu get the English version further down —
-// see isTamilNaduOrder / buildShareText.
+// NOTE on language: the message below is Tamil (the default). The English
+// version further down is used when the admin switches the card to EN.
 function buildShareTextTamil(order) {
   const amount = Number(order.grandTotal || 0);
 
@@ -143,19 +136,17 @@ ABS Crackers World
 Your Celebration, Our Responsibility!`;
 }
 
-function buildShareText(order) {
-  return isTamilNaduOrder(order)
-    ? buildShareTextTamil(order)
-    : buildShareTextEnglish(order);
+function buildShareText(order, lang = "ta") {
+  return lang === "en" ? buildShareTextEnglish(order) : buildShareTextTamil(order);
 }
 
 /**
  * Button 1 — opens the customer's WhatsApp chat with the ready-made bill
- * message pre-filled (Tamil for Tamil Nadu addresses, English otherwise).
- * No file, no download. Admin just taps Send in WhatsApp.
+ * message pre-filled. `lang` is "ta" (default) or "en". No file, no
+ * download. Admin just taps Send in WhatsApp.
  */
-export function sendBillMessage(order) {
-  const text = buildShareText(order);
+export function sendBillMessage(order, lang = "ta") {
+  const text = buildShareText(order, lang);
   openWhatsappChat(order, text);
 }
 

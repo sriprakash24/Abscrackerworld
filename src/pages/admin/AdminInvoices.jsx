@@ -381,7 +381,7 @@ function InvoiceRow({ invoice, linkedOrders = [], onView, onEdit, onDelete }) {
           </span>
         </div>
         <p className="truncate text-[10.5px] font-semibold text-muted">
-          {invoice.customer?.name} · {invoice.customer?.mobile}
+          {invoice.customer?.name || 'Walk-in Customer'}{invoice.customer?.mobile ? ` · ${invoice.customer.mobile}` : ''}
         </p>
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-[12px] font-extrabold text-gradient-gold">₹{(invoice.grandTotal ?? 0).toLocaleString('en-IN')}</span>

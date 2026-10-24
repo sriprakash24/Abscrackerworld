@@ -112,6 +112,12 @@ async function normalizeProduct(id, raw) {
     nameTa: raw.name_ta || raw.nameTa || "",
     category: raw.category || "UNCATEGORISED",
     subcategory: raw.subcategory || "",
+    // Admin-maintained search keywords (Admin → Keywords) — extra names /
+    // nicknames / Tanglish spellings that make a product findable in the
+    // manual-invoice picker.
+    keywords: Array.isArray(raw.keywords)
+      ? raw.keywords.map((k) => String(k).trim()).filter(Boolean)
+      : [],
     unit: raw.unit || "",
     mrp: Number(raw.mrp) || 0,
     sale: Number(raw.salePrice ?? raw.sale) || 0,
@@ -545,6 +551,36 @@ export async function bulkUpdateProductOrderLimits(updates) {
     chunk.forEach(({ id, maxOrderQty }) => {
       batch.update(doc(db, PRODUCTS_COLLECTION, id), {
         maxOrderQty: Math.max(0, Math.round(Number(maxOrderQty) || 0)),
+        updatedAt: serverTimestamp(),
+      });
+    });
+    await batch.commit();
+  }
+}
+
+/**
+ * Bulk-saves search `keywords` (array of strings) for a batch of products —
+ * powers the Admin "Keywords" screen. `updates` is an array of
+ * { id, keywords }. Keywords are trimmed, de-duplicated (case-insensitive)
+ * and stored as typed.
+ */
+export async function bulkUpdateProductKeywords(updates) {
+  const CHUNK_SIZE = 450;
+  for (let i = 0; i < updates.length; i += CHUNK_SIZE) {
+    const chunk = updates.slice(i, i + CHUNK_SIZE);
+    const batch = writeBatch(db);
+    chunk.forEach(({ id, keywords }) => {
+      const seen = new Set();
+      const clean = [];
+      (keywords || []).forEach((k) => {
+        const t = String(k).trim();
+        if (t && !seen.has(t.toLowerCase())) {
+          seen.add(t.toLowerCase());
+          clean.push(t);
+        }
+      });
+      batch.update(doc(db, PRODUCTS_COLLECTION, id), {
+        keywords: clean,
         updatedAt: serverTimestamp(),
       });
     });

@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, Download, Link2, PenSquare } from 'lucide-react';
+import { X, Download, Link2, PenSquare, Loader2, ArrowLeft } from 'lucide-react';
 import { SHOP_INFO, PAYMENT_MODE_LABELS } from '../../constants/invoiceConstants';
 import { generateInvoicePdf } from '../../utils/generateInvoicePdf';
 
@@ -10,7 +10,7 @@ function formatDate(date) {
 }
 
 /** On-screen, read-only invoice — lets admin verify an invoice looks right before/without downloading it. */
-export default function InvoicePreviewModal({ open, invoice, onClose }) {
+export default function InvoicePreviewModal({ open, invoice, onClose, draft = false, onConfirm, confirming = false, confirmLabel = 'Create Invoice' }) {
   if (!invoice) return null;
 
   return (
@@ -34,7 +34,7 @@ export default function InvoicePreviewModal({ open, invoice, onClose }) {
             {/* Toolbar */}
             <div className="flex items-center justify-between gap-2 border-b border-black/10 bg-white px-4 py-3">
               <div className="flex items-center gap-1.5">
-                <h2 className="text-[13px] font-extrabold text-gradient-gold">{invoice.invoiceNo}</h2>
+                <h2 className="text-[13px] font-extrabold text-gradient-gold">{draft ? 'Invoice preview' : invoice.invoiceNo}</h2>
                 <span
                   className={`flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${
                     invoice.source === 'ORDER' ? 'border-gold/35 bg-gold/10 text-gold' : 'border-brown/16 bg-brown/6 text-muted'
@@ -45,13 +45,17 @@ export default function InvoicePreviewModal({ open, invoice, onClose }) {
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => generateInvoicePdf(invoice)}
-                  className="btn-3d flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-bold text-white"
-                >
-                  <Download size={12} />
-                  Download PDF
-                </button>
+                {draft ? (
+                  <span className="rounded-full border border-orange/40 bg-orange/10 px-2 py-0.5 text-[9.5px] font-extrabold text-orange">PREVIEW</span>
+                ) : (
+                  <button
+                    onClick={() => generateInvoicePdf(invoice)}
+                    className="btn-3d flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-bold text-white"
+                  >
+                    <Download size={12} />
+                    Download PDF
+                  </button>
+                )}
                 <button onClick={onClose} className="orb-3d flex h-8 w-8 items-center justify-center !rounded-full text-muted">
                   <X size={14} />
                 </button>
@@ -68,7 +72,7 @@ export default function InvoicePreviewModal({ open, invoice, onClose }) {
               </div>
 
               <div className="mt-3 flex justify-between text-[11.5px] font-semibold">
-                <span>Invoice No.: {invoice.invoiceNo}</span>
+                <span>Invoice No.: {draft ? 'Assigned on create' : invoice.invoiceNo}</span>
                 <span>Date: {formatDate(invoice.date)}</span>
               </div>
               {invoice.orderId && <p className="text-[10px] text-[#8a7f70]">Order Ref: {invoice.orderId}</p>}
@@ -133,6 +137,27 @@ export default function InvoicePreviewModal({ open, invoice, onClose }) {
                 <p className="mt-1">{SHOP_INFO.termsLine}</p>
               </div>
             </div>
+            {draft && (
+              <div className="flex gap-2.5 border-t border-black/10 bg-white px-4 py-3">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-brown/20 bg-white py-2.5 text-[12.5px] font-bold text-brown"
+                >
+                  <ArrowLeft size={13} />
+                  Back to edit
+                </button>
+                <button
+                  type="button"
+                  onClick={onConfirm}
+                  disabled={confirming}
+                  className="btn-3d flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-[12.5px] font-bold text-white disabled:opacity-60"
+                >
+                  {confirming && <Loader2 size={13} className="animate-spin" />}
+                  {confirmLabel}
+                </button>
+              </div>
+            )}
           </motion.div>
         </motion.div>
       )}

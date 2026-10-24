@@ -67,6 +67,7 @@ function MergedEstimateCard({ mobile, orders, allSiblings, delay = 0 }) {
   const [previewBill, setPreviewBill] = useState(null);
   const [downloading, setDownloading] = useState(false);
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [msgLang, setMsgLang] = useState("ta"); // Tamil by default; toggle to English per customer
   const [sendingFile, setSendingFile] = useState(false);
   const [confirmingPayment, setConfirmingPayment] = useState(false);
   const [confirmBusy, setConfirmBusy] = useState(false);
@@ -229,7 +230,7 @@ function MergedEstimateCard({ mobile, orders, allSiblings, delay = 0 }) {
     e.stopPropagation();
     setSendingMessage(true);
     try {
-      sendBillMessage(mergedOrder);
+      sendBillMessage(mergedOrder, msgLang);
     } finally {
       setSendingMessage(false);
     }
@@ -374,6 +375,19 @@ function MergedEstimateCard({ mobile, orders, allSiblings, delay = 0 }) {
               >
                 {downloading ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
                 Download Estimate Bill
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMsgLang((l) => (l === "ta" ? "en" : "ta"));
+                }}
+                title="Message language — tap to switch"
+                className={`rounded-xl border px-2.5 py-2 text-[11px] font-extrabold transition-colors ${
+                  msgLang === "en" ? "border-orange/50 bg-orange/15 text-orange" : "border-brown/15 bg-white text-muted"
+                }`}
+              >
+                {msgLang === "ta" ? "தமிழ்" : "EN"}
               </button>
               <button
                 onClick={handleSendMessage}
